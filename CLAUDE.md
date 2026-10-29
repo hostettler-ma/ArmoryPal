@@ -9,7 +9,10 @@ Mobile-first companion PWA for the Flesh and Blood TCG. Players coordinate card 
 ## Stack (agreed)
 - **Next.js 15 (App Router) + TypeScript**, Tailwind CSS, deployed on **Vercel** (free tier).
 - **Supabase**: Postgres, Auth, Realtime, RLS (free tier). Local dev via `npx supabase` CLI.
-- **Auth:** email magic link + **Discord** OAuth. Each user has a display name and an optional GEM ID.
+- **Auth:** **Discord** OAuth, plus an email magic link. Each user has a display name and an optional GEM ID.
+  - **Production is Discord-only for now:** the email form shows only when `NEXT_PUBLIC_ENABLE_EMAIL_LOGIN=true` (set in `.env.local`, unset on Vercel), until a custom SMTP provider is configured.
+  - **Stray login codes:** the middleware forwards any `?code=` on a non-callback page to `/auth/callback` (a safety net for Supabase's Site URL fallback).
+  - **Live site:** https://armorypal.vercel.app (Supabase project `hlfjqfwiotpvbjrslrnn`).
 - **PWA:** Serwist (`@serwist/next`) + web manifest.
 - **Dates:** `@date-fns/tz`. Schedules are store-local (IANA timezone on the store).
 - **Tests:** Vitest. Unit tests for pure rules, plus integration tests for RPCs/RLS against local Supabase.

@@ -62,8 +62,9 @@ git push origin main
 
 Dashboard → **Authentication → URL Configuration**:
 
-- **Site URL**: `<app-url>`
-- **Redirect URLs**: add `<app-url>/auth/callback`
+- **Site URL**: `<app-url>`, exactly the production domain (not a Vercel per-deployment URL, which is
+  locked behind Vercel login)
+- **Redirect URLs**: add `<app-url>/**` (the wildcard is needed: the app returns to `/auth/callback?next=…`)
 
 ## 7. Discord login
 
@@ -71,14 +72,15 @@ Dashboard → **Authentication → URL Configuration**:
    `https://<ref>.supabase.co/auth/v1/callback` (keep the local `http://127.0.0.1:54321/...` one for development).
 2. Supabase dashboard → **Authentication → Sign In / Providers → Discord**: enable, paste the Client ID and Client Secret.
 
-## 8. Email (magic links)
+## 8. Email (magic links): off at launch
 
-Supabase's built-in email is for testing only: it sends **just a few emails per hour** and only reliably to team
-members. Before inviting players:
+ArmoryPal launched **Discord-only**: the email form is hidden unless `NEXT_PUBLIC_ENABLE_EMAIL_LOGIN=true`.
+Supabase's built-in email sends **just a few emails per hour**, so it isn't usable for players. To turn email on later:
 
-- Dashboard → **Authentication → Emails → SMTP Settings** → enable custom SMTP with a provider such as Resend,
-  Postmark, or Brevo (all have free tiers). You'll need a domain you control for the sender address.
-- Until then, players can sign in with **Discord**.
+1. Dashboard → **Authentication → Emails → SMTP Settings** → enable custom SMTP with a provider such as Resend,
+   Postmark, or Brevo (free tiers). You'll need a domain you control for the sender address.
+2. Vercel → Project → **Settings → Environment Variables** → add `NEXT_PUBLIC_ENABLE_EMAIL_LOGIN` = `true`
+   (Production), then **Redeploy** (it's baked in at build time).
 
 ## 9. Make yourself admin
 

@@ -3,6 +3,13 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
+/**
+ * Email magic-link sign-in. Off unless NEXT_PUBLIC_ENABLE_EMAIL_LOGIN=true:
+ * production launches Discord-only until a real SMTP provider is configured
+ * (Supabase's built-in mailer only sends a few emails per hour).
+ */
+const EMAIL_LOGIN = process.env.NEXT_PUBLIC_ENABLE_EMAIL_LOGIN === "true";
+
 type Status =
   | { kind: "idle" }
   | { kind: "sending" }
@@ -51,36 +58,59 @@ export function LoginForm({ next }: { next: string }) {
 
   return (
     <div className="space-y-6">
-      <button type="button" className="btn btn-secondary" onClick={signInWithDiscord}>
+      <button
+        type="button"
+        className={`btn ${EMAIL_LOGIN ? "btn-secondary" : "btn-primary"}`}
+        onClick={signInWithDiscord}
+      >
         <DiscordIcon /> Continue with Discord
       </button>
 
-      <div className="flex items-center gap-3 text-sm text-muted">
-        <div className="h-px flex-1 bg-border" /> or <div className="h-px flex-1 bg-border" />
-      </div>
-
-      <form onSubmit={sendMagicLink} className="space-y-3">
-        <label className="label" htmlFor="email">
-          Email
-        </label>
-        <input
-          id="email"
-          type="email"
-          inputMode="email"
-          autoComplete="email"
-          required
-          className="input"
-          placeholder="you@example.com"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-        <button className="btn btn-primary" disabled={status.kind === "sending"}>
-          {status.kind === "sending" ? "Sending…" : "Email me a sign-in link"}
-        </button>
-      </form>
+      {EMAIL_LOGIN && (
+        <>
+          <div className="flex items-center gap-3 text-sm text-muted">
+            <div className="h-px flex-1 bg-border" /> or <div className="h-px flex-1 bg-border" />
+          </div>
+          <EmailForm email={email} setEmail={setEmail} onSubmit={sendMagicLink} sending={status.kind === "sending"} />
+        </>
+      )}
 
       {status.kind === "error" && <p className="field-error text-center">{status.message}</p>}
     </div>
+  );
+}
+
+function EmailForm({
+  email,
+  setEmail,
+  onSubmit,
+  sending,
+}: {
+  email: string;
+  setEmail: (v: string) => void;
+  onSubmit: (e: React.FormEvent) => void;
+  sending: boolean;
+}) {
+  return (
+    <form onSubmit={onSubmit} className="space-y-3">
+      <label className="label" htmlFor="email">
+        Email
+      </label>
+      <input
+        id="email"
+        type="email"
+        inputMode="email"
+        autoComplete="email"
+        required
+        className="input"
+        placeholder="you@example.com"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+      />
+      <button className="btn btn-primary" disabled={sending}>
+        {sending ? "Sending…" : "Email me a sign-in link"}
+      </button>
+    </form>
   );
 }
 
