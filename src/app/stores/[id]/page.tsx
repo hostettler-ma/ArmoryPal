@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { EventCard } from "@/components/event-card";
 import { MyStoreButton } from "@/components/my-store-button";
 import { PageHeader } from "@/components/page-header";
 import { activeSchedules, STORE_SELECT, type StoreWithSchedules } from "@/components/store-card";
 import { isUuid, requireProfile } from "@/lib/auth";
+import { getCurrentEvents } from "@/lib/event-data";
 import { formatLocation, formatSchedule } from "@/lib/stores";
 
 export default async function StorePage({ params }: { params: Promise<{ id: string }> }) {
@@ -18,6 +20,7 @@ export default async function StorePage({ params }: { params: Promise<{ id: stri
   if (!data) notFound();
   const store = data as unknown as StoreWithSchedules;
   const schedules = activeSchedules(store);
+  const events = (await getCurrentEvents(supabase, [store.id], user.id)).get(store.id) ?? [];
 
   return (
     <main className="space-y-5">
@@ -41,23 +44,22 @@ export default async function StorePage({ params }: { params: Promise<{ id: stri
       <MyStoreButton storeId={store.id} isMine={!!mine} wide />
 
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold">Weekly events</h2>
-        {schedules.length ? (
+        <h2 className="text-lg font-semibold">This week</h2>
+        {events.length ? (
           <ul className="space-y-2">
-            {schedules.map((s) => (
-              <li key={s.id} className="card">
-                <p className="font-semibold">{s.label}</p>
-                <p className="text-sm text-muted">{formatSchedule(s)}</p>
+            {events.map((e) => (
+              <li key={e.id}>
+                <EventCard event={e} timezone={store.timezone} />
               </li>
             ))}
           </ul>
         ) : (
           <p className="card text-muted">This store has no Armory scheduled yet.</p>
         )}
-        <p className="text-xs text-muted">
-          Times are local to the store ({store.timezone.replaceAll("_", " ")}). This week&apos;s events and
-          card requests arrive in Phase 3.
-        </p>
+        {schedules.length > 0 && (
+          <p className="text-sm text-muted">Every week: {schedules.map((s) => `${s.label}, ${formatSchedule(s)}`).join(" · ")}</p>
+        )}
+        <p className="text-xs text-muted">Times are local to the store ({store.timezone.replaceAll("_", " ")}).</p>
       </section>
     </main>
   );

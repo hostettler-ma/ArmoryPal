@@ -1,6 +1,8 @@
 import Link from "next/link";
-import { STORE_SELECT, StoreCard, type StoreWithSchedules } from "@/components/store-card";
+import { EventCard } from "@/components/event-card";
+import { STORE_SELECT, type StoreWithSchedules } from "@/components/store-card";
 import { requireProfile } from "@/lib/auth";
+import { getCurrentEvents } from "@/lib/event-data";
 
 export default async function HomePage() {
   const { supabase, user, profile } = await requireProfile();
@@ -11,6 +13,11 @@ export default async function HomePage() {
     .eq("user_id", user.id)
     .order("created_at");
   const stores = (data ?? []).map((row) => row.store as unknown as StoreWithSchedules).filter(Boolean);
+  const events = await getCurrentEvents(
+    supabase,
+    stores.map((s) => s.id),
+    user.id,
+  );
 
   return (
     <main className="space-y-6">
@@ -41,10 +48,24 @@ export default async function HomePage() {
           )}
         </div>
         {stores.length ? (
-          <ul className="space-y-3">
+          <ul className="space-y-6">
             {stores.map((s) => (
-              <li key={s.id}>
-                <StoreCard store={s} />
+              <li key={s.id} className="space-y-2">
+                <Link href={`/stores/${s.id}`} className="flex items-baseline justify-between gap-2">
+                  <span className="truncate font-semibold">{s.name}</span>
+                  <span className="shrink-0 text-sm text-muted">{s.city}</span>
+                </Link>
+                {(events.get(s.id) ?? []).length ? (
+                  <ul className="space-y-2">
+                    {events.get(s.id)!.map((e) => (
+                      <li key={e.id}>
+                        <EventCard event={e} timezone={s.timezone} />
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="card text-sm text-muted">No Armory scheduled.</p>
+                )}
               </li>
             ))}
           </ul>

@@ -5,7 +5,33 @@ export type Database = {
   
   "public": {
           Tables: {
-            "cards": {
+            "attendances": {
+                  Row: {
+                    "created_at": string,"event_id": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"event_id": string,"user_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"event_id"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "attendances_event_id_fkey"
+      columns: ["event_id"]
+isOneToOne: false
+      referencedRelation: "events"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "attendances_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"cards": {
                   Row: {
                     "color": string | null,"id": string,"image_url": string | null,"name": string,"pitch": number | null,"types": (string)[],"updated_at": string
                   }
@@ -32,6 +58,32 @@ export type Database = {
                   }
                   Relationships: [
                     
+                  ]
+                },"events": {
+                  Row: {
+                    "created_at": string,"ends_at": string,"event_date": string,"id": string,"schedule_id": string,"starts_at": string,"store_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"ends_at": string,"event_date": string,"id"?: string,"schedule_id": string,"starts_at": string,"store_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"ends_at"?: string,"event_date"?: string,"id"?: string,"schedule_id"?: string,"starts_at"?: string,"store_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "events_schedule_id_fkey"
+      columns: ["schedule_id"]
+isOneToOne: false
+      referencedRelation: "store_schedules"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "events_store_id_fkey"
+      columns: ["store_id"]
+isOneToOne: false
+      referencedRelation: "stores"
+      referencedColumns: ["id"]
+    }
                   ]
                 },"profiles": {
                   Row: {
@@ -119,11 +171,54 @@ isOneToOne: false
             [_ in never]: never
           }
           Functions: {
-            "is_admin":
+            "assert_event_open":
+{ Args: { "p_event_id": string }; Returns: {
+              "created_at": string,
+"ends_at": string,
+"event_date": string,
+"id": string,
+"schedule_id": string,
+"starts_at": string,
+"store_id": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "events"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
+"attend_event":
+{ Args: { "p_event_id": string }; Returns: undefined
+                           },
+"current_events_for_stores":
+{ Args: { "p_store_ids": (string)[] }; Returns: {
+              "created_at": string,
+"ends_at": string,
+"event_date": string,
+"id": string,
+"schedule_id": string,
+"starts_at": string,
+"store_id": string
+            }[]
+                          SetofOptions: {
+        from: "*"
+        to: "events"
+        isOneToOne: false
+        isSetofReturn: true
+      } },
+"event_occurrence":
+{ Args: { "p_now"?: string,"p_start_time": string,"p_timezone": string,"p_weekday": number }; Returns: {
+              "ends_at": string,"event_date": string,"starts_at": string
+            }[]
+                           },
+"is_admin":
 { Args: Record<PropertyKey, never>; Returns: boolean
                            },
 "is_valid_timezone":
 { Args: { "tz": string }; Returns: boolean
+                           },
+"leave_event":
+{ Args: { "p_event_id": string }; Returns: undefined
                            },
 "search_cards":
 { Args: { "max_results"?: number,"q": string }; Returns: {

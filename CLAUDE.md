@@ -32,6 +32,10 @@ Mobile-first companion PWA for the Flesh and Blood TCG. Players coordinate card 
   - In Phase 4, each selected colour becomes **its own request line**, with its own quantity and its own pledges and status. A request always references exactly one card.
 - **Stores can have multiple weekly schedules** (`store_schedules`). Each schedule produces one `events` row per week, created lazily. Admins (`profiles.is_admin`) create stores and schedules.
 - **Events become read-only after `ends_at`** (end of the event day in the store's timezone). Open requests can be copied to the next week's event.
+- **Which event is current** is decided by SQL `public.event_occurrence(weekday, start_time, tz, now)`: the next `weekday` in store-local time, counting today until local midnight. Its TS mirror is `currentEventFor()` in `src/lib/events.ts`. **Change both together.** `tests/db/events.test.ts` checks that they agree across DST changes, offsets and year boundaries.
+- **Events are created lazily** by the `current_events_for_stores(store_ids)` RPC, which is idempotent and called on page views. Users can't insert events. Server code uses `getCurrentEvents()` in `src/lib/event-data.ts`.
+- **Attendance** goes only through the `attend_event` / `leave_event` RPCs, which reject ended events via the internal `assert_event_open`. The table has no write policies. Attendee lists are visible to all signed-in users.
+- **FKs to schedules and stores from events are `on delete restrict`.** Schedules get deactivated, never deleted.
 - **Rules are enforced in the database**: writes with rules go through `security definer` RPCs that lock the request row (`FOR UPDATE`), and RLS blocks direct writes. The same rules are mirrored as pure functions in `src/lib/rules.ts` for UI feedback, and **both are tested**.
   - Only attendees of a non-past event can add requests or pledges.
   - You can't pledge on your own request.
