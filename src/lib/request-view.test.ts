@@ -1,8 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { buildRequestViews, type LoadedRequest } from "./request-view";
+import { buildPeopleList, buildRequestViews, type LoadedRequest } from "./request-view";
 
 const ME = "me";
-const card = (color: "Red" | "Blue") => ({ id: `c-${color}`, name: "Snatch", pitch: color === "Red" ? 1 : 3, color, types: [] });
+const card = (color: "Red" | "Blue") => ({
+  id: `c-${color}`,
+  name: "Snatch",
+  pitch: color === "Red" ? 1 : 3,
+  color,
+  types: [],
+  set_ids: ["1HP", "WTR"],
+});
 
 const req = (id: string, over: Partial<LoadedRequest> = {}): LoadedRequest => ({
   id,
@@ -78,6 +85,39 @@ describe("buildRequestViews", () => {
       "other-filled",
       "mine-filled",
     ]);
+  });
+
+  it("flags requests whose requester is no longer attending", () => {
+    const views = buildRequestViews([req("a"), req("b", { requester_id: "carl" })], viewer, new Set(["alice", ME]));
+    expect(views.find((v) => v.id === "a")!.requesterAttending).toBe(true);
+    expect(views.find((v) => v.id === "b")!.requesterAttending).toBe(false);
+  });
+
+  describe("buildPeopleList", () => {
+    it("lists attendees in join order with request counts, then people who left but kept requests", () => {
+      const views = buildRequestViews(
+        [
+          req("a1", { requester_id: "alice", quantity: 2 }),
+          req("a2", { requester_id: "alice", quantity: 1, pledges: [pledge(ME, 1)], card: card("Blue") }),
+          req("c1", { requester_id: "carl", requester: { display_name: "Carl" } }),
+        ],
+        viewer,
+        new Set([ME, "alice"]),
+      );
+      const people = buildPeopleList(
+        [
+          { user_id: ME, name: "Me" },
+          { user_id: "alice", name: "Alice" },
+        ],
+        views,
+        ME,
+      );
+      expect(people).toEqual([
+        { id: ME, name: "Me", attending: true, isMe: true, requests: 0, stillNeeded: 0 },
+        { id: "alice", name: "Alice", attending: true, isMe: false, requests: 2, stillNeeded: 1 },
+        { id: "carl", name: "Carl", attending: false, isMe: false, requests: 1, stillNeeded: 1 },
+      ]);
+    });
   });
 
   it("drops rows whose card is missing", () => {

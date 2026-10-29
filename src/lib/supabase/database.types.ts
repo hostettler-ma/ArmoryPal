@@ -33,14 +33,14 @@ isOneToOne: false
                   ]
                 },"cards": {
                   Row: {
-                    "color": string | null,"id": string,"image_url": string | null,"name": string,"pitch": number | null,"types": (string)[],"updated_at": string
+                    "color": string | null,"id": string,"image_url": string | null,"name": string,"pitch": number | null,"set_ids": (string)[],"types": (string)[],"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "color"?: string | null,"id": string,"image_url"?: string | null,"name": string,"pitch"?: number | null,"types"?: (string)[],"updated_at"?: string
+                    "color"?: string | null,"id": string,"image_url"?: string | null,"name": string,"pitch"?: number | null,"set_ids"?: (string)[],"types"?: (string)[],"updated_at"?: string
                   }
                   Update: {
-                    "color"?: string | null,"id"?: string,"image_url"?: string | null,"name"?: string,"pitch"?: number | null,"types"?: (string)[],"updated_at"?: string
+                    "color"?: string | null,"id"?: string,"image_url"?: string | null,"name"?: string,"pitch"?: number | null,"set_ids"?: (string)[],"types"?: (string)[],"updated_at"?: string
                   }
                   Relationships: [
                     
@@ -82,6 +82,52 @@ isOneToOne: false
       columns: ["store_id"]
 isOneToOne: false
       referencedRelation: "stores"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"notification_preferences": {
+                  Row: {
+                    "enabled": boolean,"kind": string,"updated_at": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "enabled": boolean,"kind": string,"updated_at"?: string,"user_id"?: string
+                  }
+                  Update: {
+                    "enabled"?: boolean,"kind"?: string,"updated_at"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "notification_preferences_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"notifications": {
+                  Row: {
+                    "created_at": string,"event_id": string | null,"id": string,"kind": string,"payload": NonNullable<Json>,"read_at": string | null,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"event_id"?: string | null,"id"?: string,"kind": string,"payload"?: NonNullable<Json>,"read_at"?: string | null,"user_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"event_id"?: string | null,"id"?: string,"kind"?: string,"payload"?: NonNullable<Json>,"read_at"?: string | null,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "notifications_event_id_fkey"
+      columns: ["event_id"]
+isOneToOne: false
+      referencedRelation: "events"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "notifications_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
       referencedColumns: ["id"]
     }
                   ]
@@ -285,6 +331,12 @@ isOneToOne: false
 "cancel_request":
 { Args: { "p_request_id": string }; Returns: undefined
                            },
+"cancel_request_internal":
+{ Args: { "p_reason": string,"p_request_id": string }; Returns: undefined
+                           },
+"card_label":
+{ Args: { "p_card_id": string }; Returns: string
+                           },
 "current_events_for_stores":
 { Args: { "p_store_ids": (string)[] }; Returns: {
               "created_at": string,
@@ -313,7 +365,7 @@ isOneToOne: false
 { Args: { "tz": string }; Returns: boolean
                            },
 "leave_event":
-{ Args: { "p_event_id": string }; Returns: undefined
+{ Args: { "p_cancel_requests"?: boolean,"p_event_id": string }; Returns: undefined
                            },
 "lock_own_request":
 { Args: { "p_request_id": string }; Returns: {
@@ -334,6 +386,15 @@ isOneToOne: false
         isOneToOne: true
         isSetofReturn: false
       } },
+"mark_notifications_read":
+{ Args: Record<PropertyKey, never>; Returns: undefined
+                           },
+"my_display_name":
+{ Args: Record<PropertyKey, never>; Returns: string
+                           },
+"notify":
+{ Args: { "p_event_id": string,"p_kind": string,"p_payload": Json,"p_user_id": string }; Returns: undefined
+                           },
 "pledge":
 { Args: { "p_quantity": number,"p_request_id": string }; Returns: {
               "created_at": string,
@@ -350,6 +411,9 @@ isOneToOne: false
         isOneToOne: true
         isSetofReturn: false
       } },
+"release_my_pledges":
+{ Args: { "p_event_id": string,"p_reason": string }; Returns: undefined
+                           },
 "search_cards":
 { Args: { "max_results"?: number,"q": string }; Returns: {
               "color": string | null,
@@ -357,6 +421,7 @@ isOneToOne: false
 "image_url": string | null,
 "name": string,
 "pitch": number | null,
+"set_ids": (string)[],
 "types": (string)[],
 "updated_at": string
             }[]

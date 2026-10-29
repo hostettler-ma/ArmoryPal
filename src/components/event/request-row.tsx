@@ -1,5 +1,5 @@
 import { PitchDot } from "@/components/pitch-dot";
-import { cardLabel } from "@/lib/cards";
+import { cardLabel, formatSetIds } from "@/lib/cards";
 import type { RequestView } from "@/lib/request-view";
 import type { Coverage } from "@/lib/rules";
 import { EditRequestButton } from "./edit-request-sheet";
@@ -45,8 +45,16 @@ export function RequestRow({
         </span>
         <div className="min-w-0 flex-1">
           <p className="font-semibold">{cardLabel(request.card)}</p>
+          {request.card.set_ids.length > 0 && (
+            <p className="font-mono text-xs text-muted" title={`Printed in: ${request.card.set_ids.join(", ")}`}>
+              {formatSetIds(request.card.set_ids)}
+            </p>
+          )}
           <p className="text-sm text-muted">
             {mode === "bring" && (request.isMine ? "Your request" : `for ${request.requesterName}`)}
+            {mode === "bring" && !request.requesterAttending && (
+              <span className="ml-1 rounded-full border border-border px-1.5 text-xs">Not going</span>
+            )}
             {mode === "bring" && request.note && " · "}
             {request.note && <span className="italic">“{request.note}”</span>}
           </p>

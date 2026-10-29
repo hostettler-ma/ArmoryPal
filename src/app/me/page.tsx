@@ -16,6 +16,9 @@ export default async function MePage() {
       </header>
       <p className="text-sm text-muted">Signed in as {user.email ?? "Discord user"}</p>
       <ProfileForm displayName={profile.display_name} gemId={profile.gem_id ?? ""} submitLabel="Save" />
+      <Link href="/settings/notifications" className="btn btn-secondary">
+        Notification settings
+      </Link>
       <form action={signOut}>
         <button className="btn btn-secondary">Sign out</button>
       </form>

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { EventCard } from "@/components/event-card";
+import { NotificationBell } from "@/components/notification-bell";
 import { STORE_SELECT, type StoreWithSchedules } from "@/components/store-card";
 import { requireProfile } from "@/lib/auth";
 import { getCurrentEvents } from "@/lib/event-data";
@@ -23,7 +24,8 @@ export default async function HomePage() {
     <main className="space-y-6">
       <header className="flex items-center justify-between gap-3">
         <h1 className="text-2xl font-bold">ArmoryPal</h1>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
+          <NotificationBell supabase={supabase} userId={user.id} />
           {profile.is_admin && (
             <Link href="/admin" className="rounded-full px-3 py-2 text-sm font-medium text-muted">
               Admin

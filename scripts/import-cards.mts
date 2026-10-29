@@ -13,7 +13,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { config } from "dotenv";
 import { createClient } from "@supabase/supabase-js";
-import { latestExpansion, toCardRow, type FabCubeCard, type FabCubeSet } from "../src/lib/cards";
+import { latestExpansion, setInfo, toCardRow, type FabCubeCard, type FabCubeSet } from "../src/lib/cards";
 import type { Database } from "../src/lib/supabase/database.types";
 
 /** Bump this (and re-run) when a new set releases. */
@@ -58,7 +58,8 @@ const [rawCards, rawSets] = await Promise.all([load<FabCubeCard>("card.json"), l
 const latest = latestExpansion(rawCards, rawSets);
 if (!latest) throw new Error("Couldn't determine the latest expansion from set.json.");
 
-const rows = rawCards.map(toCardRow).map((r) => ({ ...r, updated_at: new Date().toISOString() }));
+const sets = setInfo(rawSets);
+const rows = rawCards.map((c) => ({ ...toCardRow(c, sets), updated_at: new Date().toISOString() }));
 console.log(`${rows.length} cards to upsert. Latest expansion: ${latest.name} (${latest.id}, ${latest.releasedOn}).`);
 
 const supabase = createClient<Database>(url, secret, { auth: { persistSession: false } });

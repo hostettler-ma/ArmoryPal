@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   cardLabel,
+  cardSetIds,
+  formatSetIds,
+  setInfo,
   EXPANSION_MIN_CARDS,
   formatReleaseMonth,
   groupCards,
@@ -33,6 +36,7 @@ describe("toCardRow", () => {
       color: "Red",
       types: ["Generic", "Action", "Attack"],
       image_url: "https://img/1.png",
+      set_ids: ["1HP", "WTR"], // no release dates given → alphabetical
     });
   });
 
@@ -69,6 +73,7 @@ describe("groupCards", () => {
     color: pitch === 1 ? "Red" : pitch === 2 ? "Yellow" : pitch === 3 ? "Blue" : null,
     types: ["Generic", "Action"],
     image_url: null,
+    set_ids: [],
   });
 
   it("collapses pitch variants into one entry per name, keeping rank order", () => {
@@ -138,6 +143,56 @@ describe("latestExpansion", () => {
 
   it("returns null when nothing qualifies", () => {
     expect(latestExpansion(cardsIn(["X"], 10, "x"), [set("X", "2026-01-01T00:00:00.000Z")])).toBeNull();
+  });
+});
+
+describe("set codes", () => {
+  const set = (id: string, name: string, ...dates: (string | null)[]): FabCubeSet => ({
+    id,
+    name,
+    printings: dates.map((d) => ({ initial_release_date: d && `${d}T00:00:00.000Z` })),
+  });
+  const sets = setInfo([
+    set("WTR", "Welcome to Rathe", "2019-10-11"),
+    set("1HP", "History Pack 1", "2023-02-24", "2021-07-09"), // reprint edition listed first
+    set("PEN", "Compendium of Rathe", "2026-02-13"),
+    set("ASB", "Armory Deck - Boltyn", "2025-03-14"),
+    set("AHA", "Armory Deck Origins - Hala", "2026-04-17"),
+    set("SFA", "Silver Age Chapter 2 - Fai", "2026-02-13"),
+    set("SBA", "Silver Age Chapter 3 - Briar", null),
+    set("PROMO", "No date", null),
+  ]);
+  const ids = (...codes: string[]) => ({ printings: codes.map((set_id) => ({ set_id, image_url: null })) });
+
+  it("uses each set's earliest release date and flags Armory / Silver Age decks", () => {
+    expect(sets.get("1HP")).toEqual({ releasedOn: "2021-07-09", isDeck: false });
+    expect(sets.get("AHA")?.isDeck).toBe(true);
+    expect(sets.get("SFA")?.isDeck).toBe(true);
+    expect(sets.get("PEN")?.isDeck).toBe(false);
+    expect(sets.get("PROMO")?.releasedOn).toBeNull();
+  });
+
+  it("lists regular sets newest first (undated after), with all Armory/Silver Age decks at the back", () => {
+    expect(cardSetIds(ids("ASB", "SBA", "WTR", "PROMO", "SFA", "PEN", "WTR", "1HP", "AHA"), sets)).toEqual([
+      "PEN",
+      "1HP",
+      "WTR",
+      "PROMO",
+      "AHA",
+      "SFA",
+      "ASB",
+      "SBA", // undated deck: still a deck, so after every regular set
+    ]);
+  });
+
+  it("ends up on the card row", () => {
+    expect(toCardRow(base, sets).set_ids).toEqual(["1HP", "WTR"]);
+  });
+
+  it("formats compactly, truncating long lists", () => {
+    expect(formatSetIds(["PEN", "1HP", "WTR"])).toBe("PEN · 1HP · WTR");
+    expect(formatSetIds(["A", "B", "C", "D", "E", "F", "G"])).toBe("A · B · C · D · E +2 more");
+    expect(formatSetIds([])).toBe("");
   });
 });
 

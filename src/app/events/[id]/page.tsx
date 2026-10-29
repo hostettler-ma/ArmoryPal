@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AttendanceButton } from "@/components/attendance-button";
+import { NotificationBell } from "@/components/notification-bell";
+import { RealtimeRefresh } from "@/components/realtime-refresh";
 import { AddRequestSheet } from "@/components/event/add-request-sheet";
 import { RequestRow } from "@/components/event/request-row";
 import { PageHeader } from "@/components/page-header";
@@ -8,9 +10,10 @@ import { PitchDot } from "@/components/pitch-dot";
 import { isUuid, requireProfile } from "@/lib/auth";
 import { cardLabel, formatReleaseMonth } from "@/lib/cards";
 import { eventPhase, formatEventWhen } from "@/lib/events";
-import { buildRequestViews, type LoadedRequest } from "@/lib/request-view";
+import { buildPeopleList, buildRequestViews, type LoadedRequest } from "@/lib/request-view";
 
-const TABS = ["requests", "checklist", "going"] as const;
+// Display order; the first tab is the default.
+const TABS = ["going", "requests", "checklist"] as const;
 type Tab = (typeof TABS)[number];
 
 export default async function EventPage({
@@ -23,7 +26,7 @@ export default async function EventPage({
   const { id } = await params;
   if (!isUuid(id)) notFound();
   const tabParam = (await searchParams).tab;
-  const tab: Tab = TABS.includes(tabParam as Tab) ? (tabParam as Tab) : "requests";
+  const tab: Tab = TABS.includes(tabParam as Tab) ? (tabParam as Tab) : TABS[0];
   const { supabase, user } = await requireProfile();
 
   const [{ data: event }, { data: requestRows }, { data: meta }] = await Promise.all([
@@ -37,7 +40,7 @@ export default async function EventPage({
     supabase
       .from("requests")
       .select(
-        "id, quantity, note, requester_id, created_at, card:cards(id, name, pitch, color, types), requester:profiles(display_name), pledges(pledger_id, quantity, pledger:profiles(display_name))",
+        "id, quantity, note, requester_id, created_at, card:cards(id, name, pitch, color, types, set_ids), requester:profiles(display_name), pledges(pledger_id, quantity, pledger:profiles(display_name))",
       )
       .eq("event_id", id)
       .eq("status", "active"),
@@ -49,14 +52,19 @@ export default async function EventPage({
   const ended = phase === "ended";
   const attendees = [...event.attendances].sort((a, b) => a.created_at.localeCompare(b.created_at));
   const attending = attendees.some((a) => a.user_id === user.id);
-  const requests = buildRequestViews((requestRows ?? []) as LoadedRequest[], {
-    id: user.id,
-    attending,
-    eventEnded: ended,
-  });
+  const requests = buildRequestViews(
+    (requestRows ?? []) as LoadedRequest[],
+    { id: user.id, attending, eventEnded: ended },
+    new Set(attendees.map((a) => a.user_id)),
+  );
   const mine = requests.filter((r) => r.isMine);
   const myPledges = requests.filter((r) => r.myPledge > 0);
   const stillNeeded = requests.filter((r) => r.coverage !== "covered").length;
+  const people = buildPeopleList(
+    attendees.map((a) => ({ user_id: a.user_id, name: a.profile?.display_name ?? "Unknown player" })),
+    requests,
+    user.id,
+  );
   const catalogNote = meta
     ? `Cards up to ${meta.latest_set_name}${meta.latest_set_released_on ? ` (${formatReleaseMonth(meta.latest_set_released_on)})` : ""}. Card data: the-fab-cube/flesh-and-blood-cards.`
     : null;
@@ -69,7 +77,13 @@ export default async function EventPage({
 
   return (
     <main className="space-y-5">
-      <PageHeader title={event.schedule.label} back={`/stores/${event.store.id}`} />
+      <PageHeader
+        title={event.schedule.label}
+        back={`/stores/${event.store.id}`}
+        action={<NotificationBell supabase={supabase} userId={user.id} />}
+      />
+      {/* Live updates: re-render when anyone changes attendance, requests, or pledges. */}
+      {!ended && <RealtimeRefresh topic={`event:${event.id}`} event="change" />}
 
       <div className="space-y-1">
         <p className="font-semibold">{event.store.name}</p>
@@ -87,6 +101,7 @@ export default async function EventPage({
           eventId={event.id}
           attending={attending}
           pledgedCards={myPledges.reduce((sum, r) => sum + r.myPledge, 0)}
+          openRequests={mine.length}
         />
       )}
 
@@ -162,14 +177,27 @@ export default async function EventPage({
 
       {tab === "going" && (
         <section className="space-y-3">
-          {attendees.length === 0 ? (
+          {people.length === 0 ? (
             <p className="card text-muted">Nobody has said they&apos;re going yet.</p>
           ) : (
             <ul className="card divide-y divide-border !py-0">
-              {attendees.map((a) => (
-                <li key={a.user_id} className="flex min-h-12 items-center justify-between py-2">
-                  <span>{a.profile?.display_name ?? "Unknown player"}</span>
-                  {a.user_id === user.id && <span className="text-sm text-muted">You</span>}
+              {people.map((p) => (
+                <li key={p.id} className="flex min-h-12 items-center gap-3 py-2">
+                  <span className="min-w-0 flex-1 truncate">
+                    {p.name}
+                    {p.isMe && <span className="ml-1 text-sm text-muted">(you)</span>}
+                    {!p.attending && (
+                      <span className="ml-2 rounded-full border border-border px-1.5 text-xs text-muted">Not going</span>
+                    )}
+                  </span>
+                  {p.requests > 0 && (
+                    <span className="shrink-0 text-right text-sm">
+                      {p.requests} {p.requests === 1 ? "request" : "requests"}
+                      <span className="block text-xs text-muted">
+                        {p.stillNeeded === 0 ? "all covered" : `${p.stillNeeded} still needed`}
+                      </span>
+                    </span>
+                  )}
                 </li>
               ))}
             </ul>

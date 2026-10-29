@@ -21,6 +21,10 @@ Mobile-first companion PWA for the Flesh and Blood TCG. Players coordinate card 
   - **Import behavior:** the upsert is idempotent and keyed on `unique_id`. That ID is a nanoid-style string, not a UUID, so `cards.id` is `text`.
   - **Everything is imported, including tokens** (players borrow those often). Cards are never deleted because requests reference them.
   - **What's stored:** name, pitch (1–3 or null), color, types and image_url. `(name, pitch)` is unique (`nulls not distinct`).
+  - **`set_ids`:** the set codes the card was printed in, ordered by `cardSetIds()` in `src/lib/cards.ts`:
+    1. Regular sets, newest release first (dates from `set.json`).
+    2. Undated regular sets (promos).
+    3. **Armory Deck** and **Silver Age** decks at the back (`setInfo().isDeck`, matched by name prefix), newest first, undated last. Request rows show the 5 newest via `formatSetIds()`, and the pledge sheet shows all of them.
   - **License:** the dataset's README says "feel free to … use it for whatever projects you like". There's no formal license, so we credit it in the UI.
   - **After `db reset`:** the cards table is empty. Run the import again.
   - **Latest set:** the import also reads `set.json` and writes the one-row `catalog_meta` table: the dataset tag plus the **latest expansion**. That's the most recently released set with ≥ 150 distinct cards (`EXPANSION_MIN_CARDS`); the threshold keeps Armory decks, demo decks, Silver Age decks and mastery packs from counting. The UI shows "Includes cards up to <set>".
@@ -43,17 +47,30 @@ Mobile-first companion PWA for the Flesh and Blood TCG. Players coordinate card 
   - **One active request per user, card and event.** `add_requests` adds to an existing request (capped at 20) and is all-or-nothing.
   - **Pledges:** one row per pledger per request. `pledge()` *replaces* the caller's quantity, and locks the request row (`FOR UPDATE`) so concurrent pledges can't exceed the quantity.
   - **Cancelling a request** deletes its pledges. Requests are cancelled (`status`), never deleted.
-  - **Leaving an event** (`leave_event`) deletes all of the leaver's pledges for that event, so those cards are needed again. Their own requests are kept. The UI asks for confirmation when the leaver is bringing cards.
+  - **Leaving an event** (`leave_event`) deletes all of the leaver's pledges for that event, so those cards are needed again. See the Leaving and Notifications notes above for what else it does.
   - **Coverage** (open / partial / covered) is computed in TS (`coverage()`, `buildRequestViews()` in `src/lib/request-view.ts`), not stored.
-- **Event page** (`/events/[id]?tab=requests|checklist|going`). The Requests tab orders others' unfilled requests, then mine unfilled, then others' filled, then mine filled (`listGroup()` in `request-view.ts`). "My checklist" shows cards I'm bringing above cards I need. The page is server-rendered, with client "sheets" in `src/components/event/*`. Server actions in `src/app/actions/requests.ts` are thin RPC wrappers that revalidate the page.
+- **Event page** (`/events/[id]?tab=going|requests|checklist`). Tabs appear in that order, and **Going is the default**. Going lists attendees in join order with their request counts (`buildPeopleList()`), followed by people who left but kept requests ("Not going"). The Requests tab orders others' unfilled requests, then mine unfilled, then others' filled, then mine filled (`listGroup()` in `request-view.ts`). "My checklist" shows cards I'm bringing above cards I need. The page is server-rendered, with client "sheets" in `src/components/event/*`. Server actions in `src/app/actions/requests.ts` are thin RPC wrappers that revalidate the page.
 - **Rules are enforced in the database**: writes with rules go through `security definer` RPCs that lock the request row (`FOR UPDATE`), and RLS blocks direct writes. The same rules are mirrored as pure functions in `src/lib/rules.ts` for UI feedback, and **both are tested**.
   - Only attendees of a non-past event can add requests or pledges.
   - You can't pledge on your own request.
   - 1 ≤ pledge quantity ≤ remaining (plus your existing pledge). One pledge row per user per request, and its quantity is editable.
   - A request's quantity can't be lowered below what's already pledged.
   - Leaving an event asks whether to cancel your requests and pledges. Affected users get in-app `notifications`.
-- **Realtime:** Supabase Realtime `postgres_changes` on `attendances`, `requests`, and `pledges`, filtered by `event_id` (pledges carry a denormalized `event_id` for this).
-- **Notifications** are in-app rows for now. Design them so push can be added later as another delivery channel.
+- **Realtime** uses **Broadcast from the database**, not `postgres_changes`. `postgres_changes` can't filter DELETE events by `event_id`, and un-pledging, leaving and cancelling all delete rows.
+  - **Event topic:** statement-level triggers on `attendances`, `requests` and `pledges` call `realtime.send(…, 'change', 'event:<id>', private)`. That's one message per event per SQL statement, carrying just `{table, op}`.
+  - **User topic:** a trigger on `notifications` sends `'notification'` to `user:<id>`.
+  - **Who can listen:** RLS on `realtime.messages` lets any signed-in user receive `event:*`, but only the owner receives `user:<id>`.
+  - **Client:** `<RealtimeRefresh topic event>` (`src/components/realtime-refresh.tsx`) calls `router.refresh()`, debounced. Broadcast is at-most-once, so it also refreshes after a reconnect and on `visibilitychange`.
+- **Notifications** (`notifications` table) are in-app only for now. Push could later deliver the same rows.
+  - **Writing:** only SQL functions write them, via the internal `notify()`. Payloads are rendered by `formatNotification()` in `src/lib/notifications.ts`. Kinds:
+    - `pledge_released`: someone un-pledged or left.
+    - `request_cancelled`: the requester cancelled, or left with "cancel my requests".
+    - `new_requests`: **one** per `add_requests` call, sent to each other attendee. Payload is `{actor, card, items, copies}`.
+    - `requests_filled`: sent when a pledge covers the requester's *last* unfilled request on the event. It fires on that transition only. `pledge()` locks all of the requester's requests on the event in id order so concurrent pledges can't miss or duplicate it, and `leave_event` uses the same lock order.
+  - **Adding a kind:** update the SQL check constraints (on `notifications` and `notification_preferences`) and `NOTIFICATION_KINDS` in `src/lib/notifications.ts` together.
+  - **Preferences** live in `notification_preferences` (user, kind, enabled). A missing row means on. `notify()` skips disabled kinds, so they're never stored. The settings page is `/settings/notifications`, linked from the inbox and `/me`.
+  - **Reading:** users read only their own. `/notifications` marks them read (`mark_notifications_read()`), and the bell (`NotificationBell`) shows the unread count live.
+- **Leaving an event:** `leave_event(event, cancel_requests)` always releases your pledges and notifies the requesters. Cancelling your requests is optional (the UI checkbox is on by default) and notifies their pledgers. Kept requests show a "Not going" badge.
 
 ## Data model (summary)
 `profiles`, `stores`, `store_schedules`, `user_stores`, `events`, `cards`, `attendances`, `requests`, `pledges`, `notifications`, and view `request_status` (pledged / remaining / open|partial|covered). Migrations live in `supabase/migrations/`, seed data in `supabase/seed.sql`.

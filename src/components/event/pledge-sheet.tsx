@@ -55,6 +55,13 @@ function PledgeForm({ eventId, request, onDone }: { eventId: string; request: Re
         </div>
       </div>
 
+      {request.card.set_ids.length > 0 && (
+        <div>
+          <p className="text-sm font-medium">Printed in</p>
+          <p className="font-mono text-sm text-muted">{request.card.set_ids.join(" · ")}</p>
+        </div>
+      )}
+
       <div className="flex items-center justify-between">
         <span className="font-medium">How many will you bring?</span>
         <QuantityStepper label="How many will you bring" value={quantity} max={request.maxPledge} onChange={setQuantity} />

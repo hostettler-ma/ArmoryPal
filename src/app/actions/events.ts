@@ -12,7 +12,12 @@ export async function setAttendance(_prev: AttendanceState, formData: FormData):
   if (!isUuid(eventId)) return { error: "Unknown event." };
 
   const supabase = await createClient();
-  const { error } = await supabase.rpc(attend ? "attend_event" : "leave_event", { p_event_id: eventId });
+  const { error } = attend
+    ? await supabase.rpc("attend_event", { p_event_id: eventId })
+    : await supabase.rpc("leave_event", {
+        p_event_id: eventId,
+        p_cancel_requests: formData.get("cancelRequests") === "on",
+      });
   if (error) {
     return { error: /ended/.test(error.message) ? "This event has already ended." : "Something went wrong. Try again." };
   }
