@@ -49,14 +49,20 @@ Trading/pricing, deck building, payments, chat, push notifications.
 npm install
 npx supabase start          # local Postgres/Auth/Realtime; Studio http://127.0.0.1:54323, Mailpit (magic-link emails) http://127.0.0.1:54324
 npx supabase status         # shows local URL + publishable/secret keys for .env.local (see .env.example)
-npx supabase db reset       # re-apply migrations + seed
+npx supabase migration up --local   # apply new migrations, keeping local users/data
+npx supabase db reset       # wipe and re-apply migrations + seed (deletes local accounts!)
 npm run db:types            # regenerate src/lib/supabase/database.types.ts after a migration
 npm run dev                 # http://localhost:3000
 npm test                    # unit tests (Vitest, src/**/*.test.ts)
 npm run typecheck; npm run lint
-npm run test:db             # integration tests against local Supabase (from Phase 4)
-npx tsx scripts/import-cards.ts
+npm run test:db             # RLS/RPC integration tests against local Supabase (tests/db/**)
+npx tsx scripts/make-admin.mts you@example.com [--revoke]
+npx tsx scripts/import-cards.mts
 ```
+
+- Node scripts in `scripts/` use the `.mts` extension (the package isn't `"type": "module"`, and the scripts use top-level await). They read `.env.local` through dotenv.
+- `supabase/seed.sql` holds **fictional** sample stores only, for local dev.
+- DB tests: `tests/db/helpers.ts` provides `createTestUser({ isAdmin })`, which returns a client signed in as that user, and `deleteTestUsers()` for cleanup. Add a DB test for every new RLS policy or RPC rule.
 
 Gotcha: in Windows PowerShell 5.1, `Out-File -Encoding utf8` writes a BOM. Don't use it to write `.env*` files. Use `[IO.File]::WriteAllText` or the Write tool instead.
 
@@ -64,7 +70,11 @@ Gotcha: in Windows PowerShell 5.1, `Out-File -Encoding utf8` writes a BOM. Don't
 - `src/lib/supabase/{client,server,middleware,env}.ts`: Supabase clients (`@supabase/ssr`). Env vars: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, plus the server-only `SUPABASE_SECRET_KEY`.
 - `src/middleware.ts`: refreshes the session and redirects signed-out users to `/login`.
 - `src/lib/auth.ts`: `requireProfile()` for pages (redirects to `/login` or `/welcome`) and `safeNext()` to guard `?next=`.
-- `src/app/actions/*`: server actions. `src/components/*`: shared client components.
+- `src/lib/auth.ts` also has `requireAdmin()` (returns a 404 for non-admins) and `isUuid()`. Check route params with `isUuid()` before querying.
+- `src/app/actions/*`: server actions. `src/components/*`: shared components (`admin/` holds admin-only forms).
+- Pure validation and formatting helpers go in `src/lib/*.ts`, with matching `*.test.ts`. Example: `src/lib/stores.ts` has `parseStoreInput`, `parseScheduleInput` and `formatSchedule`, and its checks mirror the DB constraints.
+- Admin authorization lives in RLS via `public.is_admin()`. Server actions call `requireAdmin()` only to fail fast.
+- Store schedules are deactivated, never deleted, so past events keep their history.
 - Discord login is configured in `supabase/config.toml` (`[auth.external.discord]`, disabled until a Discord app exists). The secret goes in `supabase/.env`.
 
 ## Conventions

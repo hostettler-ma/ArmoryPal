@@ -19,13 +19,102 @@ export type Database = {
                   Relationships: [
                     
                   ]
+                },"store_schedules": {
+                  Row: {
+                    "active": boolean,"created_at": string,"id": string,"label": string,"start_time": string,"store_id": string,"weekday": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "active"?: boolean,"created_at"?: string,"id"?: string,"label"?: string,"start_time": string,"store_id": string,"weekday": number
+                  }
+                  Update: {
+                    "active"?: boolean,"created_at"?: string,"id"?: string,"label"?: string,"start_time"?: string,"store_id"?: string,"weekday"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "store_schedules_store_id_fkey"
+      columns: ["store_id"]
+isOneToOne: false
+      referencedRelation: "stores"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"stores": {
+                  Row: {
+                    "address": string | null,"city": string,"country": string,"created_at": string,"created_by": string | null,"id": string,"name": string,"region": string | null,"timezone": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "address"?: string | null,"city": string,"country": string,"created_at"?: string,"created_by"?: string | null,"id"?: string,"name": string,"region"?: string | null,"timezone": string
+                  }
+                  Update: {
+                    "address"?: string | null,"city"?: string,"country"?: string,"created_at"?: string,"created_by"?: string | null,"id"?: string,"name"?: string,"region"?: string | null,"timezone"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "stores_created_by_fkey"
+      columns: ["created_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"user_stores": {
+                  Row: {
+                    "created_at": string,"store_id": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"store_id": string,"user_id"?: string
+                  }
+                  Update: {
+                    "created_at"?: string,"store_id"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "user_stores_store_id_fkey"
+      columns: ["store_id"]
+isOneToOne: false
+      referencedRelation: "stores"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "user_stores_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 }
           }
           Views: {
             [_ in never]: never
           }
           Functions: {
-            [_ in never]: never
+            "is_admin":
+{ Args: Record<PropertyKey, never>; Returns: boolean
+                           },
+"is_valid_timezone":
+{ Args: { "tz": string }; Returns: boolean
+                           },
+"search_stores":
+{ Args: { "q": string }; Returns: {
+              "address": string | null,
+"city": string,
+"country": string,
+"created_at": string,
+"created_by": string | null,
+"id": string,
+"name": string,
+"region": string | null,
+"timezone": string
+            }[]
+                          SetofOptions: {
+        from: "*"
+        to: "stores"
+        isOneToOne: false
+        isSetofReturn: true
+      } }
           }
           Enums: {
             [_ in never]: never

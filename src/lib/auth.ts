@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -20,6 +20,20 @@ export async function requireProfile() {
   if (!profile?.display_name) redirect("/welcome");
 
   return { supabase, user, profile: { ...profile, display_name: profile.display_name } };
+}
+
+/** Like requireProfile, but 404s for non-admins so the admin area stays hidden. */
+export async function requireAdmin() {
+  const ctx = await requireProfile();
+  if (!ctx.profile.is_admin) notFound();
+  return ctx;
+}
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** Route params are user input; check the shape before handing them to Postgres. */
+export function isUuid(value: unknown): value is string {
+  return typeof value === "string" && UUID_RE.test(value);
 }
 
 /** Only allows same-site relative paths, to avoid open redirects via ?next=. */
