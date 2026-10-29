@@ -29,8 +29,24 @@ describe("parseStoreInput", () => {
   it("normalizes whitespace and blanks optional fields", () => {
     expect(parseStoreInput(valid)).toEqual({
       ok: true,
-      value: { name: "Pitch Perfect", city: "Portland", region: null, country: "USA", address: null, timezone: "America/Los_Angeles" },
+      value: {
+        name: "Pitch Perfect",
+        city: "Portland",
+        region: null,
+        country: "USA",
+        address: null,
+        timezone: "America/Los_Angeles",
+        notes: null,
+      },
     });
+  });
+
+  it("keeps line breaks in notes, trims the ends, and caps the length", () => {
+    const r = parseStoreInput({ ...valid, notes: "  Pre-register online.\nDoors at 6:30.  " });
+    expect(r.ok && r.value.notes).toBe("Pre-register online.\nDoors at 6:30.");
+    const long = parseStoreInput({ ...valid, notes: "x".repeat(501) });
+    expect(long.ok).toBe(false);
+    if (!long.ok) expect(long.errors.notes).toBeDefined();
   });
 
   it("requires name, city, and country", () => {

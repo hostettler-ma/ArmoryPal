@@ -3,11 +3,23 @@
 import { useFormStatus } from "react-dom";
 import { setMyStore } from "@/app/actions/stores";
 
-export function MyStoreButton({ storeId, isMine, wide }: { storeId: string; isMine: boolean; wide?: boolean }) {
+export function MyStoreButton({
+  storeId,
+  isMine,
+  wide,
+  redirectOnRemove,
+}: {
+  storeId: string;
+  isMine: boolean;
+  wide?: boolean;
+  /** Where to go after removing (e.g. "/" from the store page). Stays put if unset. */
+  redirectOnRemove?: string;
+}) {
   return (
     <form action={setMyStore} className={wide ? "w-full" : "shrink-0"}>
       <input type="hidden" name="storeId" value={storeId} />
       <input type="hidden" name="add" value={String(!isMine)} />
+      {isMine && redirectOnRemove && <input type="hidden" name="redirectOnRemove" value={redirectOnRemove} />}
       <SubmitButton isMine={isMine} wide={wide} />
     </form>
   );

@@ -9,6 +9,7 @@ import { getCopyCandidate } from "@/lib/event-data";
 import { RequestRow } from "@/components/event/request-row";
 import { PageHeader } from "@/components/page-header";
 import { StoreLink } from "@/components/store-link";
+import { StoreNotes } from "@/components/store-notes";
 import { formatLocation } from "@/lib/stores";
 import { PitchDot } from "@/components/pitch-dot";
 import { isUuid, requireProfile } from "@/lib/auth";
@@ -37,7 +38,7 @@ export default async function EventPage({
     supabase
       .from("events")
       .select(
-        "*, store:stores(id, name, timezone, city, region, country), schedule:store_schedules(label), attendances(user_id, created_at, profile:profiles(display_name))",
+        "*, store:stores(id, name, timezone, city, region, country, notes), schedule:store_schedules(label), attendances(user_id, created_at, profile:profiles(display_name))",
       )
       .eq("id", id)
       .maybeSingle(),
@@ -97,6 +98,7 @@ export default async function EventPage({
           {phase === "live" && <span className="ml-2 text-live">● Happening now</span>}
         </p>
         <StoreLink store={event.store} subtitle={formatLocation(event.store)} />
+        {!ended && <StoreNotes notes={event.store.notes} />}
       </div>
 
       {ended ? (

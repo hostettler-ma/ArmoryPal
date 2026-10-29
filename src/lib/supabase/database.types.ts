@@ -237,14 +237,14 @@ isOneToOne: false
                   ]
                 },"stores": {
                   Row: {
-                    "address": string | null,"city": string,"country": string,"created_at": string,"created_by": string | null,"id": string,"name": string,"region": string | null,"timezone": string
+                    "address": string | null,"city": string,"country": string,"created_at": string,"created_by": string | null,"id": string,"name": string,"notes": string | null,"region": string | null,"timezone": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "address"?: string | null,"city": string,"country": string,"created_at"?: string,"created_by"?: string | null,"id"?: string,"name": string,"region"?: string | null,"timezone": string
+                    "address"?: string | null,"city": string,"country": string,"created_at"?: string,"created_by"?: string | null,"id"?: string,"name": string,"notes"?: string | null,"region"?: string | null,"timezone": string
                   }
                   Update: {
-                    "address"?: string | null,"city"?: string,"country"?: string,"created_at"?: string,"created_by"?: string | null,"id"?: string,"name"?: string,"region"?: string | null,"timezone"?: string
+                    "address"?: string | null,"city"?: string,"country"?: string,"created_at"?: string,"created_by"?: string | null,"id"?: string,"name"?: string,"notes"?: string | null,"region"?: string | null,"timezone"?: string
                   }
                   Relationships: [
                     {
@@ -443,6 +443,7 @@ isOneToOne: false
 "created_by": string | null,
 "id": string,
 "name": string,
+"notes": string | null,
 "region": string | null,
 "timezone": string
             }[]

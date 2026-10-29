@@ -2,10 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { isUuid } from "@/lib/auth";
+import { isUuid, safeNext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 
-/** Adds or removes a store from the current user's "My stores" list. */
+/**
+ * Adds or removes a store from the current user's "My stores" list. A
+ * `redirectOnRemove` field (same-site path) navigates there after a removal.
+ */
 export async function setMyStore(formData: FormData) {
   const storeId = formData.get("storeId");
   const add = formData.get("add") === "true";
@@ -27,4 +30,7 @@ export async function setMyStore(formData: FormData) {
   revalidatePath("/");
   revalidatePath("/stores");
   revalidatePath(`/stores/${storeId}`);
+
+  const redirectOnRemove = formData.get("redirectOnRemove");
+  if (!add && typeof redirectOnRemove === "string" && redirectOnRemove) redirect(safeNext(redirectOnRemove));
 }

@@ -37,7 +37,11 @@ export type StoreInput = {
   country: string;
   address: string | null;
   timezone: string;
+  /** Free text shown on the store and event pages, e.g. "Pre-register at …". */
+  notes: string | null;
 };
+
+export const MAX_STORE_NOTES = 500;
 
 const clean = (v: unknown) => String(v ?? "").trim().replace(/\s+/g, " ");
 const optional = (v: unknown) => clean(v) || null;
@@ -51,6 +55,8 @@ export function parseStoreInput(raw: Record<string, unknown>): Parsed<StoreInput
     country: clean(raw.country),
     address: optional(raw.address),
     timezone: clean(raw.timezone),
+    // Keep line breaks in notes; only trim the ends.
+    notes: String(raw.notes ?? "").trim() || null,
   };
   const errors: Errors<keyof StoreInput> = {};
   const required = (k: "name" | "city" | "country", label: string) => {
@@ -63,6 +69,8 @@ export function parseStoreInput(raw: Record<string, unknown>): Parsed<StoreInput
   if (value.region && value.region.length > 80) errors.region = "Region must be 80 characters or fewer.";
   if (value.address && value.address.length > 200) errors.address = "Address must be 200 characters or fewer.";
   if (!isValidTimezone(value.timezone)) errors.timezone = "Pick a valid time zone.";
+  if (value.notes && value.notes.length > MAX_STORE_NOTES)
+    errors.notes = `Notes must be ${MAX_STORE_NOTES} characters or fewer.`;
   return Object.keys(errors).length ? { ok: false, errors } : { ok: true, value };
 }
 

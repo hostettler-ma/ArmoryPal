@@ -111,7 +111,7 @@ npx tsx scripts/import-cards.mts
 ```
 
 - Node scripts in `scripts/` use the `.mts` extension (the package isn't `"type": "module"`, and the scripts use top-level await). They read `.env.local` through dotenv.
-- `supabase/seed.sql` holds **fictional** sample stores only, for local dev.
+- `supabase/seed.sql` holds the **real New York area stores** running a weekly FaB Armory, with their slots (America/New_York). Addresses are left empty until verified.
 - DB tests: `tests/db/helpers.ts` provides `createTestUser({ isAdmin })`, which returns a client signed in as that user, and `deleteTestUsers()` for cleanup. Add a DB test for every new RLS policy or RPC rule.
 
 Gotcha: in Windows PowerShell 5.1, `Out-File -Encoding utf8` writes a BOM. Don't use it to write `.env*` files. Use `[IO.File]::WriteAllText` or the Write tool instead.
@@ -125,6 +125,12 @@ Gotcha: in Windows PowerShell 5.1, `Out-File -Encoding utf8` writes a BOM. Don't
 - Pure validation and formatting helpers go in `src/lib/*.ts`, with matching `*.test.ts`. Example: `src/lib/stores.ts` has `parseStoreInput`, `parseScheduleInput` and `formatSchedule`, and its checks mirror the DB constraints.
 - Admin authorization lives in RLS via `public.is_admin()`. Server actions call `requireAdmin()` only to fail fast.
 - Store schedules are deactivated, never deleted, so past events keep their history.
+- **Store search** goes through the `search_stores(q)` RPC (latest version in `*_search_stores_order.sql`).
+  - **Match tiers:** 0 exact name/city, 1 name/city or a word in them starts with the query, 2 contains it, 3 typo match.
+  - **Within a tier:** the store's **earliest active slot, Monday first**, then start time, then name. Stores without a slot go last.
+  - **Empty query:** lists all stores Monday → Sunday.
+  - **Wildcards:** LIKE wildcards are escaped. The function returns `s.*`, so new store columns flow through.
+- **Store notes:** `stores.notes` holds free text up to 500 chars (`MAX_STORE_NOTES`), e.g. "Pre-register at …". Admins edit it in the store form. `<StoreNotes>` shows it on the store page and on open event pages.
 - Discord login is configured in `supabase/config.toml` (`[auth.external.discord]`, disabled until a Discord app exists). The secret goes in `supabase/.env`.
 
 ## Conventions

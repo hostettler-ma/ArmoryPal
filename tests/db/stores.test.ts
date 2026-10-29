@@ -66,10 +66,64 @@ describe("stores RLS", () => {
     expect(error?.code).toBe("23514"); // check violation
   });
 
+  it("lets admins set notes up to 500 characters, but not non-admins", async () => {
+    const ok = await boss.client.from("stores").update({ notes: "Pre-register online.\nDoors 6:30." }).eq("id", storeIds[0]);
+    expect(ok.error).toBeNull();
+    const tooLong = await boss.client.from("stores").update({ notes: "x".repeat(501) }).eq("id", storeIds[0]);
+    expect(tooLong.error?.code).toBe("23514");
+    const { data: byPlayer } = await player.client.from("stores").update({ notes: "hijacked" }).eq("id", storeIds[0]).select();
+    expect(byPlayer).toEqual([]);
+  });
+
   it("finds stores by city with a typo", async () => {
     const { data, error } = await player.client.rpc("search_stores", { q: "Tesvtille" });
     expect(error).toBeNull();
     expect(data!.map((s) => s.id)).toContain(storeIds[0]);
+  });
+});
+
+describe("search_stores ordering", () => {
+  // Weekday: 0 = Sunday … 6 = Saturday. Expected order for "qorvex":
+  //   tier 0 (exact name/city): Hilltop Cards (city Qorvex, Wed) before Qorvex (Sun)
+  //   tier 1 (word prefix):     Big Qorvex Hall (Mon), Qorvex Games (Fri), Qorvex Annex (no slot → last)
+  //   tier 2 (contains):        SuperQorvexium (Tue)
+  const fixtures = [
+    { name: "Qorvex", city: "Testville", slot: { weekday: 0, start_time: "12:00" } },
+    { name: "Hilltop Cards", city: "Qorvex", slot: { weekday: 3, start_time: "19:00" } },
+    { name: "Qorvex Games", city: "Testville", slot: { weekday: 5, start_time: "19:00" } },
+    { name: "Big Qorvex Hall", city: "Testville", slot: { weekday: 1, start_time: "18:30" } },
+    { name: "Qorvex Annex", city: "Testville", slot: null },
+    { name: "SuperQorvexium", city: "Testville", slot: { weekday: 2, start_time: "19:00" } },
+  ];
+
+  beforeAll(async () => {
+    for (const f of fixtures) {
+      const { data } = await admin
+        .from("stores")
+        .insert({ name: f.name, city: f.city, country: "Testland", timezone: "UTC" })
+        .select("id")
+        .single();
+      storeIds.push(data!.id);
+      if (f.slot) await admin.from("store_schedules").insert({ store_id: data!.id, ...f.slot });
+    }
+  });
+
+  it("orders by match tier, then earliest weekly slot (Monday first), stores without slots last", async () => {
+    const { data, error } = await player.client.rpc("search_stores", { q: "qorvex" });
+    expect(error).toBeNull();
+    expect(data!.map((s) => s.name)).toEqual([
+      "Hilltop Cards",
+      "Qorvex",
+      "Big Qorvex Hall",
+      "Qorvex Games",
+      "Qorvex Annex",
+      "SuperQorvexium",
+    ]);
+  });
+
+  it("treats % and _ in the query literally", async () => {
+    const { data } = await player.client.rpc("search_stores", { q: "%" });
+    expect(data).toEqual([]);
   });
 });
 

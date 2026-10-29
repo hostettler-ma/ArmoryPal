@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { EventCard } from "@/components/event-card";
 import { MyStoreButton } from "@/components/my-store-button";
+import { StoreNotes } from "@/components/store-notes";
 import { PageHeader } from "@/components/page-header";
 import { activeSchedules, STORE_SELECT, type StoreWithSchedules } from "@/components/store-card";
 import { isUuid, requireProfile } from "@/lib/auth";
@@ -41,7 +42,9 @@ export default async function StorePage({ params }: { params: Promise<{ id: stri
         {store.address && <p className="text-sm text-muted">{store.address}</p>}
       </div>
 
-      <MyStoreButton storeId={store.id} isMine={!!mine} wide />
+      <StoreNotes notes={store.notes} />
+
+      <MyStoreButton storeId={store.id} isMine={!!mine} wide redirectOnRemove="/" />
 
       <section className="space-y-3">
         <h2 className="text-lg font-semibold">This week</h2>

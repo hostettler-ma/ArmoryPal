@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useState } from "react";
 import { saveStore, type FormState } from "@/app/actions/admin";
+import { MAX_STORE_NOTES } from "@/lib/stores";
 import type { Tables } from "@/lib/supabase/database.types";
 
 const FIELDS = [
@@ -39,6 +40,22 @@ export function StoreForm({ store }: { store?: Tables<"stores"> }) {
         </label>
         <TimezoneSelect defaultValue={store?.timezone} />
         {state.errors?.timezone && <p className="field-error">{state.errors.timezone}</p>}
+      </div>
+      <div>
+        <label className="label" htmlFor="notes">
+          Notes <span className="font-normal text-muted">(optional)</span>
+        </label>
+        <textarea
+          id="notes"
+          name="notes"
+          rows={3}
+          maxLength={MAX_STORE_NOTES}
+          className="input py-3"
+          placeholder="e.g. Pre-register at the store's website"
+          defaultValue={store?.notes ?? ""}
+        />
+        <p className="mt-1 text-sm text-muted">Shown to players on the store and event pages.</p>
+        {state.errors?.notes && <p className="field-error">{state.errors.notes}</p>}
       </div>
       {state.errors?.form && <p className="field-error">{state.errors.form}</p>}
       {state.saved && !pending && <p className="text-sm text-muted">Saved.</p>}
