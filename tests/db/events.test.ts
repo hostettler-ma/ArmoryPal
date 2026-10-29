@@ -147,8 +147,11 @@ describe("attendance", () => {
   it("blocks direct writes to attendances, so users can't add or remove others", async () => {
     const { error } = await alice.client.from("attendances").insert({ event_id: eventId, user_id: alice.id });
     expect(error?.code).toBe("42501");
+    // Refused outright (no DELETE grant → null) or filtered to nothing by RLS ([]): either way, nobody removed.
+    const before = (await admin.from("attendances").select("user_id").eq("event_id", eventId)).data!.length;
     const { data: removed } = await alice.client.from("attendances").delete().eq("event_id", eventId).select();
-    expect(removed).toEqual([]);
+    expect(removed ?? []).toEqual([]);
+    expect((await admin.from("attendances").select("user_id").eq("event_id", eventId)).data!.length).toBe(before);
   });
 
   it("doesn't expose the internal assert_event_open helper", async () => {

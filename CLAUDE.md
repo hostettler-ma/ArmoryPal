@@ -89,6 +89,7 @@ Mobile-first companion PWA for the Flesh and Blood TCG. Players coordinate card 
   - **Manifest and icons:** `src/app/manifest.ts`. Icons are generated with `next/og` from `src/lib/app-icon.tsx` (`/icons/*.png`, `/icon`, `/apple-icon`). They and `/~offline` are public (middleware matcher and `PUBLIC_PATHS`).
   - **Install hint:** `<InstallHint>` on Home, using `beforeinstallprompt` on Android and Share instructions on iOS.
 - **Deploying:** see `DEPLOY.md`. The scripts accept `--env .env.production.local` and print their `Target:` URL. Vercel only needs `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`; the secret key never goes to Vercel.
+- **Grants are explicit** (`*_explicit_api_grants.sql`). Production doesn't auto-grant API roles access to new tables or functions, so **every new table or RPC needs its own `grant` in its migration**: `select` (plus the exact writes) for `authenticated`, `execute` for RPCs, and `all` for `service_role`. `anon` gets nothing. To reproduce production locally, revoke all from `anon`/`authenticated`/`service_role`/`public` on `public` tables and functions, re-run that migration, then run `npm run test:db`.
 - **Security baseline:** every public table has RLS. No security-definer function is executable by `anon`; check this after adding functions. Internal helpers revoke `execute` from `authenticated` too.
 
 ## Data model (summary)

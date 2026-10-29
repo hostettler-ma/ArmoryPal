@@ -37,8 +37,11 @@ describe("cards table", () => {
     const { error } = await player.client.from("cards").insert({ id: "test-zx-evil", name: "Evil" });
     expect(error?.code).toBe("42501");
 
+    // Refused outright (no UPDATE grant → null) or filtered to nothing by RLS ([]): either way, unchanged.
     const { data: updated } = await player.client.from("cards").update({ name: "Renamed" }).eq("id", "test-zx-1").select();
-    expect(updated).toEqual([]);
+    expect(updated ?? []).toEqual([]);
+    const { data: after } = await admin.from("cards").select("name").eq("id", "test-zx-1").single();
+    expect(after!.name).toBe("Zyxquat Strike");
   });
 
   it("enforces one row per name + pitch, including pitchless cards", async () => {

@@ -309,8 +309,10 @@ describe("direct table access", () => {
       .from("requests")
       .insert({ event_id: eventId, requester_id: requester.id, card_id: "test-rq-red", quantity: 1 });
     expect(req.error?.code).toBe("42501");
+    // Refused outright (no UPDATE grant → null) or filtered to nothing by RLS ([]): either way, unchanged.
     const { data: upd } = await requester.client.from("requests").update({ quantity: 9 }).eq("id", id).select();
-    expect(upd).toEqual([]);
+    expect(upd ?? []).toEqual([]);
+    expect((await admin.from("requests").select("quantity").eq("id", id).single()).data!.quantity).toBe(2);
   });
 
   it("refuses anonymous callers", async () => {
