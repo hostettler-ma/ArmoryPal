@@ -36,6 +36,16 @@ Mobile-first companion PWA for the Flesh and Blood TCG. Players coordinate card 
 - **Events are created lazily** by the `current_events_for_stores(store_ids)` RPC, which is idempotent and called on page views. Users can't insert events. Server code uses `getCurrentEvents()` in `src/lib/event-data.ts`.
 - **Attendance** goes only through the `attend_event` / `leave_event` RPCs, which reject ended events via the internal `assert_event_open`. The table has no write policies. Attendee lists are visible to all signed-in users.
 - **FKs to schedules and stores from events are `on delete restrict`.** Schedules get deactivated, never deleted.
+- **Requests and pledges** (migration `*_requests_pledges.sql`) are written only through RPCs:
+  - **RPCs:** `add_requests(event, items jsonb, note)`, `update_request`, `cancel_request`, `pledge(request, qty)` and `unpledge`.
+  - **Error codes:** the RPCs raise short codes as the message (`not_attending`, `own_request`, `exceeds_remaining`, `below_pledged`, `event_ended`, …). `ruleMessage()` in `src/lib/rules.ts` maps them to UI text, so add new codes in both places.
+  - **Quantities:** 1–20 (`MAX_QUANTITY`). Notes are at most 200 chars.
+  - **One active request per user, card and event.** `add_requests` adds to an existing request (capped at 20) and is all-or-nothing.
+  - **Pledges:** one row per pledger per request. `pledge()` *replaces* the caller's quantity, and locks the request row (`FOR UPDATE`) so concurrent pledges can't exceed the quantity.
+  - **Cancelling a request** deletes its pledges. Requests are cancelled (`status`), never deleted.
+  - **Leaving an event** (`leave_event`) deletes all of the leaver's pledges for that event, so those cards are needed again. Their own requests are kept. The UI asks for confirmation when the leaver is bringing cards.
+  - **Coverage** (open / partial / covered) is computed in TS (`coverage()`, `buildRequestViews()` in `src/lib/request-view.ts`), not stored.
+- **Event page** (`/events/[id]?tab=requests|mine|going`) is server-rendered, with client "sheets" in `src/components/event/*`. Server actions in `src/app/actions/requests.ts` are thin RPC wrappers that revalidate the page.
 - **Rules are enforced in the database**: writes with rules go through `security definer` RPCs that lock the request row (`FOR UPDATE`), and RLS blocks direct writes. The same rules are mirrored as pure functions in `src/lib/rules.ts` for UI feedback, and **both are tested**.
   - Only attendees of a non-past event can add requests or pledges.
   - You can't pledge on your own request.

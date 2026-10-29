@@ -1,0 +1,121 @@
+// Business rules for requests and pledges. These mirror the checks in the SQL
+// functions (supabase/migrations/*_requests_pledges.sql), which are the source
+// of truth; this copy drives the UI (what to show/enable) and is unit-tested.
+// Change both together.
+
+export const MAX_QUANTITY = 20;
+export const MAX_NOTE_LENGTH = 200;
+
+export type Coverage = "open" | "partial" | "covered";
+
+export type RuleError =
+  | "event_ended"
+  | "event_not_found"
+  | "not_signed_in"
+  | "not_attending"
+  | "own_request"
+  | "request_cancelled"
+  | "request_not_found"
+  | "not_owner"
+  | "invalid_quantity"
+  | "exceeds_remaining"
+  | "below_pledged"
+  | "note_too_long"
+  | "no_items"
+  | "card_not_found";
+
+export type Check = { ok: true } | { ok: false; reason: RuleError };
+const ok: Check = { ok: true };
+const fail = (reason: RuleError): Check => ({ ok: false, reason });
+
+export function totalPledged(pledges: { quantity: number }[]): number {
+  return pledges.reduce((sum, p) => sum + p.quantity, 0);
+}
+
+export function coverage(quantity: number, pledged: number): Coverage {
+  if (pledged <= 0) return "open";
+  return pledged >= quantity ? "covered" : "partial";
+}
+
+/** Context about the viewer and a request, as needed by the checks below. */
+export type PledgeContext = {
+  eventEnded: boolean;
+  viewerAttending: boolean;
+  viewerIsRequester: boolean;
+  requestActive: boolean;
+  requestQuantity: number;
+  /** All pledges on the request, including the viewer's. */
+  pledged: number;
+  /** The viewer's current pledge (0 if none). */
+  myPledge: number;
+};
+
+/** Largest quantity the viewer may pledge (replacing their existing pledge). */
+export function maxPledge(ctx: Pick<PledgeContext, "requestQuantity" | "pledged" | "myPledge">): number {
+  return Math.max(0, ctx.requestQuantity - (ctx.pledged - ctx.myPledge));
+}
+
+/** May the viewer pledge for this request at all? */
+export function canPledge(ctx: PledgeContext): Check {
+  if (ctx.eventEnded) return fail("event_ended");
+  if (!ctx.viewerAttending) return fail("not_attending");
+  if (!ctx.requestActive) return fail("request_cancelled");
+  if (ctx.viewerIsRequester) return fail("own_request");
+  if (maxPledge(ctx) < 1) return fail("exceeds_remaining");
+  return ok;
+}
+
+/** May the viewer pledge exactly `quantity`? */
+export function checkPledgeQuantity(ctx: PledgeContext, quantity: number): Check {
+  const base = canPledge(ctx);
+  if (!base.ok) return base;
+  if (!Number.isInteger(quantity) || quantity < 1) return fail("invalid_quantity");
+  if (quantity > maxPledge(ctx)) return fail("exceeds_remaining");
+  return ok;
+}
+
+export function canAddRequest(ctx: { eventEnded: boolean; viewerAttending: boolean }): Check {
+  if (ctx.eventEnded) return fail("event_ended");
+  if (!ctx.viewerAttending) return fail("not_attending");
+  return ok;
+}
+
+export function checkRequestQuantity(quantity: number): Check {
+  return Number.isInteger(quantity) && quantity >= 1 && quantity <= MAX_QUANTITY ? ok : fail("invalid_quantity");
+}
+
+/** Requesters may change quantity, but not below what others already pledged. */
+export function checkRequestUpdate(
+  ctx: { eventEnded: boolean; viewerIsRequester: boolean; requestActive: boolean; pledged: number },
+  quantity: number,
+): Check {
+  if (ctx.eventEnded) return fail("event_ended");
+  if (!ctx.viewerIsRequester) return fail("not_owner");
+  if (!ctx.requestActive) return fail("request_cancelled");
+  const q = checkRequestQuantity(quantity);
+  if (!q.ok) return q;
+  if (quantity < ctx.pledged) return fail("below_pledged");
+  return ok;
+}
+
+const MESSAGES: Record<RuleError, string> = {
+  event_ended: "This event has already ended.",
+  event_not_found: "That event doesn't exist.",
+  not_signed_in: "Please sign in again.",
+  not_attending: "Mark yourself as going first.",
+  own_request: "You can't bring cards for your own request.",
+  request_cancelled: "That request was cancelled.",
+  request_not_found: "That request doesn't exist anymore.",
+  not_owner: "Only the requester can change this.",
+  invalid_quantity: `Pick a quantity between 1 and ${MAX_QUANTITY}.`,
+  exceeds_remaining: "That's more than is still needed. Someone may have just pledged; check again.",
+  below_pledged: "Others already pledged more than that. Ask them to lower their pledge first.",
+  note_too_long: `Keep the note to ${MAX_NOTE_LENGTH} characters.`,
+  no_items: "Pick at least one card.",
+  card_not_found: "That card isn't in the catalog.",
+};
+
+/** Friendly text for an error code raised by the SQL functions (or a Check). */
+export function ruleMessage(codeOrMessage: string | undefined): string {
+  return (codeOrMessage && MESSAGES[codeOrMessage as RuleError]) || "Something went wrong. Try again.";
+}

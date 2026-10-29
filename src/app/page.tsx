@@ -77,12 +77,6 @@ export default async function HomePage() {
             </Link>
           </div>
         )}
-      </section>
-
-      {/* Temporary until requests land in Phase 4. */}
-      <Link href="/dev/cards" className="block text-center text-sm text-muted underline">
-        Try the card search
-      </Link>
-    </main>
+      </section>    </main>
   );
 }

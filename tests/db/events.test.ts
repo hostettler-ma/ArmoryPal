@@ -141,7 +141,7 @@ describe("attendance", () => {
 
   it("rejects unknown events", async () => {
     const { error } = await alice.client.rpc("attend_event", { p_event_id: "00000000-0000-4000-a000-0000000000ff" });
-    expect(error?.message).toMatch(/not found/);
+    expect(error?.message).toBe("event_not_found");
   });
 
   it("blocks direct writes to attendances, so users can't add or remove others", async () => {
