@@ -45,7 +45,7 @@ Mobile-first companion PWA for the Flesh and Blood TCG. Players coordinate card 
   - **Cancelling a request** deletes its pledges. Requests are cancelled (`status`), never deleted.
   - **Leaving an event** (`leave_event`) deletes all of the leaver's pledges for that event, so those cards are needed again. Their own requests are kept. The UI asks for confirmation when the leaver is bringing cards.
   - **Coverage** (open / partial / covered) is computed in TS (`coverage()`, `buildRequestViews()` in `src/lib/request-view.ts`), not stored.
-- **Event page** (`/events/[id]?tab=requests|mine|going`) is server-rendered, with client "sheets" in `src/components/event/*`. Server actions in `src/app/actions/requests.ts` are thin RPC wrappers that revalidate the page.
+- **Event page** (`/events/[id]?tab=requests|checklist|going`). The Requests tab orders others' unfilled requests, then mine unfilled, then others' filled, then mine filled (`listGroup()` in `request-view.ts`). "My checklist" shows cards I'm bringing above cards I need. The page is server-rendered, with client "sheets" in `src/components/event/*`. Server actions in `src/app/actions/requests.ts` are thin RPC wrappers that revalidate the page.
 - **Rules are enforced in the database**: writes with rules go through `security definer` RPCs that lock the request row (`FOR UPDATE`), and RLS blocks direct writes. The same rules are mirrored as pure functions in `src/lib/rules.ts` for UI feedback, and **both are tested**.
   - Only attendees of a non-past event can add requests or pledges.
   - You can't pledge on your own request.
@@ -106,5 +106,9 @@ Gotcha: in Windows PowerShell 5.1, `Out-File -Encoding utf8` writes a BOM. Don't
 
 ## Conventions
 - Mobile-first UI: design for ~375px wide first, with large tap targets and bottom sheets for forms.
+- **Colours come from the Expo 2025 Osaka design system palette** (Inochi, Umi, Noyama and Hikari), defined as tokens in `src/app/globals.css` with light and dark values.
+  - **Tokens:** `accent` (Inochi blue, or Umi sky in dark mode), `danger`, `live`, `pitch-red/yellow/blue`, and `chip-{open,partial,covered}-{bg,fg}`.
+  - **Use the tokens** (`bg-accent`, `text-danger`, `bg-chip-open-bg` …), never raw Tailwind colours like `bg-red-600`.
+  - **Text colours must meet WCAG AA (4.5:1).** Text shades may be deepened from the palette hue to get there; dots and borders use the exact palette values.
 - Keep business rules out of components. Put them in `src/lib/rules.ts` and the matching SQL RPC, and change both together.
 - Every schema change is a new migration file. Never edit an applied migration.

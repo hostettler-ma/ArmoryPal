@@ -85,7 +85,7 @@ function EditRequestForm({ eventId, request, onDone }: { eventId: string; reques
       </button>
 
       {confirmCancel ? (
-        <div className="card space-y-3 border-accent">
+        <div className="card space-y-3 border-danger">
           <p className="text-sm">
             Cancel this request?
             {request.pledgers.length > 0 &&

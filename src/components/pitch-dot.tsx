@@ -1,9 +1,10 @@
 import type { CardColor } from "@/lib/cards";
 
+// Expo 2025 palette via theme tokens (globals.css). Yellow gets a faint ring so it stays visible on white.
 const DOT_CLASS: Record<CardColor, string> = {
-  Red: "bg-red-600",
-  Yellow: "bg-yellow-400",
-  Blue: "bg-blue-600",
+  Red: "bg-pitch-red",
+  Yellow: "bg-pitch-yellow ring-1 ring-black/15 ring-inset",
+  Blue: "bg-pitch-blue",
 };
 
 /** Colored pitch strip indicator; an empty ring for cards without pitch (heroes, equipment). */

@@ -22,7 +22,7 @@ export default async function LoginPage({
         <p className="text-muted">Borrow and bring cards for your weekly Armory.</p>
       </header>
       {error && (
-        <p className="card text-center text-sm text-accent">
+        <p className="card text-center text-sm text-danger">
           That sign-in link didn&apos;t work. It may have expired. Try again.
         </p>
       )}

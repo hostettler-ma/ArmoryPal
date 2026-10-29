@@ -58,6 +58,28 @@ describe("buildRequestViews", () => {
     expect(views.map((v) => v.id)).toEqual(["open-3", "open-3b", "open-1", "partial", "covered"]);
   });
 
+  it("orders others' open, my open, others' filled, then my filled", () => {
+    const views = buildRequestViews(
+      [
+        req("mine-filled", { requester_id: ME, quantity: 1, pledges: [pledge("bob", 1)] }),
+        req("other-filled", { quantity: 1, pledges: [pledge("bob", 1)] }),
+        req("mine-open", { requester_id: ME, quantity: 2 }),
+        req("mine-partial", { requester_id: ME, quantity: 2, pledges: [pledge("bob", 1)] }),
+        req("other-partial", { quantity: 2, pledges: [pledge(ME, 1)] }),
+        req("other-open", { quantity: 1 }),
+      ],
+      viewer,
+    );
+    expect(views.map((v) => v.id)).toEqual([
+      "other-open",
+      "other-partial",
+      "mine-open",
+      "mine-partial",
+      "other-filled",
+      "mine-filled",
+    ]);
+  });
+
   it("drops rows whose card is missing", () => {
     expect(buildRequestViews([req("r", { card: null })], viewer)).toEqual([]);
   });

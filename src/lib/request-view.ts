@@ -33,9 +33,18 @@ export type RequestView = {
 const COVERAGE_ORDER: Record<Coverage, number> = { open: 0, partial: 1, covered: 2 };
 
 /**
- * Turns loaded rows into what the event page renders, sorted so the bring list
- * shows what's still needed first (open, then partial, then covered; most
- * remaining first; then oldest first).
+ * Bring-list group: others' unfilled requests first (what the viewer can act
+ * on), then the viewer's own unfilled ones, then filled requests (others',
+ * then the viewer's).
+ */
+function listGroup(v: Pick<RequestView, "coverage" | "isMine">): number {
+  const filled = v.coverage === "covered";
+  return (filled ? 2 : 0) + (v.isMine ? 1 : 0);
+}
+
+/**
+ * Turns loaded rows into what the event page renders, sorted by listGroup,
+ * then open before partial, most remaining first, oldest first.
  */
 export function buildRequestViews(
   rows: LoadedRequest[],
@@ -79,6 +88,7 @@ export function buildRequestViews(
     })
     .sort(
       (a, b) =>
+        listGroup(a) - listGroup(b) ||
         COVERAGE_ORDER[a.coverage] - COVERAGE_ORDER[b.coverage] ||
         b.remaining - a.remaining ||
         createdAt.get(a.id)!.localeCompare(createdAt.get(b.id)!),

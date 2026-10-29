@@ -1,24 +1,62 @@
 @import "tailwindcss";
 
+/*
+ * Palette from the Expo 2025 Osaka design system
+ * (https://www.expo2025.or.jp/en/overview/design_system/):
+ *   Inochi  #E60012 red · #0068B7 blue · #D2D7DA cool gray
+ *   Umi     #00A59E teal · #A78EC3 lavender · #31ACE3 sky · #C9E0B8 pale green
+ *   Noyama  #D9DE00 lime · #99C41E green
+ *   Hikari  #EC8632 orange · #E95D19 red-orange · #F2A800 amber · #FCD700 yellow
+ * Tints/shades below are derived from these for backgrounds and readable text.
+ */
 :root {
-  --background: #f7f5f2;
+  --background: #f3f5f6; /* cool gray, lightened */
   --surface: #ffffff;
-  --foreground: #1c1917;
-  --muted: #78716c;
-  --border: #e7e5e4;
-  --accent: #b91c1c;
+  --foreground: #1a1f24;
+  --muted: #5b6670;
+  --border: #d2d7da; /* Inochi cool gray */
+  --accent: #0068b7; /* Inochi blue */
   --accent-foreground: #ffffff;
+  /* Text shades of Inochi red / Hikari red-orange, deepened to meet WCAG AA (4.5:1) on the background. */
+  --danger: #cc0010;
+  --live: #b84a12;
+
+  /* Pitch strip colors (Inochi red / Hikari yellow / Inochi blue) */
+  --pitch-red: #e60012;
+  --pitch-yellow: #fcd700;
+  --pitch-blue: #0068b7;
+
+  /* Request status chips: open (Hikari red-orange) → partial (Hikari amber) → covered (Noyama green) */
+  --chip-open-bg: #fde4d7;
+  --chip-open-fg: #8f3007;
+  --chip-partial-bg: #fff2bf;
+  --chip-partial-fg: #6b4a00;
+  --chip-covered-bg: #c9e0b8; /* Umi/Noyama pale green */
+  --chip-covered-fg: #2f4a0b;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0c0a09;
-    --surface: #1c1917;
-    --foreground: #f5f5f4;
-    --muted: #a8a29e;
-    --border: #292524;
-    --accent: #ef4444;
-    --accent-foreground: #0c0a09;
+    --background: #0f1316;
+    --surface: #1a2026;
+    --foreground: #eef1f3;
+    --muted: #9aa5ae;
+    --border: #2c353d;
+    --accent: #31ace3; /* Umi sky reads better than deep blue on dark */
+    --accent-foreground: #0f1316;
+    --danger: #ff5a52;
+    --live: #ec8632; /* Hikari orange */
+
+    --pitch-red: #ff2a35;
+    --pitch-yellow: #fcd700;
+    --pitch-blue: #31ace3;
+
+    --chip-open-bg: #4a1f0b;
+    --chip-open-fg: #f7a77f;
+    --chip-partial-bg: #45380a;
+    --chip-partial-fg: #fcd700;
+    --chip-covered-bg: #2a3a14;
+    --chip-covered-fg: #c9e0b8;
   }
 }
 
@@ -30,6 +68,17 @@
   --color-border: var(--border);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
+  --color-danger: var(--danger);
+  --color-live: var(--live);
+  --color-pitch-red: var(--pitch-red);
+  --color-pitch-yellow: var(--pitch-yellow);
+  --color-pitch-blue: var(--pitch-blue);
+  --color-chip-open-bg: var(--chip-open-bg);
+  --color-chip-open-fg: var(--chip-open-fg);
+  --color-chip-partial-bg: var(--chip-partial-bg);
+  --color-chip-partial-fg: var(--chip-partial-fg);
+  --color-chip-covered-bg: var(--chip-covered-bg);
+  --color-chip-covered-fg: var(--chip-covered-fg);
   --font-sans: var(--font-geist-sans), system-ui, sans-serif;
 }
 
@@ -58,7 +107,7 @@ body {
     @apply mb-1 block text-sm font-medium;
   }
   .field-error {
-    @apply mt-1 text-sm text-accent;
+    @apply mt-1 text-sm text-danger;
   }
   .card {
     @apply rounded-2xl border border-border bg-surface p-4;

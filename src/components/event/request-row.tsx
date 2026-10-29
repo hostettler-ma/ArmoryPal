@@ -6,9 +6,9 @@ import { EditRequestButton } from "./edit-request-sheet";
 import { PledgeButton } from "./pledge-sheet";
 
 const CHIP: Record<Coverage, string> = {
-  open: "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-200",
-  partial: "bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200",
-  covered: "bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-200",
+  open: "bg-chip-open-bg text-chip-open-fg",
+  partial: "bg-chip-partial-bg text-chip-partial-fg",
+  covered: "bg-chip-covered-bg text-chip-covered-fg",
 };
 
 export function CoverageChip({ request }: { request: RequestView }) {

@@ -10,7 +10,7 @@ import { cardLabel, formatReleaseMonth } from "@/lib/cards";
 import { eventPhase, formatEventWhen } from "@/lib/events";
 import { buildRequestViews, type LoadedRequest } from "@/lib/request-view";
 
-const TABS = ["requests", "mine", "going"] as const;
+const TABS = ["requests", "checklist", "going"] as const;
 type Tab = (typeof TABS)[number];
 
 export default async function EventPage({
@@ -63,7 +63,7 @@ export default async function EventPage({
 
   const tabLabel: Record<Tab, string> = {
     requests: `Requests (${stillNeeded})`,
-    mine: `Mine (${mine.length + myPledges.length})`,
+    checklist: `My checklist (${mine.length + myPledges.length})`,
     going: `Going (${attendees.length})`,
   };
 
@@ -75,7 +75,7 @@ export default async function EventPage({
         <p className="font-semibold">{event.store.name}</p>
         <p className="text-muted">
           {formatEventWhen(event.starts_at, event.store.timezone)}
-          {phase === "live" && <span className="ml-2 font-semibold text-accent">● Happening now</span>}
+          {phase === "live" && <span className="ml-2 font-semibold text-live">● Happening now</span>}
         </p>
       </div>
 
@@ -90,7 +90,7 @@ export default async function EventPage({
         />
       )}
 
-      <nav className="grid grid-cols-3 gap-1 rounded-xl bg-surface p-1 ring-1 ring-border" aria-label="Event sections">
+      <nav className="flex gap-1 rounded-xl bg-surface p-1 ring-1 ring-border" aria-label="Event sections">
         {TABS.map((t) => (
           <Link
             key={t}
@@ -98,7 +98,7 @@ export default async function EventPage({
             replace
             scroll={false}
             aria-current={t === tab ? "page" : undefined}
-            className={`rounded-lg px-2 py-2 text-center text-sm font-medium ${t === tab ? "bg-accent text-accent-foreground" : "text-muted"}`}
+            className={`flex-auto rounded-lg px-2 py-2 text-center text-sm font-medium whitespace-nowrap ${t === tab ? "bg-accent text-accent-foreground" : "text-muted"}`}
           >
             {tabLabel[t]}
           </Link>
@@ -123,22 +123,8 @@ export default async function EventPage({
         </section>
       )}
 
-      {tab === "mine" && (
+      {tab === "checklist" && (
         <>
-          <section className="space-y-3">
-            <h2 className="text-lg font-semibold">Cards I need</h2>
-            {!ended && attending && <AddRequestSheet eventId={event.id} catalogNote={catalogNote} />}
-            {mine.length === 0 ? (
-              <p className="card text-muted">You haven&apos;t requested any cards.</p>
-            ) : (
-              <ul className="space-y-2">
-                {mine.map((r) => (
-                  <RequestRow key={r.id} eventId={event.id} request={r} mode="mine" editable={!ended} />
-                ))}
-              </ul>
-            )}
-          </section>
-
           <section className="space-y-3">
             <h2 className="text-lg font-semibold">Cards I&apos;m bringing</h2>
             {myPledges.length === 0 ? (
@@ -153,6 +139,20 @@ export default async function EventPage({
                     </span>
                     <span className="shrink-0 text-sm text-muted">for {r.requesterName}</span>
                   </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          <section className="space-y-3">
+            <h2 className="text-lg font-semibold">Cards I need</h2>
+            {!ended && attending && <AddRequestSheet eventId={event.id} catalogNote={catalogNote} />}
+            {mine.length === 0 ? (
+              <p className="card text-muted">You haven&apos;t requested any cards.</p>
+            ) : (
+              <ul className="space-y-2">
+                {mine.map((r) => (
+                  <RequestRow key={r.id} eventId={event.id} request={r} mode="mine" editable={!ended} />
                 ))}
               </ul>
             )}

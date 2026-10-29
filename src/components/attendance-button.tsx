@@ -28,7 +28,7 @@ export function AttendanceButton({
 
       {/* Once the leave succeeds, needsConfirm turns false and this closes. */}
       {confirming && needsConfirm ? (
-        <div className="card space-y-3 border-accent">
+        <div className="card space-y-3 border-live">
           <p className="text-sm">
             You&apos;re bringing {pledgedCards} {pledgedCards === 1 ? "card" : "cards"} for others. If you can&apos;t
             make it, {pledgedCards === 1 ? "it goes" : "they go"} back to being needed.
