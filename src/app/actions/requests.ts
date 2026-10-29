@@ -2,6 +2,15 @@
 
 import { revalidatePath } from "next/cache";
 import { isUuid } from "@/lib/auth";
+import {
+  buildImportPreview,
+  MAX_IMPORT_LINES,
+  parseCardList,
+  type ImportItem,
+  type Resolution,
+  type SkippedLine,
+} from "@/lib/card-import";
+import type { CardRow } from "@/lib/cards";
 import { ruleMessage } from "@/lib/rules";
 import { createClient } from "@/lib/supabase/server";
 
@@ -47,6 +56,44 @@ export async function cancelRequest(eventId: string, requestId: string): Promise
 export async function pledge(eventId: string, requestId: string, quantity: number): Promise<ActionResult> {
   if (!isUuid(requestId)) return { error: ruleMessage("request_not_found") };
   return run(eventId, (s) => s.rpc("pledge", { p_request_id: requestId, p_quantity: quantity }));
+}
+
+export type ImportPreview = { items: ImportItem[]; skipped: SkippedLine[]; error?: string };
+
+/**
+ * Parses a pasted card list and resolves it against the catalog for the
+ * confirmation step. Nothing is written; confirming calls addRequests().
+ */
+export async function previewCardImport(text: string): Promise<ImportPreview> {
+  const parsed = parseCardList(text.slice(0, 20_000));
+  const lines = parsed.lines.slice(0, MAX_IMPORT_LINES);
+  const tooMany = parsed.lines.slice(MAX_IMPORT_LINES).map((l) => ({
+    lineNo: l.lineNo,
+    raw: l.raw,
+    reason: `Only the first ${MAX_IMPORT_LINES} cards are imported`,
+  }));
+  if (lines.length === 0) return { items: [], skipped: [...parsed.skipped, ...tooMany] };
+
+  const supabase = await createClient();
+  const { data: resolved, error } = await supabase.rpc("resolve_card_names", { p_names: lines.map((l) => l.name) });
+  if (error) return { items: [], skipped: [], error: ruleMessage(error.message) };
+
+  const names = [...new Set((resolved ?? []).map((r) => r.name).filter((n): n is string => !!n))];
+  const { data: cards } = names.length
+    ? await supabase.from("cards").select("id, name, pitch, color, types, image_url, set_ids").in("name", names)
+    : { data: [] };
+  const variantsByName = new Map<string, CardRow[]>();
+  for (const c of (cards ?? []) as CardRow[]) variantsByName.set(c.name, [...(variantsByName.get(c.name) ?? []), c]);
+
+  const resolutions: Resolution[] = lines.map((_, i) => {
+    const r = resolved?.find((x) => x.idx === i + 1);
+    return { name: r?.name ?? null, match: (r?.match as Resolution["match"]) ?? null };
+  });
+  const preview = buildImportPreview(lines, resolutions, variantsByName);
+  return {
+    items: preview.items,
+    skipped: [...parsed.skipped, ...preview.skipped, ...tooMany].sort((a, b) => a.lineNo - b.lineNo),
+  };
 }
 
 /** Copies the viewer's still-needed requests from last week's event into this one. */

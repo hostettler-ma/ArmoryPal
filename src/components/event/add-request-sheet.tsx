@@ -1,17 +1,20 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { addRequests } from "@/app/actions/requests";
+import { addRequests, previewCardImport, type ImportPreview } from "@/app/actions/requests";
 import { CardAutocomplete } from "@/components/card-autocomplete";
 import { PitchDot } from "@/components/pitch-dot";
 import { QuantityStepper } from "@/components/quantity-stepper";
 import { Sheet } from "@/components/sheet";
+import { importCopies, type ImportItem } from "@/lib/card-import";
 import { cardLabel, type CardRow } from "@/lib/cards";
 import { MAX_NOTE_LENGTH, MAX_QUANTITY } from "@/lib/rules";
 
+type Mode = "search" | "paste";
+
 export function AddRequestSheet({ eventId, catalogNote }: { eventId: string; catalogNote: string | null }) {
   const [open, setOpen] = useState(false);
-  // Remounting the form on each open resets the picker and quantities.
+  // Remounting the form on each open resets the picker, list, and quantities.
   const [formKey, setFormKey] = useState(0);
 
   return (
@@ -34,6 +37,55 @@ export function AddRequestSheet({ eventId, catalogNote }: { eventId: string; cat
 }
 
 function AddRequestForm({ eventId, onDone }: { eventId: string; onDone: () => void }) {
+  const [mode, setMode] = useState<Mode>("search");
+  return (
+    <div className="space-y-4">
+      <div className="flex gap-1 rounded-xl bg-background p-1 ring-1 ring-border" role="tablist" aria-label="How to add cards">
+        {(["search", "paste"] as const).map((m) => (
+          <button
+            key={m}
+            type="button"
+            role="tab"
+            aria-selected={mode === m}
+            onClick={() => setMode(m)}
+            className={`flex-1 rounded-lg px-2 py-2 text-sm font-medium ${mode === m ? "bg-accent text-accent-foreground" : "text-muted"}`}
+          >
+            {m === "search" ? "Search" : "Paste list"}
+          </button>
+        ))}
+      </div>
+      {/* Both stay mounted so switching tabs doesn't lose what was typed. */}
+      <div hidden={mode !== "search"}>
+        <SearchForm eventId={eventId} onDone={onDone} />
+      </div>
+      <div hidden={mode !== "paste"}>
+        <PasteForm eventId={eventId} onDone={onDone} />
+      </div>
+    </div>
+  );
+}
+
+function NoteField({ id, value, onChange }: { id: string; value: string; onChange: (v: string) => void }) {
+  return (
+    <div>
+      <label className="label" htmlFor={id}>
+        Note <span className="font-normal text-muted">(optional)</span>
+      </label>
+      <input
+        id={id}
+        className="input"
+        placeholder="e.g. any printing, need by round 1"
+        maxLength={MAX_NOTE_LENGTH}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      />
+    </div>
+  );
+}
+
+const cardsLabel = (n: number) => `${n} ${n === 1 ? "card" : "cards"}`;
+
+function SearchForm({ eventId, onDone }: { eventId: string; onDone: () => void }) {
   const [cards, setCards] = useState<CardRow[]>([]);
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [note, setNote] = useState("");
@@ -78,24 +130,163 @@ function AddRequestForm({ eventId, onDone }: { eventId: string; onDone: () => vo
         </ul>
       )}
 
-      <div>
-        <label className="label" htmlFor="request-note">
-          Note <span className="font-normal text-muted">(optional)</span>
-        </label>
-        <input
-          id="request-note"
-          className="input"
-          placeholder="e.g. any printing, need by round 1"
-          maxLength={MAX_NOTE_LENGTH}
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
-        />
-      </div>
+      <NoteField id="request-note" value={note} onChange={setNote} />
 
       {error && <p className="field-error">{error}</p>}
       <button className="btn btn-primary" onClick={submit} disabled={pending || cards.length === 0}>
-        {pending ? "Adding…" : `Request ${totalCopies} ${totalCopies === 1 ? "card" : "cards"}`}
+        {pending ? "Adding…" : `Request ${cardsLabel(totalCopies)}`}
       </button>
+    </div>
+  );
+}
+
+const EXAMPLE = "1 Sledge of Anvilheim\n3 Oaken Old\n2 Boulder Drop\n1 Snatch (Blue)";
+
+/** Paste a card list → check it → confirm what was found (and see what wasn't). */
+function PasteForm({ eventId, onDone }: { eventId: string; onDone: () => void }) {
+  const [text, setText] = useState("");
+  const [preview, setPreview] = useState<ImportPreview | null>(null);
+  const [items, setItems] = useState<ImportItem[]>([]);
+  const [note, setNote] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
+
+  function check() {
+    setError(null);
+    startTransition(async () => {
+      const result = await previewCardImport(text);
+      if (result.error) setError(result.error);
+      else {
+        setPreview(result);
+        setItems(result.items);
+      }
+    });
+  }
+
+  function switchColor(index: number, variant: CardRow) {
+    setItems((list) => list.map((it, i) => (i === index ? { ...it, card: variant, defaultedToRed: false } : it)));
+  }
+
+  function submit() {
+    setError(null);
+    // Two rows may now point at the same card (after a color switch): merge them.
+    const merged = new Map<string, number>();
+    for (const it of items) merged.set(it.card.id, Math.min(MAX_QUANTITY, (merged.get(it.card.id) ?? 0) + it.quantity));
+    startTransition(async () => {
+      const result = await addRequests(
+        eventId,
+        [...merged].map(([cardId, quantity]) => ({ cardId, quantity })),
+        note,
+      );
+      if (result.error) setError(result.error);
+      else onDone();
+    });
+  }
+
+  if (!preview) {
+    return (
+      <div className="space-y-3">
+        <label className="label" htmlFor="paste-list">
+          Card list
+        </label>
+        <textarea
+          id="paste-list"
+          className="input min-h-48 py-3 font-mono text-sm"
+          placeholder={EXAMPLE}
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          spellCheck={false}
+          autoCapitalize="none"
+          autoCorrect="off"
+        />
+        <p className="text-sm text-muted">
+          One card per line, like <code>2 Boulder Drop</code>. Add a color with <code>(Blue)</code>; otherwise
+          multi-color cards default to Red.
+        </p>
+        {error && <p className="field-error">{error}</p>}
+        <button className="btn btn-primary" onClick={check} disabled={pending || !text.trim()}>
+          {pending ? "Checking…" : "Check list"}
+        </button>
+      </div>
+    );
+  }
+
+  const copies = importCopies(items);
+  return (
+    <div className="space-y-4">
+      <p className="font-semibold">
+        {items.length ? `Found ${cardsLabel(copies)}. Check before requesting:` : "No cards from this list could be imported."}
+      </p>
+
+      {items.length > 0 && (
+        <ul className="card divide-y divide-border !py-0">
+          {items.map((it, i) => (
+            <li key={`${it.card.id}-${i}`} className="space-y-1 py-2">
+              <div className="flex items-center gap-3">
+                <PitchDot color={it.card.color} />
+                <span className="min-w-0 flex-1">
+                  {it.quantity}× {cardLabel(it.card)}
+                </span>
+                <button
+                  type="button"
+                  aria-label={`Don't import ${cardLabel(it.card)}`}
+                  onClick={() => setItems((list) => list.filter((_, j) => j !== i))}
+                  className="-mr-2 h-9 w-9 shrink-0 text-muted"
+                >
+                  ✕
+                </button>
+              </div>
+              {it.variants.length > 1 && (
+                <div className="flex items-center gap-2 pl-6 text-xs text-muted">
+                  {it.defaultedToRed ? "Red by default · switch:" : "Color:"}
+                  {it.variants.map((v) => (
+                    <button
+                      key={v.id}
+                      type="button"
+                      aria-pressed={v.id === it.card.id}
+                      aria-label={`Use ${v.color ?? "no pitch"}`}
+                      onClick={() => switchColor(i, v)}
+                      className={`flex h-8 w-8 items-center justify-center rounded-full ${v.id === it.card.id ? "bg-highlight" : ""}`}
+                    >
+                      <PitchDot color={v.color} />
+                    </button>
+                  ))}
+                </div>
+              )}
+              {it.typedAs.length > 0 && (
+                <p className="pl-6 text-xs text-muted">You typed “{it.typedAs.join("”, “")}”</p>
+              )}
+              {it.capped && <p className="pl-6 text-xs text-muted">Capped at {MAX_QUANTITY}</p>}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {preview.skipped.length > 0 && (
+        <div className="space-y-1">
+          <p className="text-sm font-semibold text-danger">Not found / not imported ({preview.skipped.length})</p>
+          <ul className="card space-y-1 text-sm">
+            {preview.skipped.map((s) => (
+              <li key={s.lineNo} className="flex gap-2">
+                <span className="min-w-0 flex-1 truncate font-mono">{s.raw}</span>
+                <span className="shrink-0 text-muted">{s.reason}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {items.length > 0 && <NoteField id="import-note" value={note} onChange={setNote} />}
+
+      {error && <p className="field-error">{error}</p>}
+      <div className="grid grid-cols-2 gap-2">
+        <button className="btn btn-secondary" onClick={() => setPreview(null)} disabled={pending}>
+          Edit list
+        </button>
+        <button className="btn btn-primary" onClick={submit} disabled={pending || items.length === 0}>
+          {pending ? "Adding…" : `Request ${cardsLabel(copies)}`}
+        </button>
+      </div>
     </div>
   );
 }

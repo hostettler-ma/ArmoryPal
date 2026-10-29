@@ -34,6 +34,12 @@ Mobile-first companion PWA for the Flesh and Blood TCG. Players coordinate card 
   - **Limits:** `max_results` counts **distinct names**. Every pitch variant of each top name is returned together, in pitch order.
 - **Card picker UX** (`src/components/card-autocomplete.tsx`): results show **one entry per name**, with dots for the colours it comes in. Picking a name with several colours then shows **toggle buttons**, so you can pick one or more colours (e.g. red + yellow + blue). `onSelect` receives `CardRow[]` in pitch order. Single-version cards (heroes, equipment, tokens, one-colour cards) are selected immediately. `groupCards()` in `src/lib/cards.ts` does the grouping.
   - In Phase 4, each selected colour becomes **its own request line**, with its own quantity and its own pledges and status. A request always references exactly one card.
+- **Paste-list import** (the add-request sheet's "Paste list" tab):
+  - **Parsing:** `parseCardList()` in `src/lib/card-import.ts` accepts `3 Name`, `3x Name`, `Name x3` or a bare name (= 1), with optional `(Blue)`, `[b]` or `- blue`. It ignores blanks, `#`/`//` comments and bullets.
+  - **Lookup:** the `resolve_card_names(names[])` RPC matches on `card_name_key()` (lowercase, no punctuation) first, then a trigram typo match (≥ 0.5, indexed). It handles up to 200 names per call.
+  - **Colour:** `chooseVariant()` defaults multi-colour cards to **Red**, or the lowest pitch if there's no red.
+  - **Preview:** `buildImportPreview()` sums duplicates (capped at 20) and lists skipped lines with a reason.
+  - **Writing:** the server action `previewCardImport()` writes nothing. Confirming sends **one** `add_requests` call, so there's one notification.
 - **Stores can have multiple weekly schedules** (`store_schedules`). Each schedule produces one `events` row per week, created lazily. Admins (`profiles.is_admin`) create stores and schedules.
 - **Events become read-only after `ends_at`** (end of the event day in the store's timezone). Every write RPC rejects them via `assert_event_open`, and the UI hides actions and live updates.
 - **History** (`/stores/[id]/history`) lists past events newest first, 20 per page, with went and covered counts. Ended event pages link back to it.

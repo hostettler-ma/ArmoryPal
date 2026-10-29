@@ -337,6 +337,9 @@ isOneToOne: false
 "card_label":
 { Args: { "p_card_id": string }; Returns: string
                            },
+"card_name_key":
+{ Args: { "p_name": string }; Returns: string
+                           },
 "copy_open_requests":
 { Args: { "p_from_event": string,"p_to_event": string }; Returns: number
                            },
@@ -416,6 +419,11 @@ isOneToOne: false
       } },
 "release_my_pledges":
 { Args: { "p_event_id": string,"p_reason": string }; Returns: undefined
+                           },
+"resolve_card_names":
+{ Args: { "p_names": (string)[] }; Returns: {
+              "idx": number,"input": string,"match": string,"name": string
+            }[]
                            },
 "search_cards":
 { Args: { "max_results"?: number,"q": string }; Returns: {
