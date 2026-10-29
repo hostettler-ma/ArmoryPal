@@ -16,7 +16,20 @@ Mobile-first companion PWA for the Flesh and Blood TCG. Players coordinate card 
 
 ## Key decisions
 - **Card model = name + pitch.** Requests reference a single card (one row per unique name+pitch). Printing, foil, and set preferences go in the free-text note.
-- **Card data** comes from [the-fab-cube/flesh-and-blood-cards](https://github.com/the-fab-cube/flesh-and-blood-cards) `json/english/card.json`, **pinned to a release tag**. Import with `scripts/import-cards.ts` (idempotent upsert keyed on `unique_id`). We store name, pitch, color, types, and image_url only. Check the dataset's license and add attribution before going public.
+- **Card data** comes from [the-fab-cube/flesh-and-blood-cards](https://github.com/the-fab-cube/flesh-and-blood-cards) `json/english/card.json`.
+  - **Pinned release:** `DATASET_TAG` in `scripts/import-cards.mts` (currently v8.2.0). After a new set releases, bump it and re-run.
+  - **Import behavior:** the upsert is idempotent and keyed on `unique_id`. That ID is a nanoid-style string, not a UUID, so `cards.id` is `text`.
+  - **Everything is imported, including tokens** (players borrow those often). Cards are never deleted because requests reference them.
+  - **What's stored:** name, pitch (1–3 or null), color, types and image_url. `(name, pitch)` is unique (`nulls not distinct`).
+  - **License:** the dataset's README says "feel free to … use it for whatever projects you like". There's no formal license, so we credit it in the UI.
+  - **After `db reset`:** the cards table is empty. Run the import again.
+  - **Latest set:** the import also reads `set.json` and writes the one-row `catalog_meta` table: the dataset tag plus the **latest expansion**. That's the most recently released set with ≥ 150 distinct cards (`EXPANSION_MIN_CARDS`); the threshold keeps Armory decks, demo decks, Silver Age decks and mastery packs from counting. The UI shows "Includes cards up to <set>".
+  - **Offline import:** `--dir <folder>` imports from local `card.json` and `set.json` files instead of downloading.
+- **Card search** goes through the `search_cards(q, max_results)` RPC, using pg_trgm.
+  - **Ranking:** card names are ranked exact match, then prefix, then substring, then typo matches (word_similarity ≥ 0.45, tie-broken by strict_word_similarity). LIKE wildcards are escaped.
+  - **Limits:** `max_results` counts **distinct names**. Every pitch variant of each top name is returned together, in pitch order.
+- **Card picker UX** (`src/components/card-autocomplete.tsx`): results show **one entry per name**, with dots for the colours it comes in. Picking a name with several colours then shows **toggle buttons**, so you can pick one or more colours (e.g. red + yellow + blue). `onSelect` receives `CardRow[]` in pitch order. Single-version cards (heroes, equipment, tokens, one-colour cards) are selected immediately. `groupCards()` in `src/lib/cards.ts` does the grouping.
+  - In Phase 4, each selected colour becomes **its own request line**, with its own quantity and its own pledges and status. A request always references exactly one card.
 - **Stores can have multiple weekly schedules** (`store_schedules`). Each schedule produces one `events` row per week, created lazily. Admins (`profiles.is_admin`) create stores and schedules.
 - **Events become read-only after `ends_at`** (end of the event day in the store's timezone). Open requests can be copied to the next week's event.
 - **Rules are enforced in the database**: writes with rules go through `security definer` RPCs that lock the request row (`FOR UPDATE`), and RLS blocks direct writes. The same rules are mirrored as pure functions in `src/lib/rules.ts` for UI feedback, and **both are tested**.

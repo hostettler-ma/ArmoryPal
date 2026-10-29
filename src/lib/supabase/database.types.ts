@@ -5,7 +5,35 @@ export type Database = {
   
   "public": {
           Tables: {
-            "profiles": {
+            "cards": {
+                  Row: {
+                    "color": string | null,"id": string,"image_url": string | null,"name": string,"pitch": number | null,"types": (string)[],"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "color"?: string | null,"id": string,"image_url"?: string | null,"name": string,"pitch"?: number | null,"types"?: (string)[],"updated_at"?: string
+                  }
+                  Update: {
+                    "color"?: string | null,"id"?: string,"image_url"?: string | null,"name"?: string,"pitch"?: number | null,"types"?: (string)[],"updated_at"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"catalog_meta": {
+                  Row: {
+                    "dataset_tag": string,"id": boolean,"imported_at": string,"latest_set_id": string,"latest_set_name": string,"latest_set_released_on": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "dataset_tag": string,"id"?: boolean,"imported_at"?: string,"latest_set_id": string,"latest_set_name": string,"latest_set_released_on"?: string | null
+                  }
+                  Update: {
+                    "dataset_tag"?: string,"id"?: boolean,"imported_at"?: string,"latest_set_id"?: string,"latest_set_name"?: string,"latest_set_released_on"?: string | null
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"profiles": {
                   Row: {
                     "created_at": string,"display_name": string | null,"gem_id": string | null,"id": string,"is_admin": boolean
                   }
@@ -97,6 +125,22 @@ isOneToOne: false
 "is_valid_timezone":
 { Args: { "tz": string }; Returns: boolean
                            },
+"search_cards":
+{ Args: { "max_results"?: number,"q": string }; Returns: {
+              "color": string | null,
+"id": string,
+"image_url": string | null,
+"name": string,
+"pitch": number | null,
+"types": (string)[],
+"updated_at": string
+            }[]
+                          SetofOptions: {
+        from: "*"
+        to: "cards"
+        isOneToOne: false
+        isSetofReturn: true
+      } },
 "search_stores":
 { Args: { "q": string }; Returns: {
               "address": string | null,
