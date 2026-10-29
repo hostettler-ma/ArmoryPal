@@ -1,11 +1,12 @@
 // Grants (or with --revoke, removes) admin rights for a user by email.
-// Usage: npx tsx scripts/make-admin.mts you@example.com [--revoke]
-// Reads NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SECRET_KEY from .env.local (or the environment).
+// Usage: npx tsx scripts/make-admin.mts you@example.com [--revoke] [--env .env.production.local]
+// Reads NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SECRET_KEY from .env.local (or --env file, or the environment).
 import { config } from "dotenv";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "../src/lib/supabase/database.types";
 
-config({ path: ".env.local" });
+const envIndex = process.argv.indexOf("--env");
+config({ path: envIndex >= 0 ? process.argv[envIndex + 1] : ".env.local", quiet: true });
 
 const email = process.argv[2]?.toLowerCase();
 const isAdmin = !process.argv.includes("--revoke");
@@ -17,6 +18,7 @@ if (!email || !url || !secret) {
   process.exit(1);
 }
 
+console.log(`Target: ${url}`);
 const supabase = createClient<Database>(url, secret, { auth: { persistSession: false } });
 
 async function findUserId(target: string): Promise<string | null> {

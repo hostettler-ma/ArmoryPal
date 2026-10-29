@@ -7,8 +7,9 @@
 //   npx tsx scripts/import-cards.mts                 # pinned DATASET_TAG
 //   npx tsx scripts/import-cards.mts --tag v8.3.0    # a newer release
 //   npx tsx scripts/import-cards.mts --dir ./data    # local card.json + set.json
+//   npx tsx scripts/import-cards.mts --env .env.production.local   # target production
 //
-// Reads NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SECRET_KEY from .env.local (or the environment).
+// Reads NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SECRET_KEY from .env.local (or --env file, or the environment).
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { config } from "dotenv";
@@ -20,12 +21,12 @@ import type { Database } from "../src/lib/supabase/database.types";
 const DATASET_TAG = "v8.2.0";
 const BATCH_SIZE = 500;
 
-config({ path: ".env.local", quiet: true });
-
 function arg(name: string): string | undefined {
   const i = process.argv.indexOf(`--${name}`);
   return i >= 0 ? process.argv[i + 1] : undefined;
 }
+
+config({ path: arg("env") ?? ".env.local", quiet: true });
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const secret = process.env.SUPABASE_SECRET_KEY;
@@ -62,6 +63,7 @@ const sets = setInfo(rawSets);
 const rows = rawCards.map((c) => ({ ...toCardRow(c, sets), updated_at: new Date().toISOString() }));
 console.log(`${rows.length} cards to upsert. Latest expansion: ${latest.name} (${latest.id}, ${latest.releasedOn}).`);
 
+console.log(`Target: ${url}`);
 const supabase = createClient<Database>(url, secret, { auth: { persistSession: false } });
 for (let i = 0; i < rows.length; i += BATCH_SIZE) {
   const batch = rows.slice(i, i + BATCH_SIZE);

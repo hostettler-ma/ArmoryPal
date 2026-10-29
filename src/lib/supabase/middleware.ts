@@ -3,7 +3,8 @@ import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "./database.types";
 import { supabaseKey, supabaseUrl } from "./env";
 
-const PUBLIC_PATHS = ["/login", "/auth"];
+// Reachable without signing in. /~offline is served by the service worker.
+const PUBLIC_PATHS = ["/login", "/auth", "/~offline"];
 
 /** Refreshes the auth session cookie and sends signed-out users to /login. */
 export async function updateSession(request: NextRequest) {

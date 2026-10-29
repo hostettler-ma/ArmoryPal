@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { signOut } from "@/app/actions/profile";
+import { FanNotice } from "@/components/fan-notice";
 import { ProfileForm } from "@/components/profile-form";
 import { requireProfile } from "@/lib/auth";
 
@@ -22,6 +23,8 @@ export default async function MePage() {
       <form action={signOut}>
         <button className="btn btn-secondary">Sign out</button>
       </form>
+
+      <FanNotice />
     </main>
   );
 }

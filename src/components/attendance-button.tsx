@@ -65,7 +65,7 @@ export function AttendanceButton({
           I can&apos;t make it
         </button>
       ) : (
-        <button className={`btn ${attending ? "btn-secondary" : "btn-primary"}`} disabled={pending}>
+        <button className={`btn ${attending ? "btn-primary" : "btn-primary"}`} disabled={pending}>
           {pending ? "Saving…" : attending ? "I can't make it" : "I'm going"}
         </button>
       )}

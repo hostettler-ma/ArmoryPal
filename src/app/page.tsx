@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { EventCard } from "@/components/event-card";
+import { InstallHint } from "@/components/install-hint";
 import { NotificationBell } from "@/components/notification-bell";
 import { StoreLink } from "@/components/store-link";
 import { formatLocation } from "@/lib/stores";
@@ -81,6 +82,8 @@ export default async function HomePage() {
           </div>
         )}
       </section>
+
+      <InstallHint />
     </main>
   );
 }

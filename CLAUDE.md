@@ -84,6 +84,13 @@ Mobile-first companion PWA for the Flesh and Blood TCG. Players coordinate card 
   - **Reading:** users read only their own. `/notifications` marks them read (`mark_notifications_read()`), and the bell (`NotificationBell`) shows the unread count live.
 - **Leaving an event:** `leave_event(event, cancel_requests)` always releases your pledges and notifies the requesters. Cancelling your requests is optional (the UI checkbox is on by default) and notifies their pledgers. Kept requests show a "Not going" badge.
 
+- **PWA:** the service worker `src/app/sw.ts` is built by `@serwist/next` into `public/sw.js`. That file is git-ignored, and the worker is disabled in dev.
+  - **Caching:** **only static assets** (`/_next/static`, images, fonts) are cached. Pages, RSC payloads, server actions and Supabase calls are **NetworkOnly**, because they're per-user and live. Offline navigations show `/~offline`. Don't add page caching.
+  - **Manifest and icons:** `src/app/manifest.ts`. Icons are generated with `next/og` from `src/lib/app-icon.tsx` (`/icons/*.png`, `/icon`, `/apple-icon`). They and `/~offline` are public (middleware matcher and `PUBLIC_PATHS`).
+  - **Install hint:** `<InstallHint>` on Home, using `beforeinstallprompt` on Android and Share instructions on iOS.
+- **Deploying:** see `DEPLOY.md`. The scripts accept `--env .env.production.local` and print their `Target:` URL. Vercel only needs `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`; the secret key never goes to Vercel.
+- **Security baseline:** every public table has RLS. No security-definer function is executable by `anon`; check this after adding functions. Internal helpers revoke `execute` from `authenticated` too.
+
 ## Data model (summary)
 `profiles`, `stores`, `store_schedules`, `user_stores`, `events`, `cards`, `attendances`, `requests`, `pledges`, `notifications`, and view `request_status` (pledged / remaining / open|partial|covered). Migrations live in `supabase/migrations/`, seed data in `supabase/seed.sql`.
 
@@ -112,8 +119,9 @@ npm run dev                 # http://localhost:3000
 npm test                    # unit tests (Vitest, src/**/*.test.ts)
 npm run typecheck; npm run lint
 npm run test:db             # RLS/RPC integration tests against local Supabase (tests/db/**)
-npx tsx scripts/make-admin.mts you@example.com [--revoke]
-npx tsx scripts/import-cards.mts
+npx tsx scripts/make-admin.mts you@example.com [--revoke] [--env .env.production.local]
+npx tsx scripts/import-cards.mts [--env .env.production.local]
+npm run build; npm start    # production build incl. service worker (stop `npm run dev` first: both use .next)
 ```
 
 - Node scripts in `scripts/` use the `.mts` extension (the package isn't `"type": "module"`, and the scripts use top-level await). They read `.env.local` through dotenv.

@@ -7,7 +7,8 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Skip static assets, images, and PWA files.
-    "/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|sw.js|icons/|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    // Skip static assets, images, and PWA files (manifest, service worker, generated icons),
+    // which must load without a session.
+    "/((?!_next/static|_next/image|manifest.webmanifest|sw.js|swe-worker|icons/|icon|apple-icon|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
   ],
 };
