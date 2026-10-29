@@ -186,7 +186,7 @@ export function CardAutocomplete({
                   type="button"
                   aria-pressed={selected}
                   onClick={() => toggleVariant(v)}
-                  className={`btn !min-h-12 gap-2 border ${selected ? "border-accent bg-surface ring-2 ring-accent" : "border-border bg-surface"}`}
+                  className={`btn !min-h-12 gap-2 border ${selected ? "border-accent-text bg-highlight text-highlight-foreground" : "border-accent-soft bg-surface"}`}
                 >
                   <PitchDot color={v.color} />
                   {v.color ?? "No pitch"}

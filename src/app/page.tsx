@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { EventCard } from "@/components/event-card";
 import { NotificationBell } from "@/components/notification-bell";
+import { StoreLink } from "@/components/store-link";
+import { formatLocation } from "@/lib/stores";
 import { STORE_SELECT, type StoreWithSchedules } from "@/components/store-card";
 import { requireProfile } from "@/lib/auth";
 import { getCurrentEvents } from "@/lib/event-data";
@@ -44,30 +46,29 @@ export default async function HomePage() {
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold">My stores</h2>
           {stores.length > 0 && (
-            <Link href="/stores" className="text-sm font-medium text-accent">
+            <Link href="/stores" className="text-sm font-medium text-accent-text">
               Find stores
             </Link>
           )}
         </div>
         {stores.length ? (
-          <ul className="space-y-6">
+          <ul className="space-y-4">
             {stores.map((s) => (
-              <li key={s.id} className="space-y-2">
-                <Link href={`/stores/${s.id}`} className="flex items-baseline justify-between gap-2">
-                  <span className="truncate font-semibold">{s.name}</span>
-                  <span className="shrink-0 text-sm text-muted">{s.city}</span>
-                </Link>
-                {(events.get(s.id) ?? []).length ? (
-                  <ul className="space-y-2">
-                    {events.get(s.id)!.map((e) => (
-                      <li key={e.id}>
-                        <EventCard event={e} timezone={s.timezone} />
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="card text-sm text-muted">No Armory scheduled.</p>
-                )}
+              <li key={s.id}>
+                {/* The store's events render inside its tile, so they read as part of the store. */}
+                <StoreLink store={s} subtitle={formatLocation(s)}>
+                  {(events.get(s.id) ?? []).length ? (
+                    <ul className="space-y-2" aria-label={`This week at ${s.name}`}>
+                      {events.get(s.id)!.map((e) => (
+                        <li key={e.id}>
+                          <EventCard event={e} timezone={s.timezone} />
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="rounded-xl bg-surface p-3 text-sm text-muted">No Armory scheduled.</p>
+                  )}
+                </StoreLink>
               </li>
             ))}
           </ul>
@@ -79,6 +80,7 @@ export default async function HomePage() {
             </Link>
           </div>
         )}
-      </section>    </main>
+      </section>
+    </main>
   );
 }

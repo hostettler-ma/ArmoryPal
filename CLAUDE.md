@@ -35,7 +35,13 @@ Mobile-first companion PWA for the Flesh and Blood TCG. Players coordinate card 
 - **Card picker UX** (`src/components/card-autocomplete.tsx`): results show **one entry per name**, with dots for the colours it comes in. Picking a name with several colours then shows **toggle buttons**, so you can pick one or more colours (e.g. red + yellow + blue). `onSelect` receives `CardRow[]` in pitch order. Single-version cards (heroes, equipment, tokens, one-colour cards) are selected immediately. `groupCards()` in `src/lib/cards.ts` does the grouping.
   - In Phase 4, each selected colour becomes **its own request line**, with its own quantity and its own pledges and status. A request always references exactly one card.
 - **Stores can have multiple weekly schedules** (`store_schedules`). Each schedule produces one `events` row per week, created lazily. Admins (`profiles.is_admin`) create stores and schedules.
-- **Events become read-only after `ends_at`** (end of the event day in the store's timezone). Open requests can be copied to the next week's event.
+- **Events become read-only after `ends_at`** (end of the event day in the store's timezone). Every write RPC rejects them via `assert_event_open`, and the UI hides actions and live updates.
+- **History** (`/stores/[id]/history`) lists past events newest first, 20 per page, with went and covered counts. Ended event pages link back to it.
+- **Copying requests forward:** `copy_open_requests(from_event, to_event)` copies the caller's still-needed requests into this week's event.
+  - **From where:** last week's ended event of the **same weekly slot**, only. The caller must be attending this week's event.
+  - **What:** only the **remaining** quantity (requested minus pledged). Copies merge with existing requests for the same card.
+  - **Idempotent:** each copy records `copied_from_id`, so running it twice doesn't copy twice. It sends one `new_requests` notification.
+  - **Banner:** the TS mirror `copySummary()` in `src/lib/rollover.ts` and `getCopyCandidate()` in `src/lib/event-data.ts` drive it. "Not now" is remembered per device in localStorage.
 - **Which event is current** is decided by SQL `public.event_occurrence(weekday, start_time, tz, now)`: the next `weekday` in store-local time, counting today until local midnight. Its TS mirror is `currentEventFor()` in `src/lib/events.ts`. **Change both together.** `tests/db/events.test.ts` checks that they agree across DST changes, offsets and year boundaries.
 - **Events are created lazily** by the `current_events_for_stores(store_ids)` RPC, which is idempotent and called on page views. Users can't insert events. Server code uses `getCurrentEvents()` in `src/lib/event-data.ts`.
 - **Attendance** goes only through the `attend_event` / `leave_event` RPCs, which reject ended events via the internal `assert_event_open`. The table has no write policies. Attendee lists are visible to all signed-in users.
@@ -124,7 +130,16 @@ Gotcha: in Windows PowerShell 5.1, `Out-File -Encoding utf8` writes a BOM. Don't
 ## Conventions
 - Mobile-first UI: design for ~375px wide first, with large tap targets and bottom sheets for forms.
 - **Colours come from the Expo 2025 Osaka design system palette** (Inochi, Umi, Noyama and Hikari), defined as tokens in `src/app/globals.css` with light and dark values.
-  - **Tokens:** `accent` (Inochi blue, or Umi sky in dark mode), `danger`, `live`, `pitch-red/yellow/blue`, and `chip-{open,partial,covered}-{bg,fg}`.
+  - **Everything interactive uses the Noyama scheme:**
+    - `accent` (green `#99C41E`, with dark `accent-foreground`; white on it fails AA) for primary buttons, the active tab and switches.
+    - `accent-soft` (pale green) for secondary-button outlines.
+    - `accent-text` (deepened green) for **link text**. Never use `text-accent` for text: the fill green is only 2:1.
+    - `highlight` / `highlight-foreground` (lime) for selected states and the "You're going" badge.
+    - `store*` (teal `#00A59E`) for stores.
+    - Input focus uses `accent-text`, since `accent` is too faint to read as an outline.
+  - **Other tokens:** `danger`, `live`, `pitch-red/yellow/blue` and `chip-{open,partial,covered}-{bg,fg}`.
+  - **Colour meanings:** green means actions, lime means selected, teal means stores, red/yellow/blue mean pitch, and warm-to-green means request status.
+  - **Store links:** anywhere a store name links somewhere, render it with `<StoreLink>` (`src/components/store-link.tsx`), never plain text. `StoreCard` wraps it for search results. Pass a store's events as `children`, so they render inside the store's tile as `EventCard` rows instead of below it.
   - **Use the tokens** (`bg-accent`, `text-danger`, `bg-chip-open-bg` …), never raw Tailwind colours like `bg-red-600`.
   - **Text colours must meet WCAG AA (4.5:1).** Text shades may be deepened from the palette hue to get there; dots and borders use the exact palette values.
 - Keep business rules out of components. Put them in `src/lib/rules.ts` and the matching SQL RPC, and change both together.

@@ -5,9 +5,12 @@
  * (https://www.expo2025.or.jp/en/overview/design_system/):
  *   Inochi  #E60012 red · #0068B7 blue · #D2D7DA cool gray
  *   Umi     #00A59E teal · #A78EC3 lavender · #31ACE3 sky · #C9E0B8 pale green
- *   Noyama  #D9DE00 lime · #99C41E green
+ *   Noyama  #0068B7 blue · #00A59E teal · #D9DE00 lime · #99C41E green · #C9E0B8 pale green
  *   Hikari  #EC8632 orange · #E95D19 red-orange · #F2A800 amber · #FCD700 yellow
  * Tints/shades below are derived from these for backgrounds and readable text.
+ *
+ * Interactive elements use Noyama: green fills (buttons, active tab, switches),
+ * pale green outlines, lime highlights, teal stores, deepened green link text.
  */
 :root {
   --background: #f3f5f6; /* cool gray, lightened */
@@ -15,8 +18,13 @@
   --foreground: #1a1f24;
   --muted: #5b6670;
   --border: #d2d7da; /* Inochi cool gray */
-  --accent: #0068b7; /* Inochi blue */
-  --accent-foreground: #ffffff;
+  /* Noyama green fills need dark text: white on #99C41E is only 2.0:1. */
+  --accent: #99c41e; /* Noyama green: buttons, active tab, switches */
+  --accent-foreground: #1f2a00;
+  --accent-text: #4a6800; /* Noyama green deepened for link text (AA on bg, surface, store tint) */
+  --accent-soft: #c9e0b8; /* Noyama pale green: secondary button outlines */
+  --highlight: #d9de00; /* Noyama lime: selected states, "You're going" */
+  --highlight-foreground: #1a1f24;
   /* Text shades of Inochi red / Hikari red-orange, deepened to meet WCAG AA (4.5:1) on the background. */
   --danger: #cc0010;
   --live: #b84a12;
@@ -33,6 +41,14 @@
   --chip-partial-fg: #6b4a00;
   --chip-covered-bg: #c9e0b8; /* Umi/Noyama pale green */
   --chip-covered-fg: #2f4a0b;
+
+  /* Stores: Umi teal. Raw teal only for the icon tile and borders (non-text, ≥3:1);
+     text uses deepened shades for AA on the tint. */
+  --store: #00a59e;
+  --store-bg: #e0f4f2;
+  --store-fg: #00524e;
+  --store-muted: #3d6663;
+  --store-icon-fg: #ffffff;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -42,8 +58,12 @@
     --foreground: #eef1f3;
     --muted: #9aa5ae;
     --border: #2c353d;
-    --accent: #31ace3; /* Umi sky reads better than deep blue on dark */
+    --accent: #99c41e;
     --accent-foreground: #0f1316;
+    --accent-text: #b5d948;
+    --accent-soft: #3d5420;
+    --highlight: #d9de00;
+    --highlight-foreground: #0f1316;
     --danger: #ff5a52;
     --live: #ec8632; /* Hikari orange */
 
@@ -57,6 +77,12 @@
     --chip-partial-fg: #fcd700;
     --chip-covered-bg: #2a3a14;
     --chip-covered-fg: #c9e0b8;
+
+    --store: #2ec4bc;
+    --store-bg: #0f2b29;
+    --store-fg: #e6f7f5;
+    --store-muted: #8fc9c4;
+    --store-icon-fg: #0f1316;
   }
 }
 
@@ -68,6 +94,10 @@
   --color-border: var(--border);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
+  --color-accent-text: var(--accent-text);
+  --color-accent-soft: var(--accent-soft);
+  --color-highlight: var(--highlight);
+  --color-highlight-foreground: var(--highlight-foreground);
   --color-danger: var(--danger);
   --color-live: var(--live);
   --color-pitch-red: var(--pitch-red);
@@ -79,6 +109,11 @@
   --color-chip-partial-fg: var(--chip-partial-fg);
   --color-chip-covered-bg: var(--chip-covered-bg);
   --color-chip-covered-fg: var(--chip-covered-fg);
+  --color-store: var(--store);
+  --color-store-bg: var(--store-bg);
+  --color-store-fg: var(--store-fg);
+  --color-store-muted: var(--store-muted);
+  --color-store-icon-fg: var(--store-icon-fg);
   --font-sans: var(--font-geist-sans), system-ui, sans-serif;
 }
 
@@ -98,10 +133,10 @@ body {
     @apply bg-accent text-accent-foreground;
   }
   .btn-secondary {
-    @apply border border-border bg-surface text-foreground;
+    @apply border-2 border-accent-soft bg-surface text-foreground;
   }
   .input {
-    @apply min-h-12 w-full rounded-xl border border-border bg-surface px-4 text-base outline-none focus:border-accent;
+    @apply min-h-12 w-full rounded-xl border border-border bg-surface px-4 text-base outline-none focus:border-accent-text;
   }
   .label {
     @apply mb-1 block text-sm font-medium;

@@ -22,7 +22,8 @@ export type RuleError =
   | "below_pledged"
   | "note_too_long"
   | "no_items"
-  | "card_not_found";
+  | "card_not_found"
+  | "invalid_copy";
 
 export type Check = { ok: true } | { ok: false; reason: RuleError };
 const ok: Check = { ok: true };
@@ -113,6 +114,7 @@ const MESSAGES: Record<RuleError, string> = {
   note_too_long: `Keep the note to ${MAX_NOTE_LENGTH} characters.`,
   no_items: "Pick at least one card.",
   card_not_found: "That card isn't in the catalog.",
+  invalid_copy: "Requests can only be copied from last week's event of the same slot.",
 };
 
 /** Friendly text for an error code raised by the SQL functions (or a Check). */

@@ -61,7 +61,7 @@ export function AttendanceButton({
           </div>
         </div>
       ) : needsConfirm ? (
-        <button type="button" className="btn btn-secondary" onClick={() => setConfirming(true)}>
+        <button type="button" className="btn btn-primary" onClick={() => setConfirming(true)}>
           I can&apos;t make it
         </button>
       ) : (

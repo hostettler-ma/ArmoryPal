@@ -24,7 +24,7 @@ export default async function EditStorePage({ params }: { params: Promise<{ id: 
         title={store.name}
         back="/admin"
         action={
-          <Link href={`/stores/${store.id}`} className="text-sm font-medium text-accent">
+          <Link href={`/stores/${store.id}`} className="text-sm font-medium text-accent-text">
             View
           </Link>
         }

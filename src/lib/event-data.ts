@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, Tables } from "@/lib/supabase/database.types";
+import { copySummary, type CopySummary, type PreviousRequest } from "./rollover";
 
 export type EventSummary = Tables<"events"> & {
   label: string;
@@ -41,4 +42,46 @@ export async function getCurrentEvents(
     byStore.set(e.store_id, [...(byStore.get(e.store_id) ?? []), summary]);
   }
   return byStore;
+}
+
+/**
+ * Last week's event of the same weekly slot (the most recent ended one before
+ * this event) and what the viewer could copy from it into this event.
+ */
+export async function getCopyCandidate(
+  supabase: SupabaseClient<Database>,
+  event: { id: string; schedule_id: string; event_date: string },
+  userId: string,
+): Promise<{ fromEventId: string; summary: CopySummary } | null> {
+  const { data: previous } = await supabase
+    .from("events")
+    .select("id")
+    .eq("schedule_id", event.schedule_id)
+    .lt("event_date", event.event_date)
+    .lte("ends_at", new Date().toISOString())
+    .order("event_date", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (!previous) return null;
+
+  const [{ data: lastWeek }, { data: copied }] = await Promise.all([
+    supabase
+      .from("requests")
+      .select("id, quantity, status, pledges(quantity)")
+      .eq("event_id", previous.id)
+      .eq("requester_id", userId)
+      .eq("status", "active"),
+    supabase
+      .from("requests")
+      .select("copied_from_id")
+      .eq("event_id", event.id)
+      .eq("requester_id", userId)
+      .not("copied_from_id", "is", null),
+  ]);
+
+  const summary = copySummary(
+    (lastWeek ?? []) as PreviousRequest[],
+    new Set((copied ?? []).map((c) => c.copied_from_id!)),
+  );
+  return summary.requests > 0 ? { fromEventId: previous.id, summary } : null;
 }

@@ -49,6 +49,12 @@ export async function pledge(eventId: string, requestId: string, quantity: numbe
   return run(eventId, (s) => s.rpc("pledge", { p_request_id: requestId, p_quantity: quantity }));
 }
 
+/** Copies the viewer's still-needed requests from last week's event into this one. */
+export async function copyOpenRequests(eventId: string, fromEventId: string): Promise<ActionResult> {
+  if (!isUuid(fromEventId)) return { error: ruleMessage("event_not_found") };
+  return run(eventId, (s) => s.rpc("copy_open_requests", { p_from_event: fromEventId, p_to_event: eventId }));
+}
+
 export async function unpledge(eventId: string, requestId: string): Promise<ActionResult> {
   if (!isUuid(requestId)) return { error: ruleMessage("request_not_found") };
   return run(eventId, (s) => s.rpc("unpledge", { p_request_id: requestId }));

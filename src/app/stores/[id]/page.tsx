@@ -29,7 +29,7 @@ export default async function StorePage({ params }: { params: Promise<{ id: stri
         back="/"
         action={
           profile.is_admin && (
-            <Link href={`/admin/stores/${store.id}`} className="text-sm font-medium text-accent">
+            <Link href={`/admin/stores/${store.id}`} className="text-sm font-medium text-accent-text">
               Edit
             </Link>
           )
@@ -61,6 +61,10 @@ export default async function StorePage({ params }: { params: Promise<{ id: stri
         )}
         <p className="text-xs text-muted">Times are local to the store ({store.timezone.replaceAll("_", " ")}).</p>
       </section>
+
+      <Link href={`/stores/${store.id}/history`} className="btn btn-secondary">
+        Past events
+      </Link>
     </main>
   );
 }

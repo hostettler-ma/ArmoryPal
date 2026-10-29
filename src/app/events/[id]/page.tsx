@@ -4,8 +4,12 @@ import { AttendanceButton } from "@/components/attendance-button";
 import { NotificationBell } from "@/components/notification-bell";
 import { RealtimeRefresh } from "@/components/realtime-refresh";
 import { AddRequestSheet } from "@/components/event/add-request-sheet";
+import { CopyRequestsBanner } from "@/components/event/copy-requests-banner";
+import { getCopyCandidate } from "@/lib/event-data";
 import { RequestRow } from "@/components/event/request-row";
 import { PageHeader } from "@/components/page-header";
+import { StoreLink } from "@/components/store-link";
+import { formatLocation } from "@/lib/stores";
 import { PitchDot } from "@/components/pitch-dot";
 import { isUuid, requireProfile } from "@/lib/auth";
 import { cardLabel, formatReleaseMonth } from "@/lib/cards";
@@ -33,7 +37,7 @@ export default async function EventPage({
     supabase
       .from("events")
       .select(
-        "*, store:stores(id, name, timezone), schedule:store_schedules(label), attendances(user_id, created_at, profile:profiles(display_name))",
+        "*, store:stores(id, name, timezone, city, region, country), schedule:store_schedules(label), attendances(user_id, created_at, profile:profiles(display_name))",
       )
       .eq("id", id)
       .maybeSingle(),
@@ -52,6 +56,8 @@ export default async function EventPage({
   const ended = phase === "ended";
   const attendees = [...event.attendances].sort((a, b) => a.created_at.localeCompare(b.created_at));
   const attending = attendees.some((a) => a.user_id === user.id);
+  // Only attendees of an open event can copy last week's unfilled requests in.
+  const copyCandidate = !ended && attending ? await getCopyCandidate(supabase, event, user.id) : null;
   const requests = buildRequestViews(
     (requestRows ?? []) as LoadedRequest[],
     { id: user.id, attending, eventEnded: ended },
@@ -79,22 +85,27 @@ export default async function EventPage({
     <main className="space-y-5">
       <PageHeader
         title={event.schedule.label}
-        back={`/stores/${event.store.id}`}
+        back={ended ? `/stores/${event.store.id}/history` : `/stores/${event.store.id}`}
         action={<NotificationBell supabase={supabase} userId={user.id} />}
       />
       {/* Live updates: re-render when anyone changes attendance, requests, or pledges. */}
       {!ended && <RealtimeRefresh topic={`event:${event.id}`} event="change" />}
 
-      <div className="space-y-1">
-        <p className="font-semibold">{event.store.name}</p>
-        <p className="text-muted">
+      <div className="space-y-2">
+        <p className="font-semibold">
           {formatEventWhen(event.starts_at, event.store.timezone)}
-          {phase === "live" && <span className="ml-2 font-semibold text-live">● Happening now</span>}
+          {phase === "live" && <span className="ml-2 text-live">● Happening now</span>}
         </p>
+        <StoreLink store={event.store} subtitle={formatLocation(event.store)} />
       </div>
 
       {ended ? (
-        <p className="card text-center text-muted">This event has ended. Lists are read-only.</p>
+        <p className="card text-center text-muted">
+          This event has ended. Lists are read-only.{" "}
+          <Link href={`/stores/${event.store.id}/history`} className="font-medium text-accent-text">
+            Past events
+          </Link>
+        </p>
       ) : (
         <AttendanceButton
           key={String(attending)} // fresh state (no stale confirmation) after attending changes
@@ -103,6 +114,10 @@ export default async function EventPage({
           pledgedCards={myPledges.reduce((sum, r) => sum + r.myPledge, 0)}
           openRequests={mine.length}
         />
+      )}
+
+      {copyCandidate && (
+        <CopyRequestsBanner eventId={event.id} fromEventId={copyCandidate.fromEventId} summary={copyCandidate.summary} />
       )}
 
       <nav className="flex gap-1 rounded-xl bg-surface p-1 ring-1 ring-border" aria-label="Event sections">

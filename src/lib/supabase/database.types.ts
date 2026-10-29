@@ -337,6 +337,9 @@ isOneToOne: false
 "card_label":
 { Args: { "p_card_id": string }; Returns: string
                            },
+"copy_open_requests":
+{ Args: { "p_from_event": string,"p_to_event": string }; Returns: number
+                           },
 "current_events_for_stores":
 { Args: { "p_store_ids": (string)[] }; Returns: {
               "created_at": string,

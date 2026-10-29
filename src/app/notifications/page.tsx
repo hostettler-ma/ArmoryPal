@@ -23,7 +23,7 @@ export default async function NotificationsPage() {
         title="Notifications"
         back="/"
         action={
-          <Link href="/settings/notifications" className="text-sm font-medium text-accent">
+          <Link href="/settings/notifications" className="text-sm font-medium text-accent-text">
             Settings
           </Link>
         }
@@ -39,7 +39,7 @@ export default async function NotificationsPage() {
                 className={`card block space-y-1 ${n.read_at ? "" : "border-accent"}`}
               >
                 <p className={n.read_at ? "" : "font-semibold"}>
-                  {!n.read_at && <span className="mr-1 text-accent" aria-label="New">●</span>}
+                  {!n.read_at && <span className="mr-1 text-accent-text" aria-label="New">●</span>}
                   {formatNotification(n.kind, n.payload as NotificationPayload)}
                 </p>
                 <p className="text-sm text-muted">
