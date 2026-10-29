@@ -1,0 +1,66 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f7f5f2;
+  --surface: #ffffff;
+  --foreground: #1c1917;
+  --muted: #78716c;
+  --border: #e7e5e4;
+  --accent: #b91c1c;
+  --accent-foreground: #ffffff;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0c0a09;
+    --surface: #1c1917;
+    --foreground: #f5f5f4;
+    --muted: #a8a29e;
+    --border: #292524;
+    --accent: #ef4444;
+    --accent-foreground: #0c0a09;
+  }
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --font-sans: var(--font-geist-sans), system-ui, sans-serif;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  -webkit-tap-highlight-color: transparent;
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl px-4 text-base font-semibold transition active:scale-[0.98] disabled:opacity-50;
+  }
+  /* Use together with .btn, e.g. class="btn btn-primary". */
+  .btn-primary {
+    @apply bg-accent text-accent-foreground;
+  }
+  .btn-secondary {
+    @apply border border-border bg-surface text-foreground;
+  }
+  .input {
+    @apply min-h-12 w-full rounded-xl border border-border bg-surface px-4 text-base outline-none focus:border-accent;
+  }
+  .label {
+    @apply mb-1 block text-sm font-medium;
+  }
+  .field-error {
+    @apply mt-1 text-sm text-accent;
+  }
+  .card {
+    @apply rounded-2xl border border-border bg-surface p-4;
+  }
+}
