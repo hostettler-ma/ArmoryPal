@@ -33,16 +33,20 @@ jobs:
 
       - uses: ./.github/actions/local-stack
 
+      # A failure in one group is reported, but the remaining groups still run.
       - name: Unit tests
-        run: npm test
+        run: npm test 2>&1 | tee unit-tests.txt; exit ${PIPESTATUS[0]}
 
       - name: Database rule tests
-        run: npm run test:db
+        if: ${{ !cancelled() }}
+        run: npm run test:db 2>&1 | tee db-tests.txt; exit ${PIPESTATUS[0]}
 
       - name: Install browser
+        if: ${{ !cancelled() }}
         run: npx playwright install --with-deps chromium
 
       - name: Browser tests (functional + security)
+        if: ${{ !cancelled() }}
         run: npx playwright test
 
       - name: Dependency audit
@@ -90,6 +94,8 @@ jobs:
             test-results/
             zap/zap-report.html
             summary.md
+            unit-tests.txt
+            db-tests.txt
           retention-days: 14
 
       - name: Report

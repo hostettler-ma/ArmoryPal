@@ -28,7 +28,7 @@ runs:
           "NEXT_PUBLIC_ENABLE_EMAIL_LOGIN=true"
         ' "$RUNNER_TEMP/supabase.json" > .env.local
         # Keys are local-only, but keep them out of the logs anyway.
-        grep -E 'KEY=' .env.local | cut -d= -f2- | while read -r k; do echo "::add-mask::$k"; done
+        grep -E 'KEY=' .env.local | cut -d= -f2- | while read -r k; do [ -n "$k" ] && echo "::add-mask::$k"; done
         grep -v KEY .env.local
 
     - name: Match production database grants
@@ -37,6 +37,10 @@ runs:
         db=$(docker ps --filter "name=supabase_db_" --format '{{.Names}}' | head -1)
         npx tsx e2e/support/prod-grants.mts | docker exec -i "$db" psql -U postgres -d postgres -q 2>&1 \
           | grep -v 'does not exist' || true
+
+    - name: Import the real card catalog
+      shell: bash
+      run: npx tsx scripts/import-cards.mts
 
     - name: Build the app
       shell: bash

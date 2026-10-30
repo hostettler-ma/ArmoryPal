@@ -52,6 +52,20 @@ if (existsSync("test-results/results.json")) {
   failed = true;
 }
 
+// --- Unit and DB tests (Vitest output) ---------------------------------------------
+for (const [file, label] of [
+  ["unit-tests.txt", "Unit tests"],
+  ["db-tests.txt", "Database rule tests"],
+] as const) {
+  if (!existsSync(file)) continue;
+  const text = strip(readFileSync(file, "utf8"));
+  const totals = text.match(/^\s*Tests\s+.+$/m)?.[0].trim() ?? "no summary line";
+  const failing = [...text.matchAll(/^\s*(?:FAIL|×|✗)\s+(.+)$/gm)].map((m) => `- ${m[1].trim()}`);
+  const bad = /\bfailed\b/.test(totals) || !/\bpassed\b/.test(totals);
+  if (bad) failed = true;
+  out.push("", `### ${label}: ${bad ? "❌" : "✅"} ${totals}`, ...[...new Set(failing)].slice(0, 20));
+}
+
 // --- Dependency audit -------------------------------------------------------------
 if (existsSync("audit.txt")) {
   const audit = readFileSync("audit.txt", "utf8").trim();
@@ -64,7 +78,19 @@ if (existsSync("audit.txt")) {
 if (existsSync("zap.json")) {
   type Alert = { name: string; riskcode: string; riskdesc: string; pluginid: string; instances: { uri: string }[] };
   const zap = JSON.parse(readFileSync("zap.json", "utf8")) as { site: { alerts: Alert[] }[] };
-  const alerts = zap.site.flatMap((s) => s.alerts).sort((a, b) => Number(b.riskcode) - Number(a.riskcode));
+  // Rules marked IGNORE in .github/zap-rules.tsv (with the reason there) are left out.
+  const ignored = existsSync(".github/zap-rules.tsv")
+    ? new Set(
+        readFileSync(".github/zap-rules.tsv", "utf8")
+          .split("\n")
+          .filter((l) => l.split("\t")[1] === "IGNORE")
+          .map((l) => l.split("\t")[0]),
+      )
+    : new Set<string>();
+  const alerts = zap.site
+    .flatMap((s) => s.alerts)
+    .filter((a) => !ignored.has(a.pluginid))
+    .sort((a, b) => Number(b.riskcode) - Number(a.riskcode));
   const high = alerts.filter((a) => a.riskcode === "3");
   if (high.length) failed = true;
   out.push("", `### ZAP security scan: ${high.length ? `❌ ${high.length} high-risk finding(s)` : "✅ no high-risk findings"}`);
