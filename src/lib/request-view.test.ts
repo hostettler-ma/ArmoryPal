@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildPeopleList, buildRequestViews, type LoadedRequest } from "./request-view";
+import { buildPeopleList, buildRequestViews, summarizeBringing, type LoadedRequest } from "./request-view";
 
 const ME = "me";
 const card = (color: "Red" | "Blue") => ({
@@ -122,5 +122,23 @@ describe("buildRequestViews", () => {
 
   it("drops rows whose card is missing", () => {
     expect(buildRequestViews([req("r", { card: null })], viewer)).toEqual([]);
+  });
+});
+
+describe("summarizeBringing", () => {
+  const item = (requesterId: string, quantity: number) => ({
+    requestId: `${requesterId}-${quantity}`,
+    quantity,
+    card: { name: "Snatch", color: "Red" as const },
+    requesterId,
+    requesterName: requesterId,
+  });
+
+  it("is zero when bringing nothing", () => {
+    expect(summarizeBringing([])).toEqual({ cards: 0, players: 0 });
+  });
+
+  it("sums quantities and counts distinct requesters", () => {
+    expect(summarizeBringing([item("alice", 2), item("alice", 1), item("bob", 3)])).toEqual({ cards: 6, players: 2 });
   });
 });

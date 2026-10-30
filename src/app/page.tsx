@@ -1,21 +1,26 @@
 import Link from "next/link";
 import { EventCard } from "@/components/event-card";
 import { InstallHint } from "@/components/install-hint";
+import { NextArmoryCard } from "@/components/next-armory-card";
+import { RealtimeRefresh } from "@/components/realtime-refresh";
 import { NotificationBell } from "@/components/notification-bell";
 import { StoreLink } from "@/components/store-link";
 import { formatLocation } from "@/lib/stores";
 import { STORE_SELECT, type StoreWithSchedules } from "@/components/store-card";
 import { requireProfile } from "@/lib/auth";
-import { getCurrentEvents } from "@/lib/event-data";
+import { getCurrentEvents, getNextAttendingEvent } from "@/lib/event-data";
 
 export default async function HomePage() {
   const { supabase, user, profile } = await requireProfile();
 
-  const { data } = await supabase
-    .from("user_stores")
-    .select(`created_at, store:stores(${STORE_SELECT})`)
-    .eq("user_id", user.id)
-    .order("created_at");
+  const [{ data }, next] = await Promise.all([
+    supabase
+      .from("user_stores")
+      .select(`created_at, store:stores(${STORE_SELECT})`)
+      .eq("user_id", user.id)
+      .order("created_at"),
+    getNextAttendingEvent(supabase, user.id),
+  ]);
   const stores = (data ?? []).map((row) => row.store as unknown as StoreWithSchedules).filter(Boolean);
   const events = await getCurrentEvents(
     supabase,
@@ -42,6 +47,20 @@ export default async function HomePage() {
           </Link>
         </div>
       </header>
+
+      {next ? (
+        <>
+          {/* Live going count and pledges, like the event page. */}
+          <RealtimeRefresh topic={`event:${next.event.id}`} event="change" />
+          <NextArmoryCard next={next} />
+        </>
+      ) : (
+        stores.length > 0 && (
+          <p className="card text-center text-muted">
+            You&apos;re not signed up for an Armory yet. Pick an event below to go.
+          </p>
+        )
+      )}
 
       <section className="space-y-3">
         <div className="flex items-center justify-between">

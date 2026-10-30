@@ -66,6 +66,7 @@ Mobile-first companion PWA for the Flesh and Blood TCG. Players coordinate card 
   - **Leaving an event** (`leave_event`) deletes all of the leaver's pledges for that event, so those cards are needed again. See the Leaving and Notifications notes above for what else it does.
   - **Coverage** (open / partial / covered) is computed in TS (`coverage()`, `buildRequestViews()` in `src/lib/request-view.ts`), not stored.
 - **Event page** (`/events/[id]?tab=going|requests|checklist`). Tabs appear in that order, and **Going is the default**. Going lists attendees in join order with their request counts (`buildPeopleList()`), followed by people who left but kept requests ("Not going"). The Requests tab orders others' unfilled requests, then mine unfilled, then others' filled, then mine filled (`listGroup()` in `request-view.ts`). "My checklist" shows cards I'm bringing above cards I need. The page is server-rendered, with client "sheets" in `src/components/event/*`. Server actions in `src/app/actions/requests.ts` are thin RPC wrappers that revalidate the page.
+- **Home** (`/`) opens with `<NextArmoryCard>`: the soonest not-ended event I'm attending at **any** store (`getNextAttendingEvent()` in `src/lib/event-data.ts`), its going count, and the cards I pledged to bring (`summarizeBringing()` in `request-view.ts`). It live-refreshes on that event's topic. "My stores" follows below.
 - **Rules are enforced in the database**: writes with rules go through `security definer` RPCs that lock the request row (`FOR UPDATE`), and RLS blocks direct writes. The same rules are mirrored as pure functions in `src/lib/rules.ts` for UI feedback, and **both are tested**.
   - Only attendees of a non-past event can add requests or pledges.
   - You can't pledge on your own request.
@@ -126,6 +127,7 @@ npm run typecheck; npm run lint
 npm run test:db             # RLS/RPC integration tests against local Supabase (tests/db/**)
 npm run test:e2e            # Playwright: builds + starts the app, phone/desktop/security (local Supabase only)
 npm run audit:check         # dependency audit with the accepted-advisory allowlist
+npm run db:seed-dev         # local test players Alice/Bob/Carol + a current event with requests and pledges (after import-cards)
 npx tsx scripts/make-admin.mts you@example.com [--revoke] [--env .env.production.local]
 npx tsx scripts/import-cards.mts [--env .env.production.local]
 npm run build; npm start    # production build incl. service worker (stop `npm run dev` first: both use .next)
@@ -133,6 +135,7 @@ npm run build; npm start    # production build incl. service worker (stop `npm r
 
 - Node scripts in `scripts/` use the `.mts` extension (the package isn't `"type": "module"`, and the scripts use top-level await). They read `.env.local` through dotenv.
 - `supabase/seed.sql` holds the **real New York area stores** running a weekly FaB Armory, with their slots (America/New_York). Addresses are left empty until verified.
+- **Local testing as several players:** `npm run db:seed-dev` creates Alice, Bob and Carol (`src/lib/dev-users.ts`). In `next dev` against a local Supabase only (`devLoginEnabled()`), the login page shows a **Dev sign-in** box to sign in as each one in one tap (`devSignIn` in `src/app/actions/dev.ts`, which 404s anywhere else). Use a second browser or a private window for a second player. Local Discord login also works while `npx supabase start` is running.
 - DB tests: `tests/db/helpers.ts` provides `createTestUser({ isAdmin })`, which returns a client signed in as that user, and `deleteTestUsers()` for cleanup. Add a DB test for every new RLS policy or RPC rule.
 
 Gotcha: in Windows PowerShell 5.1, `Out-File -Encoding utf8` writes a BOM. Don't use it to write `.env*` files. Use `[IO.File]::WriteAllText` or the Write tool instead.
