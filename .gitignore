@@ -48,3 +48,14 @@ public/sw.js
 public/sw.js.map
 public/swe-worker-*.js
 
+
+# end-to-end tests (Playwright, ZAP, weekly exploration)
+/test-results/
+/playwright-report/
+/blob-report/
+/zap/
+zap.json
+audit.txt
+summary.md
+/.explore/
+explore-report.md

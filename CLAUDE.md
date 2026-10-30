@@ -16,6 +16,7 @@ Mobile-first companion PWA for the Flesh and Blood TCG. Players coordinate card 
 - **PWA:** Serwist (`@serwist/next`) + web manifest.
 - **Dates:** `@date-fns/tz`. Schedules are store-local (IANA timezone on the store).
 - **Tests:** Vitest. Unit tests for pure rules, plus integration tests for RPCs/RLS against local Supabase.
+  - **End-to-end and security:** Playwright in `e2e/` (see `e2e/README.md`). It runs nightly, on PRs and weekly with AI exploration through `.github/workflows/`. New UI flows get a test in `e2e/functional/`, and new attack surfaces get one in `e2e/security/`.
 
 ## Key decisions
 - **Card model = name + pitch.** Requests reference a single card (one row per unique name+pitch). Printing, foil, and set preferences go in the free-text note.
@@ -93,7 +94,7 @@ Mobile-first companion PWA for the Flesh and Blood TCG. Players coordinate card 
   - **Install hint:** `<InstallHint>` on Home, using `beforeinstallprompt` on Android and Share instructions on iOS.
 - **Deploying:** see `DEPLOY.md`. The scripts accept `--env .env.production.local` and print their `Target:` URL. Vercel only needs `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`; the secret key never goes to Vercel.
 - **Grants are explicit** (`*_explicit_api_grants.sql`). Production doesn't auto-grant API roles access to new tables or functions, so **every new table or RPC needs its own `grant` in its migration**: `select` (plus the exact writes) for `authenticated`, `execute` for RPCs, and `all` for `service_role`. `anon` gets nothing. To reproduce production locally, revoke all from `anon`/`authenticated`/`service_role`/`public` on `public` tables and functions, re-run that migration, then run `npm run test:db`.
-- **Security baseline:** every public table has RLS. No security-definer function is executable by `anon`; check this after adding functions. Internal helpers revoke `execute` from `authenticated` too.
+- **Security baseline:** every public table has RLS. `next.config.ts` sets X-Frame-Options, nosniff, Referrer-Policy and Permissions-Policy on every response (no CSP yet). No security-definer function is executable by `anon`; check this after adding functions. Internal helpers revoke `execute` from `authenticated` too.
 
 ## Data model (summary)
 `profiles`, `stores`, `store_schedules`, `user_stores`, `events`, `cards`, `attendances`, `requests`, `pledges`, `notifications`, and view `request_status` (pledged / remaining / open|partial|covered). Migrations live in `supabase/migrations/`, seed data in `supabase/seed.sql`.
@@ -123,6 +124,8 @@ npm run dev                 # http://localhost:3000
 npm test                    # unit tests (Vitest, src/**/*.test.ts)
 npm run typecheck; npm run lint
 npm run test:db             # RLS/RPC integration tests against local Supabase (tests/db/**)
+npm run test:e2e            # Playwright: builds + starts the app, phone/desktop/security (local Supabase only)
+npm run audit:check         # dependency audit with the accepted-advisory allowlist
 npx tsx scripts/make-admin.mts you@example.com [--revoke] [--env .env.production.local]
 npx tsx scripts/import-cards.mts [--env .env.production.local]
 npm run build; npm start    # production build incl. service worker (stop `npm run dev` first: both use .next)

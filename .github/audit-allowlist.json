@@ -1,0 +1,25 @@
+{
+  "_comment": "Advisories the nightly audit accepts for now. Each needs a reason and a date to look again; delete entries once fixed.",
+  "advisories": {
+    "GHSA-qx2v-qp2m-jg93": {
+      "package": "postcss",
+      "reason": "PostCSS bundled inside next (build tooling). It only processes our own CSS at build time; no untrusted CSS is ever parsed. Fix requires Next 16.",
+      "review_by": "2027-01-31"
+    },
+    "GHSA-6g55-p6wh-862q": {
+      "package": "postcss",
+      "reason": "Same as above: source-map loading only matters for attacker-controlled CSS, which we never build.",
+      "review_by": "2027-01-31"
+    },
+    "GHSA-fxqj-rqcc-2cmp": {
+      "package": "postcss",
+      "reason": "Same as above.",
+      "review_by": "2027-01-31"
+    },
+    "GHSA-r28c-9q8g-f849": {
+      "package": "postcss",
+      "reason": "Same as above.",
+      "review_by": "2027-01-31"
+    }
+  }
+}
