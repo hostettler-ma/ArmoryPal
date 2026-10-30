@@ -2,14 +2,16 @@ import { redirect } from "next/navigation";
 import { safeNext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { FanNotice } from "@/components/fan-notice";
+import { devLoginEnabled } from "@/lib/dev-users";
+import { DevLogin } from "./dev-login";
 import { LoginForm } from "./login-form";
 
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ next?: string; error?: string }>;
+  searchParams: Promise<{ next?: string; error?: string; dev_error?: string }>;
 }) {
-  const { next, error } = await searchParams;
+  const { next, error, dev_error } = await searchParams;
   const supabase = await createClient();
   const {
     data: { user },
@@ -29,6 +31,7 @@ export default async function LoginPage({
           </p>
         )}
         <LoginForm next={safeNext(next)} />
+        {devLoginEnabled() && <DevLogin next={safeNext(next)} failed={Boolean(dev_error)} />}
       </main>
       {/* Below the centered sign-in area, so the form stays where it is. */}
       <FanNotice />
