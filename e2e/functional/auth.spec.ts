@@ -45,6 +45,8 @@ test.describe("signing in", () => {
     await save.click();
     await expect(page.getByText("GEM IDs are numbers only.")).toBeVisible();
 
+    // A rejected submit currently clears the form (see the known-bug test below), so type both again.
+    await name.fill("Magic Tester");
     await gem.fill("1234 5678"); // spaces are stripped
     await save.click();
     await expect(page.getByText("Couldn't save your profile")).toHaveCount(0);
@@ -64,6 +66,26 @@ test.describe("signing in", () => {
     await page.goto("/auth/callback?code=not-a-real-code");
     await expect(page).toHaveURL(/\/login\?error=callback$/);
     await expect(page.getByText("That sign-in link didn't work")).toBeVisible();
+  });
+});
+
+test.describe("known bugs", () => {
+  // KNOWN BUG: after the server rejects the profile form, React 19 resets the
+  // form's uncontrolled inputs, so everything the player typed is lost (a new
+  // player's display name goes blank, so "Continue" is blocked until they
+  // retype it). Fix: return the submitted values in ProfileFormState and use
+  // them as defaultValue (src/components/profile-form.tsx).
+  // test.fail() keeps the nightly run green while the bug exists, and turns it
+  // red once fixed, as a reminder to delete this marker.
+  test.fail("typed values survive a validation error on the profile form", async ({ newPlayer }) => {
+    const { page } = await newPlayer({ name: "Keeps Typing" });
+    await page.goto("/me");
+    await page.getByLabel("Display name").fill("New Name");
+    await page.getByLabel(/GEM ID/).fill("not-a-number");
+    await page.getByRole("button", { name: "Save" }).click();
+    await expect(page.getByText("GEM IDs are numbers only.")).toBeVisible();
+    await expect(page.getByLabel("Display name")).toHaveValue("New Name", { timeout: 3_000 });
+    await expect(page.getByLabel(/GEM ID/)).toHaveValue("not-a-number", { timeout: 3_000 });
   });
 });
 
