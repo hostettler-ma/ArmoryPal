@@ -11,7 +11,26 @@ test("login page loads and offers Discord", async ({ page }) => {
   expect(res?.status()).toBe(200);
   await expect(page.getByRole("heading", { name: "ArmoryPal" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Continue with Discord" })).toBeVisible();
+  // Local-only conveniences must never reach the live site.
+  await expect(page.getByText("Dev sign-in")).toHaveCount(0);
+  await expect(page.getByLabel("Email")).toHaveCount(0);
   expect(errors).toEqual([]);
+});
+
+test("the local dev test accounts don't exist on production", async () => {
+  const url = process.env.PROD_SUPABASE_URL;
+  const key = process.env.PROD_SUPABASE_PUBLISHABLE_KEY;
+  test.skip(!url || !key, "set PROD_SUPABASE_URL and PROD_SUPABASE_PUBLISHABLE_KEY to check this");
+  const { DEV_USERS, DEV_PASSWORD } = await import("../../src/lib/dev-users");
+  // One failed sign-in attempt per account; nothing is written.
+  for (const u of DEV_USERS) {
+    const res = await fetch(`${url}/auth/v1/token?grant_type=password`, {
+      method: "POST",
+      headers: { apikey: key!, "Content-Type": "application/json" },
+      body: JSON.stringify({ email: u.email, password: DEV_PASSWORD }),
+    });
+    expect(res.status, `${u.email} must not be able to sign in`).toBeGreaterThanOrEqual(400);
+  }
 });
 
 test("protected pages redirect signed-out visitors to login", async ({ request }) => {

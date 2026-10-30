@@ -24,6 +24,14 @@ test("every page except login needs a session", async ({ page }) => {
   }
 });
 
+test("the dev sign-in is off in a production build", async ({ page }) => {
+  // devLoginEnabled() is only true under `next dev`; CI runs `next start`, like Vercel.
+  await page.goto("/login");
+  await expect(page.getByRole("heading", { name: "ArmoryPal" })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Dev sign-in" })).toHaveCount(0);
+  await expect(page.getByText("Dev sign-in")).toHaveCount(0);
+});
+
 test("the database API is closed to signed-out visitors (production grants)", async () => {
   const env = localEnv();
   const surface = await expectAnonLockedOut(env.url, env.publishableKey, { callFunctions: true });
