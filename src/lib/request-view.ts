@@ -149,3 +149,20 @@ export function buildRequestViews(
         createdAt.get(a.id)!.localeCompare(createdAt.get(b.id)!),
     );
 }
+
+/** One card the viewer promised to bring (Home's Next Armory card). */
+export type BringItem = {
+  requestId: string;
+  quantity: number;
+  card: { name: string; color: CardColor | null };
+  requesterId: string;
+  requesterName: string;
+};
+
+/** Total cards to bring and how many different players they're for. */
+export function summarizeBringing(items: BringItem[]): { cards: number; players: number } {
+  return {
+    cards: items.reduce((sum, i) => sum + i.quantity, 0),
+    players: new Set(items.map((i) => i.requesterId)).size,
+  };
+}
