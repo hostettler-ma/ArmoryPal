@@ -4,7 +4,7 @@ Browser tests (Playwright) that click through ArmoryPal like real players, plus 
 
 | Folder | What it checks |
 |---|---|
-| `functional/` | Sign-in (magic link through Mailpit), onboarding and profile fields, stores, admin, the full request → pledge → leave loop with **two players live at once**, the paste-list import, quantity limits. It also has a crawler that opens every linked page. Runs on a phone (Pixel 7) and a desktop screen. |
+| `functional/` | Login page (Discord-only, like production; magic links aren't tested yet), onboarding and profile fields, stores, admin, the full request → pledge → leave loop with **two players live at once**, the paste-list import, quantity limits. It also has a crawler that opens every linked page. Runs on a phone (Pixel 7) and a desktop screen. |
 | `security/` | Signed-out access (pages and the whole database API, checked against **production-style grants**), one user tampering with another's requests, pledges, profile, notifications and realtime channel, admin escalation, XSS in every text field, SQL and LIKE injection in search, open redirects, security headers, and secrets in the JS bundle. |
 | `prod/` | Read-only smoke checks against the live site. They never sign in or write. |
 
@@ -23,7 +23,7 @@ The local tests create users and run attack payloads, so they **only run against
 
 ```powershell
 npx supabase start
-# .env.local as usual (see .env.example), with NEXT_PUBLIC_ENABLE_EMAIL_LOGIN=true
+# .env.local as usual (see .env.example)
 npx playwright install chromium        # once
 npm run test:e2e                       # builds, starts the app, runs mobile + desktop + security
 npx playwright test --project=security # just one group

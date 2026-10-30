@@ -1,6 +1,4 @@
-import { randomUUID } from "node:crypto";
 import { expect, test } from "../support/fixtures";
-import { magicLinkFor } from "../support/mailpit";
 import { admin } from "../support/supabase";
 
 test.describe("signing in", () => {
@@ -9,21 +7,18 @@ test.describe("signing in", () => {
     await expect(page).toHaveURL(/\/login$/);
     await expect(page.getByRole("heading", { name: "ArmoryPal" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Continue with Discord" })).toBeVisible();
+    // Email sign-in stays hidden until magic links work (like production).
+    await expect(page.getByLabel("Email")).toHaveCount(0);
 
     await page.goto("/stores");
     await expect(page).toHaveURL(/\/login\?next=%2Fstores$/);
   });
 
-  test("magic link → onboarding → home, with field validation", async ({ page }) => {
-    const email = `e2e-magic-${randomUUID()}@example.com`;
-
-    await page.goto("/login");
-    await page.getByLabel("Email").fill(email);
-    await page.getByRole("button", { name: "Email me a sign-in link" }).click();
-    await expect(page.getByText("Check your email")).toBeVisible();
-    await expect(page.getByText(email)).toBeVisible();
-
-    await page.goto(await magicLinkFor(email));
+  test("onboarding: field validation, then Home", async ({ newPlayer }) => {
+    // Magic links aren't in use yet, and Discord can't run in CI, so start from a
+    // signed-in player who hasn't picked a display name.
+    const { page, id } = await newPlayer({ onboarded: false });
+    await page.goto("/");
     await expect(page).toHaveURL(/\/welcome$/);
     await expect(page.getByRole("heading", { name: "Welcome to ArmoryPal" })).toBeVisible();
 
@@ -40,26 +35,21 @@ test.describe("signing in", () => {
     await name.fill("x".repeat(60));
     await expect(name).toHaveValue("x".repeat(40));
 
-    await name.fill("Magic Tester");
+    await name.fill("Onboarding Tester");
     await gem.fill("12ab34");
     await save.click();
     await expect(page.getByText("GEM IDs are numbers only.")).toBeVisible();
 
     // A rejected submit currently clears the form (see the known-bug test below), so type both again.
-    await name.fill("Magic Tester");
+    await name.fill("Onboarding Tester");
     await gem.fill("1234 5678"); // spaces are stripped
     await save.click();
-    await expect(page.getByText("Couldn't save your profile")).toHaveCount(0);
-    await expect(page.locator(".field-error")).toHaveCount(0);
     await expect(page).toHaveURL(/\/$/);
-    await expect(page.getByRole("link", { name: "Magic Tester" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Onboarding Tester" })).toBeVisible();
     await expect(page.getByRole("link", { name: "Find your store" })).toBeVisible();
 
-    const { data: users } = await admin().auth.admin.listUsers({ perPage: 1000 });
-    const user = users.users.find((u) => u.email === email)!;
-    const { data: profile } = await admin().from("profiles").select("display_name, gem_id").eq("id", user.id).single();
-    expect(profile).toEqual({ display_name: "Magic Tester", gem_id: "12345678" });
-    await admin().auth.admin.deleteUser(user.id);
+    const { data: profile } = await admin().from("profiles").select("display_name, gem_id").eq("id", id).single();
+    expect(profile).toEqual({ display_name: "Onboarding Tester", gem_id: "12345678" });
   });
 
   test("a broken sign-in link shows an error instead of signing in", async ({ page }) => {

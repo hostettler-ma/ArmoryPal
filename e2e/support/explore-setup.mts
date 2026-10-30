@@ -34,12 +34,11 @@ writeFileSync(
   ".explore/players.md",
   [
     `App: ${baseURL}`,
-    `Mailpit (catches sign-in emails): http://127.0.0.1:54324`,
     `This week's event: ${baseURL}/events/${players.alice.eventId}`,
     `- alice: display name "Alice", ADMIN, email ${players.alice.email}`,
     `- bob: display name "Bob", regular player, email ${players.bob.email}`,
     "Both follow the store \"E2E Test Armory\", are going to this week's event and have requested 2× Zeetest Snatch (Red).",
-    "Test cards in the catalog: Zeetest Snatch (Red/Yellow/Blue) and Zeetest Sledge (no pitch). The real catalog isn't loaded.",
+    "Test cards in the catalog: Zeetest Snatch (Red/Yellow/Blue) and Zeetest Sledge (no pitch), plus the full real card catalog.",
   ].join("\n"),
 );
 console.log("Wrote .explore/alice.json, .explore/bob.json and .explore/players.md");

@@ -23,13 +23,12 @@ runs:
         jq -r '
           "NEXT_PUBLIC_SUPABASE_URL=\(.API_URL)",
           "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=\(.PUBLISHABLE_KEY // .ANON_KEY)",
-          "SUPABASE_SECRET_KEY=\(.SECRET_KEY // .SERVICE_ROLE_KEY)",
-          "E2E_MAILPIT_URL=\(.MAILPIT_URL // .INBUCKET_URL // "http://127.0.0.1:54324")",
-          "NEXT_PUBLIC_ENABLE_EMAIL_LOGIN=true"
+          "SUPABASE_SECRET_KEY=\(.SECRET_KEY // .SERVICE_ROLE_KEY)"
         ' "$RUNNER_TEMP/supabase.json" > .env.local
         # Keys are local-only, but keep them out of the logs anyway.
         grep -E 'KEY=' .env.local | cut -d= -f2- | while read -r k; do [ -n "$k" ] && echo "::add-mask::$k"; done
         grep -v KEY .env.local
+        # No NEXT_PUBLIC_ENABLE_EMAIL_LOGIN: build Discord-only, like production.
 
     - name: Match production database grants
       shell: bash

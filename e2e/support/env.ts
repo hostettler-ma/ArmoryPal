@@ -21,8 +21,6 @@ export function localEnv() {
     url,
     publishableKey,
     secretKey,
-    /** Mailpit (catches magic-link emails); `npx supabase status` shows it. */
-    mailpitUrl: process.env.E2E_MAILPIT_URL ?? "http://127.0.0.1:54324",
   };
 }
 

@@ -1,32 +1,15 @@
-import { randomUUID } from "node:crypto";
 import { expect, test } from "../support/fixtures";
-import { admin } from "../support/supabase";
-import { magicLinkFor } from "../support/mailpit";
 
 const EVIL = ["//evil.example.com", "/\\evil.example.com", "https://evil.example.com", "/%2F%2Fevil.example.com", "javascript:alert(1)"];
 
-test("after sign-in, ?next= can't send you to another site", async ({ page, baseURL }) => {
+test("a signed-in visit to /login?next= can't send you to another site", async ({ newPlayer, baseURL }) => {
   const origin = new URL(baseURL!).origin;
-  const email = `e2e-redirect-${randomUUID()}@example.com`;
-
-  // Full magic-link round trip, starting from a login page with a hostile next.
-  await page.goto(`/login?next=${encodeURIComponent("//evil.example.com/steal")}`);
-  await page.getByLabel("Email").fill(email);
-  await page.getByRole("button", { name: "Email me a sign-in link" }).click();
-  await expect(page.getByText("Check your email")).toBeVisible();
-  await page.goto(await magicLinkFor(email));
-  await page.waitForLoadState("networkidle");
-  expect(new URL(page.url()).origin).toBe(origin);
-
-  // Already signed in: /login?next=… redirects straight away; check each payload.
+  const { page } = await newPlayer();
+  // The login page redirects signed-in players to ?next= straight away.
   for (const next of EVIL) {
     await page.goto(`/login?next=${encodeURIComponent(next)}`);
     expect(new URL(page.url()).origin, next).toBe(origin);
   }
-
-  const { data } = await admin().auth.admin.listUsers({ perPage: 1000 });
-  const id = data.users.find((u) => u.email === email)?.id;
-  if (id) await admin().auth.admin.deleteUser(id);
 });
 
 test("the auth callback and the ?code= safety net stay on this site", async ({ page, baseURL }) => {

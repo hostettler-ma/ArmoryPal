@@ -23,6 +23,8 @@ Use both at once to test what one player sees when the other acts. For example, 
    - Try to read other users' data through http://127.0.0.1:54321/rest/v1 with the publishable key from the page source.
 5. **Note what the existing tests in `e2e/` don't cover yet.**
 
+Skip email sign-in (magic links): it's switched off and not in use yet. Sign-in is Discord-only, which can't run here, so both browsers start signed in.
+
 Don't spend more than a few minutes on any one thing. If a page is broken, note it and move on.
 
 ## Report
