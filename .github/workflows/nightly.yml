@@ -37,10 +37,6 @@ jobs:
       - name: Unit tests
         run: npm test 2>&1 | tee unit-tests.txt; exit ${PIPESTATUS[0]}
 
-      - name: Database rule tests
-        if: ${{ !cancelled() }}
-        run: npm run test:db 2>&1 | tee db-tests.txt; exit ${PIPESTATUS[0]}
-
       - name: Install browser
         if: ${{ !cancelled() }}
         run: npx playwright install --with-deps chromium
@@ -48,6 +44,11 @@ jobs:
       - name: Browser tests (functional + security)
         if: ${{ !cancelled() }}
         run: npx playwright test
+
+      # After the browser tests, so Realtime has fully warmed up.
+      - name: Database rule tests
+        if: ${{ !cancelled() }}
+        run: npm run test:db 2>&1 | tee db-tests.txt; exit ${PIPESTATUS[0]}
 
       - name: Dependency audit
         if: ${{ !cancelled() }}

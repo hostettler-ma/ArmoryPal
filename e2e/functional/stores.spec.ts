@@ -72,7 +72,7 @@ test("admins can create a store and add a weekly slot; others can't see admin", 
   const storeName = `E2E Admin Store ${Date.now()}`;
 
   await page.goto("/");
-  await page.getByRole("link", { name: "Admin" }).click();
+  await page.getByRole("link", { name: "Admin", exact: true }).click();
   await page.getByRole("link", { name: "+ New store" }).click();
 
   // Required fields are enforced before anything is sent.
@@ -120,7 +120,7 @@ test("admins can create a store and add a weekly slot; others can't see admin", 
   expect((await regular.page.goto(`/admin/stores/${storeId}`))?.status()).toBe(404);
   expect((await regular.page.goto("/admin/stores/new"))?.status()).toBe(404);
   await regular.page.goto("/");
-  await expect(regular.page.getByRole("link", { name: "Admin" })).toHaveCount(0);
+  await expect(regular.page.getByRole("link", { name: "Admin", exact: true })).toHaveCount(0);
 
   // Viewing the store created this week's event; events block deleting schedules and stores.
   await admin().from("events").delete().eq("store_id", storeId);

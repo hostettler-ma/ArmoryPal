@@ -47,6 +47,8 @@ test.describe("signing in", () => {
 
     await gem.fill("1234 5678"); // spaces are stripped
     await save.click();
+    await expect(page.getByText("Couldn't save your profile")).toHaveCount(0);
+    await expect(page.locator(".field-error")).toHaveCount(0);
     await expect(page).toHaveURL(/\/$/);
     await expect(page.getByRole("link", { name: "Magic Tester" })).toBeVisible();
     await expect(page.getByRole("link", { name: "Find your store" })).toBeVisible();
@@ -102,6 +104,18 @@ test.describe("profile", () => {
     await expect(page).toHaveURL(/\/login$/);
     await page.goto("/me");
     await expect(page).toHaveURL(/\/login\?next=%2Fme$/);
+  });
+
+  test("onboarding without mistakes goes straight to Home", async ({ newPlayer }) => {
+    const { page, id } = await newPlayer({ onboarded: false });
+    await page.goto("/");
+    await expect(page).toHaveURL(/\/welcome$/);
+    await page.getByLabel("Display name").fill("Fresh Player");
+    await page.getByRole("button", { name: "Continue" }).click();
+    await expect(page).toHaveURL(/\/$/);
+    await expect(page.getByRole("link", { name: "Fresh Player" })).toBeVisible();
+    const { data } = await admin().from("profiles").select("display_name").eq("id", id).single();
+    expect(data?.display_name).toBe("Fresh Player");
   });
 
   test("someone without a display name is sent to onboarding first", async ({ newPlayer }) => {
