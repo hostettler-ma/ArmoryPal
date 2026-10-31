@@ -1,0 +1,81 @@
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import { Sheet } from "@/components/sheet";
+import { GUIDE_STEPS } from "@/lib/guide";
+
+/** The getting-started guide as a step-by-step bottom sheet. */
+export function GettingStartedGuide({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const [index, setIndex] = useState(0);
+  const step = GUIDE_STEPS[index];
+  const last = index === GUIDE_STEPS.length - 1;
+
+  const close = () => {
+    onClose();
+    setIndex(0);
+  };
+
+  return (
+    <Sheet open={open} onClose={close} title="Getting started">
+      <div className="space-y-5">
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-sm text-muted" aria-live="polite">
+            Step {index + 1} of {GUIDE_STEPS.length}
+          </p>
+          <div className="flex gap-1.5" aria-hidden>
+            {GUIDE_STEPS.map((s, i) => (
+              <span
+                key={s.title}
+                className={`h-2 rounded-full transition-all ${i === index ? "w-5 bg-accent" : "w-2 bg-border"}`}
+              />
+            ))}
+          </div>
+        </div>
+
+        <div className="min-h-32 space-y-2">
+          <h3 className="text-xl font-bold">{step.title}</h3>
+          <p className="leading-relaxed text-muted">{step.body}</p>
+          {step.link && (
+            <Link href={step.link.href} onClick={close} className="inline-block font-medium text-accent-text">
+              {step.link.label} ›
+            </Link>
+          )}
+        </div>
+
+        <div className="flex gap-2">
+          {index > 0 && (
+            <button type="button" className="btn btn-secondary !w-auto px-5" onClick={() => setIndex(index - 1)}>
+              Back
+            </button>
+          )}
+          <button
+            type="button"
+            className="btn btn-primary flex-1"
+            onClick={() => (last ? close() : setIndex(index + 1))}
+          >
+            {last ? "Let's go" : "Next"}
+          </button>
+        </div>
+        {!last && (
+          <button type="button" className="mx-auto block min-h-10 px-4 text-sm font-medium text-muted" onClick={close}>
+            Skip the guide
+          </button>
+        )}
+      </div>
+    </Sheet>
+  );
+}
+
+/** Reopens the guide on demand (the /guide page). Doesn't change whether it was seen. */
+export function ShowGuideButton() {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button type="button" className="btn btn-primary" onClick={() => setOpen(true)}>
+        Show as walkthrough
+      </button>
+      <GettingStartedGuide open={open} onClose={() => setOpen(false)} />
+    </>
+  );
+}
