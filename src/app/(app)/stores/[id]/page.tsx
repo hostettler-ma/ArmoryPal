@@ -27,7 +27,6 @@ export default async function StorePage({ params }: { params: Promise<{ id: stri
     <main className="space-y-5">
       <PageHeader
         title={store.name}
-        back="/"
         action={
           profile.is_admin && (
             <Link href={`/admin/stores/${store.id}`} className="text-sm font-medium text-accent-text">

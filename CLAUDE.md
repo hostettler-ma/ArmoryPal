@@ -146,6 +146,7 @@ Gotcha: in Windows PowerShell 5.1, `Out-File -Encoding utf8` writes a BOM. Don't
 - `src/lib/auth.ts`: `requireProfile()` for pages (redirects to `/login` or `/welcome`) and `safeNext()` to guard `?next=`.
 - `src/lib/auth.ts` also has `requireAdmin()` (returns a 404 for non-admins) and `isUuid()`. Check route params with `isUuid()` before querying.
 - `src/app/actions/*`: server actions. `src/components/*`: shared components (`admin/` holds admin-only forms).
+- **Signed-in pages live in the `src/app/(app)/` route group**, whose layout calls `requireProfile()` (cached per request with React `cache()`) and renders the app bar. URLs are unchanged. `login`, `welcome`, `~offline`, `auth` and the icon routes stay outside it, so the root layout stays cookie-free and `/~offline` stays static. New signed-in pages go in `(app)`.
 - Pure validation and formatting helpers go in `src/lib/*.ts`, with matching `*.test.ts`. Example: `src/lib/stores.ts` has `parseStoreInput`, `parseScheduleInput` and `formatSchedule`, and its checks mirror the DB constraints.
 - Admin authorization lives in RLS via `public.is_admin()`. Server actions call `requireAdmin()` only to fail fast.
 - Store schedules are deactivated, never deleted, so past events keep their history.
@@ -159,6 +160,7 @@ Gotcha: in Windows PowerShell 5.1, `Out-File -Encoding utf8` writes a BOM. Don't
 
 ## Conventions
 - Mobile-first UI: design for ~375px wide first, with large tap targets and bottom sheets for forms.
+- **Navigation:** every signed-in page shows `<AppBar>` (`src/components/app-bar.tsx`): the burger `<NavMenu>` (a left drawer; add new sections to `SECTIONS` there), the **ArmoryPal wordmark in Cinzel** (`font-logo`) linking Home, the bell and the profile chip. Below it, `<PageHeader title trail>` renders a **breadcrumb trail** from Home (`trail` = the ancestors between Home and this page), which replaces back arrows. Home has no PageHeader.
 - **Colours come from the Expo 2025 Osaka design system palette** (Inochi, Umi, Noyama and Hikari), defined as tokens in `src/app/globals.css` with light and dark values.
   - **Everything interactive uses the Noyama scheme:**
     - `accent` (green `#99C41E`, with dark `accent-foreground`; white on it fails AA) for primary buttons, the active tab and switches.

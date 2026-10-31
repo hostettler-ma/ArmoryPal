@@ -21,7 +21,6 @@ export default async function NotificationsPage() {
     <main className="space-y-5">
       <PageHeader
         title="Notifications"
-        back="/"
         action={
           <Link href="/settings/notifications" className="text-sm font-medium text-accent-text">
             Settings

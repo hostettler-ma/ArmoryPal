@@ -12,7 +12,7 @@ export default async function AdminPage() {
 
   return (
     <main className="space-y-5">
-      <PageHeader title="Admin · Stores" back="/" />
+      <PageHeader title="Admin · Stores" />
       <Link href="/admin/stores/new" className="btn btn-primary">
         + New store
       </Link>

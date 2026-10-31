@@ -11,7 +11,7 @@ export default async function NotificationSettingsPage() {
 
   return (
     <main className="space-y-5">
-      <PageHeader title="Notification settings" back="/notifications" />
+      <PageHeader title="Notification settings" trail={[{ label: "Notifications", href: "/notifications" }]} />
       <p className="text-sm text-muted">Choose what shows up in your notifications. Everything is on by default.</p>
       <ul className="card divide-y divide-border !py-0">
         {NOTIFICATION_KINDS.map((k) => (

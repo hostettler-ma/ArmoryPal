@@ -6,7 +6,7 @@ export default async function NewStorePage() {
   await requireAdmin();
   return (
     <main className="space-y-5">
-      <PageHeader title="New store" back="/admin" />
+      <PageHeader title="New store" trail={[{ label: "Admin", href: "/admin" }]} />
       <StoreForm />
     </main>
   );

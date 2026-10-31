@@ -3,7 +3,6 @@ import { EventCard } from "@/components/event-card";
 import { InstallHint } from "@/components/install-hint";
 import { NextArmoryCard } from "@/components/next-armory-card";
 import { RealtimeRefresh } from "@/components/realtime-refresh";
-import { NotificationBell } from "@/components/notification-bell";
 import { StoreLink } from "@/components/store-link";
 import { formatLocation } from "@/lib/stores";
 import { STORE_SELECT, type StoreWithSchedules } from "@/components/store-card";
@@ -11,7 +10,7 @@ import { requireProfile } from "@/lib/auth";
 import { getCurrentEvents, getNextAttendingEvent } from "@/lib/event-data";
 
 export default async function HomePage() {
-  const { supabase, user, profile } = await requireProfile();
+  const { supabase, user } = await requireProfile();
 
   const [{ data }, next] = await Promise.all([
     supabase
@@ -30,23 +29,8 @@ export default async function HomePage() {
 
   return (
     <main className="space-y-6">
-      <header className="flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold">ArmoryPal</h1>
-        <div className="flex items-center gap-1">
-          <NotificationBell supabase={supabase} userId={user.id} />
-          {profile.is_admin && (
-            <Link href="/admin" className="rounded-full px-3 py-2 text-sm font-medium text-muted">
-              Admin
-            </Link>
-          )}
-          <Link
-            href="/me"
-            className="flex h-10 min-w-10 items-center justify-center rounded-full bg-surface px-3 text-sm font-semibold ring-1 ring-border"
-          >
-            {profile.display_name}
-          </Link>
-        </div>
-      </header>
+      {/* The app bar carries the wordmark; this keeps a page heading for screen readers. */}
+      <h1 className="sr-only">ArmoryPal</h1>
 
       {next ? (
         <>

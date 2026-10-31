@@ -22,7 +22,7 @@ export default async function EditStorePage({ params }: { params: Promise<{ id: 
     <main className="space-y-6">
       <PageHeader
         title={store.name}
-        back="/admin"
+        trail={[{ label: "Admin", href: "/admin" }]}
         action={
           <Link href={`/stores/${store.id}`} className="text-sm font-medium text-accent-text">
             View

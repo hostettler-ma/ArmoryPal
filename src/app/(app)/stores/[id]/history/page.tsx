@@ -51,7 +51,7 @@ export default async function StoreHistoryPage({
 
   return (
     <main className="space-y-5">
-      <PageHeader title="Past events" back={`/stores/${store.id}`} />
+      <PageHeader title="Past events" trail={[{ label: store.name, href: `/stores/${store.id}` }]} />
       <StoreLink store={store} subtitle={formatLocation(store)} />
 
       {rows.length === 0 ? (

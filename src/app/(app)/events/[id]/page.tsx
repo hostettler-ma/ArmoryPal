@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AttendanceButton } from "@/components/attendance-button";
-import { NotificationBell } from "@/components/notification-bell";
 import { RealtimeRefresh } from "@/components/realtime-refresh";
 import { AddRequestSheet } from "@/components/event/add-request-sheet";
 import { CopyRequestsBanner } from "@/components/event/copy-requests-banner";
@@ -86,8 +85,10 @@ export default async function EventPage({
     <main className="space-y-5">
       <PageHeader
         title={event.schedule.label}
-        back={ended ? `/stores/${event.store.id}/history` : `/stores/${event.store.id}`}
-        action={<NotificationBell supabase={supabase} userId={user.id} />}
+        trail={[
+          { label: event.store.name, href: `/stores/${event.store.id}` },
+          ...(ended ? [{ label: "Past events", href: `/stores/${event.store.id}/history` }] : []),
+        ]}
       />
       {/* Live updates: re-render when anyone changes attendance, requests, or pledges. */}
       {!ended && <RealtimeRefresh topic={`event:${event.id}`} event="change" />}
