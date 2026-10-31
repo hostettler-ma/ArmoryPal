@@ -94,7 +94,7 @@ jobs:
           prompt: Read .github/explore/prompt.md and .explore/players.md, then do exactly what the prompt says.
           claude_args: >-
             --mcp-config .github/explore/mcp.json
-            --allowedTools "mcp__alice__*,mcp__bob__*,Read,Glob,Grep,Write(explore-report.md),Bash(curl:*)"
+            --allowedTools "mcp__alice,mcp__bob,Read,Glob,Grep,Write,Edit,Bash(curl:*)"
             --max-turns ${{ env.MAX_TURNS }}
 
       - name: Report
@@ -119,7 +119,12 @@ jobs:
                 const result = [...log].reverse().find((m) => m.type === "result");
                 const init = log.find((m) => m.type === "system" && m.subtype === "init");
                 if (init?.mcp_servers) diag += `\nBrowser tools: ${init.mcp_servers.map((s) => `${s.name}=${s.status}`).join(", ")}`;
-                if (result) diag += `\nResult: ${result.subtype}, ${result.num_turns} turns, ${Math.round((result.duration_ms ?? 0) / 60000)} min${result.is_error ? `\n${String(result.result ?? result.errors ?? "").slice(0, 1500)}` : ""}`;
+                if (result) {
+                  diag += `\nResult: ${result.subtype}, ${result.num_turns} turns, ${Math.round((result.duration_ms ?? 0) / 60000)} min`;
+                  const denied = (result.permission_denials ?? []).map((d) => d.tool_name);
+                  if (denied.length) diag += `\nBlocked tools: ${[...new Set(denied)].join(", ")}`;
+                  diag += `\nClaude's last message: ${String(result.result ?? result.errors ?? "").slice(0, 1500)}`;
+                }
               } catch (e) {
                 diag += `\n(couldn't read the execution log: ${e.message})`;
               }

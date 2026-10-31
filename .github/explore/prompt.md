@@ -29,7 +29,7 @@ Don't spend more than a few minutes on any one thing. If a page is broken, note 
 
 ## Report
 
-Write your findings to `explore-report.md` in the repo root. Use this format and nothing else:
+Write your findings to `explore-report.md` in the repo root. **Create it within your first few steps and update it after each finding**: you have a fixed step budget, and a run that runs out still leaves whatever is in the file. Use this format and nothing else:
 
 ```
 ## Summary
