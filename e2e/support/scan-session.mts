@@ -4,9 +4,9 @@
 //   npx tsx e2e/support/scan-session.mts
 
 import { makeActiveUser } from "./auth-cookies";
-import globalSetup from "./global-setup";
+import { seedTestData } from "./global-setup";
 
-await globalSetup();
+await seedTestData();
 const user = await makeActiveUser("ZAP Scanner");
 // No spaces: the value is passed through ZAP's whitespace-split -z options.
 console.log(user.cookies.map((c) => `${c.name}=${c.value}`).join(";"));

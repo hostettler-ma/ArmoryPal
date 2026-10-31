@@ -60,6 +60,10 @@ jobs:
           npm start > "$RUNNER_TEMP/next.log" 2>&1 &
           npx wait-on@8.0.4 --timeout 60000 http://localhost:3000/login
           cookie=$(npx tsx e2e/support/scan-session.mts | tail -1)
+          if [ -z "$cookie" ] || ! echo "$cookie" | grep -q "auth-token"; then
+            echo "::error title=ZAP scan couldn't sign in::scan-session.mts produced no session cookie"
+            exit 1
+          fi
           echo "::add-mask::$cookie"
           mkdir -p zap && chmod 777 zap && cp .github/zap-rules.tsv zap/
           # Every request carries the session cookie, so ZAP reaches the signed-in pages.

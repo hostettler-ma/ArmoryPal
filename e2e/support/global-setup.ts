@@ -6,7 +6,7 @@ import { admin } from "./supabase";
  * weekly slot. Idempotent, so it's safe against a database that already has
  * them. (The real card catalog isn't needed; `supabase db reset` leaves it empty.)
  */
-export default async function globalSetup() {
+export async function seedTestData() {
   const db = admin();
 
   const { error: cardsError } = await db.from("cards").upsert([
@@ -37,3 +37,7 @@ export default async function globalSetup() {
     if (error) throw error;
   }
 }
+
+// Playwright's globalSetup needs a default export; scripts import seedTestData by name
+// (a default import of this CommonJS-compiled file from an .mts script gets the module object).
+export default seedTestData;
