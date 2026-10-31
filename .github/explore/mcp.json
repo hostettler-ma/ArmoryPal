@@ -1,0 +1,32 @@
+{
+  "mcpServers": {
+    "alice": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@playwright/mcp@0.0.83",
+        "--headless",
+        "--isolated",
+        "--no-sandbox",
+        "--storage-state", ".explore/alice.json",
+        "--viewport-size", "390,844",
+        "--output-dir", ".explore/alice",
+        "--save-trace"
+      ]
+    },
+    "bob": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@playwright/mcp@0.0.83",
+        "--headless",
+        "--isolated",
+        "--no-sandbox",
+        "--storage-state", ".explore/bob.json",
+        "--viewport-size", "1280,800",
+        "--output-dir", ".explore/bob",
+        "--save-trace"
+      ]
+    }
+  }
+}

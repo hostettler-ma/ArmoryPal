@@ -12,6 +12,21 @@ const withSerwist = withSerwistInit({
   additionalPrecacheEntries: [{ url: "/~offline", revision: "1" }],
 });
 
-const nextConfig: NextConfig = {};
+// Baseline security headers on every response (checked by e2e/security).
+// No Content-Security-Policy yet: Next's inline scripts and Supabase's
+// websocket need a nonce-based policy, which is a bigger change.
+const securityHeaders = [
+  { key: "X-Frame-Options", value: "DENY" }, // no framing → no clickjacking
+  { key: "X-Content-Type-Options", value: "nosniff" },
+  { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=()" },
+];
+
+const nextConfig: NextConfig = {
+  poweredByHeader: false,
+  async headers() {
+    return [{ source: "/:path*", headers: securityHeaders }];
+  },
+};
 
 export default withSerwist(nextConfig);

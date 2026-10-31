@@ -12,6 +12,9 @@
     "typecheck": "tsc --noEmit",
     "db:types": "supabase gen types typescript --local --schema public > src/lib/supabase/database.types.ts",
     "test:db": "vitest run --config vitest.db.config.mts",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "audit:check": "tsx scripts/audit-check.mts",
     "db:seed-dev": "tsx scripts/seed-dev.mts"
   },
   "dependencies": {
@@ -25,6 +28,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@playwright/test": "1.63.0",
     "@serwist/next": "^9.5.13",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^22.20.5",

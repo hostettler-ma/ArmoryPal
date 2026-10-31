@@ -1,0 +1,6 @@
+10038	IGNORE	(Content Security Policy header not set: known gap, needs a nonce-based CSP for Next.js inline scripts; tracked separately)
+10055	IGNORE	(CSP wildcard/unsafe directives: see 10038)
+10049	IGNORE	(Non-storable / storable content: informational caching notes)
+10027	IGNORE	(Suspicious comments in JavaScript: matches words like "query" and "admin" in minified framework code)
+10109	IGNORE	(Modern web application: informational)
+10104	IGNORE	(User agent fuzzer: informational)

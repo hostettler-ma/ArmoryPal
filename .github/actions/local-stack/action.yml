@@ -1,0 +1,46 @@
+name: ArmoryPal local stack
+description: >
+  Installs dependencies, starts a throwaway local Supabase (with production-style
+  grants), writes .env.local and builds the app. Nothing here touches production.
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 22
+        cache: npm
+
+    - name: Install dependencies
+      shell: bash
+      run: npm ci
+
+    - name: Start local Supabase
+      shell: bash
+      run: |
+        npx supabase start -x studio,imgproxy,vector,logflare,edge-runtime,postgres-meta,supavisor,storage-api
+        npx supabase status -o json > "$RUNNER_TEMP/supabase.json"
+        jq -r '
+          "NEXT_PUBLIC_SUPABASE_URL=\(.API_URL)",
+          "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=\(.PUBLISHABLE_KEY // .ANON_KEY)",
+          "SUPABASE_SECRET_KEY=\(.SECRET_KEY // .SERVICE_ROLE_KEY)"
+        ' "$RUNNER_TEMP/supabase.json" > .env.local
+        # Keys are local-only, but keep them out of the logs anyway.
+        grep -E 'KEY=' .env.local | cut -d= -f2- | while read -r k; do [ -n "$k" ] && echo "::add-mask::$k"; done
+        grep -v KEY .env.local
+        # No NEXT_PUBLIC_ENABLE_EMAIL_LOGIN: build Discord-only, like production.
+
+    - name: Match production database grants
+      shell: bash
+      run: |
+        db=$(docker ps --filter "name=supabase_db_" --format '{{.Names}}' | head -1)
+        npx tsx e2e/support/prod-grants.mts | docker exec -i "$db" psql -U postgres -d postgres -q 2>&1 \
+          | grep -v 'does not exist' || true
+
+    - name: Import the real card catalog
+      shell: bash
+      run: npx tsx scripts/import-cards.mts
+
+    - name: Build the app
+      shell: bash
+      run: npm run build
