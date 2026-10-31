@@ -58,8 +58,15 @@ test.describe("signing in", () => {
     expect(profile).toEqual({ display_name: "Onboarding Tester", gem_id: "12345678" });
   });
 
-  test("a broken sign-in link shows an error instead of signing in", async ({ page }) => {
-    await page.goto("/auth/callback?code=not-a-real-code");
+  test("a sign-in code without this browser's verifier asks to sign in again here", async ({ page }) => {
+    // What happens when the Discord app returns to a different browser than the one that started sign-in.
+    await page.goto("/auth/callback?code=not-a-real-code&next=%2Fstores");
+    await expect(page).toHaveURL(/\/login\?error=other_browser&next=%2Fstores$/);
+    await expect(page.getByText("You came back in a different browser")).toBeVisible();
+  });
+
+  test("a sign-in link without a code shows the generic error", async ({ page }) => {
+    await page.goto("/auth/callback");
     await expect(page).toHaveURL(/\/login\?error=callback$/);
     await expect(page.getByText("That sign-in link didn't work")).toBeVisible();
   });
@@ -99,8 +106,9 @@ test.describe("profile", () => {
     await page.getByLabel(/GEM ID/).fill("987654");
     await page.getByRole("button", { name: "Save" }).click();
     await expect(page.getByText("Saved.")).toBeVisible();
-    await page.getByRole("link", { name: "Back" }).click();
-    await expect(page.getByRole("link", { name: "Renamed Tester" })).toBeVisible();
+    await page.getByRole("navigation", { name: "Breadcrumb" }).getByRole("link", { name: "Home" }).click();
+    await expect(page).toHaveURL(/\/$/);
+    await expect(page.getByRole("link", { name: "Renamed Tester" })).toBeVisible(); // the profile chip
 
     // Notification settings: every switch flips and the change survives a reload.
     await page.goto("/settings/notifications");

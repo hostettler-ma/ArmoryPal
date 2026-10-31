@@ -41,7 +41,8 @@ test("find a store, add it to My stores, open it, remove it", async ({ newPlayer
   await expect(page.getByText(/Every week: E2E Armory/)).toBeVisible();
   await page.getByRole("link", { name: "Past events" }).click();
   await expect(page.getByRole("heading", { name: "Past events" })).toBeVisible();
-  await page.getByRole("link", { name: "Back" }).click();
+  await page.getByRole("navigation", { name: "Breadcrumb" }).getByRole("link", { name: E2E_STORE_NAME }).click();
+  await expect(page).toHaveURL(new RegExp(`/stores/${E2E_STORE_ID}$`));
 
   // Removing from the store page goes back home.
   await page.getByRole("button", { name: "Remove from My stores" }).click();
@@ -72,7 +73,8 @@ test("admins can create a store and add a weekly slot; others can't see admin", 
   const storeName = `E2E Admin Store ${Date.now()}`;
 
   await page.goto("/");
-  await page.getByRole("link", { name: "Admin", exact: true }).click();
+  await page.getByRole("button", { name: "Menu" }).click();
+  await page.getByRole("dialog", { name: "Menu" }).getByRole("link", { name: "Admin", exact: true }).click();
   await page.getByRole("link", { name: "+ New store" }).click();
 
   // Required fields are enforced before anything is sent.
@@ -120,7 +122,10 @@ test("admins can create a store and add a weekly slot; others can't see admin", 
   expect((await regular.page.goto(`/admin/stores/${storeId}`))?.status()).toBe(404);
   expect((await regular.page.goto("/admin/stores/new"))?.status()).toBe(404);
   await regular.page.goto("/");
-  await expect(regular.page.getByRole("link", { name: "Admin", exact: true })).toHaveCount(0);
+  await regular.page.getByRole("button", { name: "Menu" }).click();
+  const menu = regular.page.getByRole("dialog", { name: "Menu" });
+  await expect(menu.getByRole("link", { name: "Find a store" })).toBeVisible();
+  await expect(menu.getByRole("link", { name: "Admin", exact: true })).toHaveCount(0);
 
   // Viewing the store created this week's event; events block deleting schedules and stores.
   await admin().from("events").delete().eq("store_id", storeId);

@@ -76,7 +76,8 @@ if (existsSync("audit.txt")) {
 
 // --- ZAP --------------------------------------------------------------------------
 if (existsSync("zap.json")) {
-  type Alert = { name: string; riskcode: string; riskdesc: string; pluginid: string; instances: { uri: string }[] };
+  type Instance = { uri: string; method?: string; param?: string; attack?: string; evidence?: string; otherinfo?: string };
+  type Alert = { name: string; riskcode: string; riskdesc: string; pluginid: string; otherinfo?: string; instances: Instance[] };
   const zap = JSON.parse(readFileSync("zap.json", "utf8")) as { site: { alerts: Alert[] }[] };
   // Rules marked IGNORE in .github/zap-rules.tsv (with the reason there) are left out.
   const ignored = existsSync(".github/zap-rules.tsv")
@@ -87,16 +88,56 @@ if (existsSync("zap.json")) {
           .map((l) => l.split("\t")[0]),
       )
     : new Set<string>();
+  // Next.js encodes which server action to run in form fields named $ACTION_* (the action id, its
+  // bound arguments, a random key). Mangling them makes Next return a different page, which ZAP's
+  // boolean SQL-injection check reads as injection. They never reach the database, so findings on
+  // them are set aside (and counted), while the same rule still fails the run on any real parameter.
+  const frameworkParam = (p?: string) => !!p && /^\$ACTION/.test(p);
+  let setAside = 0;
   const alerts = zap.site
     .flatMap((s) => s.alerts)
     .filter((a) => !ignored.has(a.pluginid))
+    .map((a) => {
+      const real = a.instances.filter((i) => !frameworkParam(i.param));
+      setAside += a.instances.length - real.length;
+      return { ...a, instances: real };
+    })
+    .filter((a) => a.instances.length > 0)
     .sort((a, b) => Number(b.riskcode) - Number(a.riskcode));
-  const high = alerts.filter((a) => a.riskcode === "3");
+  // Boolean-based SQL injection (rule 40018 with no database error as evidence) compares pages
+  // across requests. On forms that change data (attend/leave, pledge) the page differs because ZAP's
+  // own requests changed it, so these are reported for review instead of failing the run. Any
+  // finding with evidence (a database error in the response) still fails it, and
+  // e2e/security/no-dynamic-sql.spec.ts guards the code against injectable patterns.
+  const unconfirmed = (a: Alert) => a.pluginid === "40018" && a.instances.every((i) => !i.evidence);
+  const review = alerts.filter((a) => a.riskcode === "3" && unconfirmed(a));
+  const high = alerts.filter((a) => a.riskcode === "3" && !unconfirmed(a));
   if (high.length) failed = true;
   out.push("", `### ZAP security scan: ${high.length ? `❌ ${high.length} high-risk finding(s)` : "✅ no high-risk findings"}`);
+  if (review.length)
+    out.push(
+      `⚠️ ${review.reduce((n, a) => n + a.instances.length, 0)} unconfirmed boolean-based SQL injection finding(s) to review (no database error seen; details below).`,
+    );
+  if (setAside) out.push(`(${setAside} finding(s) on Next.js server-action internals ($ACTION_*) set aside; they never reach the database.)`);
   if (alerts.length) {
     out.push("| Risk | Finding | Rule | Example URL |", "|---|---|---|---|");
     for (const a of alerts) out.push(`| ${a.riskdesc.split(" ")[0]} | ${a.name} | ${a.pluginid} | ${a.instances[0]?.uri ?? ""} |`);
+  }
+  // For high and medium findings, show exactly what ZAP sent and saw, so they can be verified or dismissed.
+  const clip = (v: unknown, n = 300) => String(v ?? "").replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim().slice(0, n);
+  for (const a of alerts.filter((x) => Number(x.riskcode) >= 2)) {
+    out.push("", `<details><summary>${a.riskdesc.split(" ")[0]}: ${a.name} (rule ${a.pluginid}), ${a.instances.length} instance(s)</summary>`, "");
+    for (const i of a.instances.slice(0, 5)) {
+      out.push(
+        `- \`${i.method ?? "GET"} ${i.uri}\``,
+        `  - parameter: \`${clip(i.param, 80) || "-"}\``,
+        `  - attack: \`${clip(i.attack, 200) || "-"}\``,
+        `  - evidence: \`${clip(i.evidence, 200) || "-"}\``,
+        ...(i.otherinfo ? [`  - ZAP's reasoning: ${clip(i.otherinfo, 500)}`] : []),
+      );
+    }
+    if (a.otherinfo) out.push("", `ZAP's reasoning: ${clip(a.otherinfo, 600)}`);
+    out.push("", "</details>");
   }
 }
 

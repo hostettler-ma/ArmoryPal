@@ -20,6 +20,8 @@ type NewPlayer = (opts?: {
   isAdmin?: boolean;
   /** false = leave the display name empty, so the app sends them to /welcome. */
   onboarded?: boolean;
+  /** false = show the first-run guide pop-up on Home (default: already seen, so it doesn't cover the page). */
+  guideSeen?: boolean;
 }) => Promise<Player>;
 
 type Fixtures = {
@@ -52,7 +54,7 @@ export const test = base.extend<Fixtures>({
     const contextOptions = { baseURL, viewport, userAgent, isMobile, hasTouch, deviceScaleFactor };
     const created: Player[] = [];
 
-    await provide(async ({ name, isAdmin = false, onboarded = true } = {}) => {
+    await provide(async ({ name, isAdmin = false, onboarded = true, guideSeen = true } = {}) => {
       const email = `e2e-${randomUUID()}@example.com`;
       const password = `pw-${randomUUID()}`;
       const displayName = onboarded ? (name ?? `Player ${uid()}`) : "";
@@ -62,7 +64,11 @@ export const test = base.extend<Fixtures>({
       const id = data.user.id;
       const { error: profileError } = await admin()
         .from("profiles")
-        .update({ display_name: displayName || null, is_admin: isAdmin })
+        .update({
+          display_name: displayName || null,
+          is_admin: isAdmin,
+          guide_seen_at: guideSeen ? new Date().toISOString() : null,
+        })
         .eq("id", id);
       if (profileError) throw profileError;
 
