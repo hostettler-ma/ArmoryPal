@@ -76,7 +76,8 @@ if (existsSync("audit.txt")) {
 
 // --- ZAP --------------------------------------------------------------------------
 if (existsSync("zap.json")) {
-  type Alert = { name: string; riskcode: string; riskdesc: string; pluginid: string; instances: { uri: string }[] };
+  type Instance = { uri: string; method?: string; param?: string; attack?: string; evidence?: string; otherinfo?: string };
+  type Alert = { name: string; riskcode: string; riskdesc: string; pluginid: string; otherinfo?: string; instances: Instance[] };
   const zap = JSON.parse(readFileSync("zap.json", "utf8")) as { site: { alerts: Alert[] }[] };
   // Rules marked IGNORE in .github/zap-rules.tsv (with the reason there) are left out.
   const ignored = existsSync(".github/zap-rules.tsv")
@@ -97,6 +98,22 @@ if (existsSync("zap.json")) {
   if (alerts.length) {
     out.push("| Risk | Finding | Rule | Example URL |", "|---|---|---|---|");
     for (const a of alerts) out.push(`| ${a.riskdesc.split(" ")[0]} | ${a.name} | ${a.pluginid} | ${a.instances[0]?.uri ?? ""} |`);
+  }
+  // For high and medium findings, show exactly what ZAP sent and saw, so they can be verified or dismissed.
+  const clip = (v: unknown, n = 300) => String(v ?? "").replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim().slice(0, n);
+  for (const a of alerts.filter((x) => Number(x.riskcode) >= 2)) {
+    out.push("", `<details><summary>${a.riskdesc.split(" ")[0]}: ${a.name} (rule ${a.pluginid}), ${a.instances.length} instance(s)</summary>`, "");
+    for (const i of a.instances.slice(0, 5)) {
+      out.push(
+        `- \`${i.method ?? "GET"} ${i.uri}\``,
+        `  - parameter: \`${clip(i.param, 80) || "-"}\``,
+        `  - attack: \`${clip(i.attack, 200) || "-"}\``,
+        `  - evidence: \`${clip(i.evidence, 200) || "-"}\``,
+        ...(i.otherinfo ? [`  - ZAP's reasoning: ${clip(i.otherinfo, 500)}`] : []),
+      );
+    }
+    if (a.otherinfo) out.push("", `ZAP's reasoning: ${clip(a.otherinfo, 600)}`);
+    out.push("", "</details>");
   }
 }
 

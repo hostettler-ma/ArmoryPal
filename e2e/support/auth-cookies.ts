@@ -34,7 +34,10 @@ export async function makeActiveUser(name: string, opts: { isAdmin?: boolean } =
   const { data, error } = await admin().auth.admin.createUser({ email, password, email_confirm: true });
   if (error) throw error;
   const id = data.user.id;
-  await admin().from("profiles").update({ display_name: name, is_admin: opts.isAdmin ?? false }).eq("id", id);
+  await admin()
+    .from("profiles")
+    .update({ display_name: name, is_admin: opts.isAdmin ?? false, guide_seen_at: new Date().toISOString() })
+    .eq("id", id);
   await admin().from("user_stores").insert({ user_id: id, store_id: E2E_STORE_ID });
 
   const db = await signedIn(email, password);
