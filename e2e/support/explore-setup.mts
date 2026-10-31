@@ -6,11 +6,11 @@
 
 import { mkdirSync, writeFileSync } from "node:fs";
 import { makeActiveUser } from "./auth-cookies";
-import globalSetup from "./global-setup";
+import { seedTestData } from "./global-setup";
 
 const baseURL = process.argv[2] ?? "http://localhost:3000";
 const { hostname } = new URL(baseURL);
-await globalSetup();
+await seedTestData();
 mkdirSync(".explore", { recursive: true });
 
 const players = { alice: await makeActiveUser("Alice", { isAdmin: true }), bob: await makeActiveUser("Bob") };
