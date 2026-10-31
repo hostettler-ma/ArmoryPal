@@ -1,4 +1,4 @@
-/** One step of the getting-started guide (first-run pop-up and the /guide page). */
+/** One step of the getting-started guide (first-run pop-up and the /guide page). `link` shows only on the page. */
 export type GuideStep = { title: string; body: string; link?: { href: string; label: string } };
 
 export const GUIDE_STEPS: GuideStep[] = [

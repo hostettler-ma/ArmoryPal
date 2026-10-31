@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { Sheet } from "@/components/sheet";
 import { GUIDE_STEPS } from "@/lib/guide";
 
@@ -35,12 +34,9 @@ export function GettingStartedGuide({ open, onClose }: { open: boolean; onClose:
 
         <div className="min-h-32 space-y-2">
           <h3 className="text-xl font-bold">{step.title}</h3>
+          {/* No step links here: following one would close the guide (and on first run mark it seen)
+              before the player reaches the remaining steps. The /guide page shows them instead. */}
           <p className="leading-relaxed text-muted">{step.body}</p>
-          {step.link && (
-            <Link href={step.link.href} onClick={close} className="inline-block font-medium text-accent-text">
-              {step.link.label} ›
-            </Link>
-          )}
         </div>
 
         <div className="flex gap-2">
