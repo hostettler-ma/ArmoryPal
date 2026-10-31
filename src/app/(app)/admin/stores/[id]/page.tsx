@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { setScheduleActive } from "@/app/actions/admin";
+import { DeleteStoreButton, RestoreStoreButton } from "@/components/admin/moderation-buttons";
 import { ScheduleForm } from "@/components/admin/schedule-form";
 import { StoreForm } from "@/components/admin/store-form";
 import { PageHeader } from "@/components/page-header";
@@ -12,9 +13,10 @@ export default async function EditStorePage({ params }: { params: Promise<{ id: 
   if (!isUuid(id)) notFound();
   const { supabase } = await requireAdmin();
 
-  const [{ data: store }, { data: schedules }] = await Promise.all([
+  const [{ data: store }, { data: schedules }, { count: eventCount }] = await Promise.all([
     supabase.from("stores").select("*").eq("id", id).maybeSingle(),
     supabase.from("store_schedules").select("*").eq("store_id", id).order("weekday").order("start_time"),
+    supabase.from("events").select("id", { count: "exact", head: true }).eq("store_id", id),
   ]);
   if (!store) notFound();
 
@@ -29,6 +31,19 @@ export default async function EditStorePage({ params }: { params: Promise<{ id: 
           </Link>
         }
       />
+
+      {store.archived_at && (
+        <div className="card space-y-3 border border-border">
+          <p>
+            <span className="font-semibold">Archived.</span>{" "}
+            <span className="text-muted">
+              Hidden from search and Home since{" "}
+              {new Date(store.archived_at).toLocaleDateString("en-US", { dateStyle: "medium" })}. Past events are kept.
+            </span>
+          </p>
+          <RestoreStoreButton storeId={store.id} />
+        </div>
+      )}
 
       <section className="space-y-3">
         <h2 className="text-lg font-semibold">Weekly slots</h2>
@@ -60,6 +75,13 @@ export default async function EditStorePage({ params }: { params: Promise<{ id: 
         <h2 className="text-lg font-semibold">Store details</h2>
         <StoreForm store={store} />
       </section>
+
+      {!store.archived_at && (
+        <section className="space-y-3">
+          <h2 className="text-lg font-semibold text-danger">Danger zone</h2>
+          <DeleteStoreButton storeId={store.id} name={store.name} eventCount={eventCount ?? 0} />
+        </section>
+      )}
     </main>
   );
 }

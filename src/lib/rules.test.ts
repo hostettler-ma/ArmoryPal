@@ -120,6 +120,8 @@ describe("requests", () => {
 describe("ruleMessage", () => {
   it("maps known codes and falls back for unknown errors", () => {
     expect(ruleMessage("own_request")).toMatch(/your own request/);
+    expect(ruleMessage("cannot_ban_admin")).toMatch(/Remove their admin rights first/);
+    expect(ruleMessage("banned")).toBe("Your account is suspended.");
     expect(ruleMessage("duplicate key value violates…")).toBe("Something went wrong. Try again.");
     expect(ruleMessage(undefined)).toBe("Something went wrong. Try again.");
   });

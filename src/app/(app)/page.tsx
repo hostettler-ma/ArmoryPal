@@ -20,7 +20,10 @@ export default async function HomePage() {
       .order("created_at"),
     getNextAttendingEvent(supabase, user.id),
   ]);
-  const stores = (data ?? []).map((row) => row.store as unknown as StoreWithSchedules).filter(Boolean);
+  // Archived stores no longer run events, so they drop off Home.
+  const stores = (data ?? [])
+    .map((row) => row.store as unknown as StoreWithSchedules)
+    .filter((s) => s && !s.archived_at);
   const events = await getCurrentEvents(
     supabase,
     stores.map((s) => s.id),

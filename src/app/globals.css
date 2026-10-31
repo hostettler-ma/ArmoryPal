@@ -136,6 +136,10 @@ body {
   .btn-secondary {
     @apply border-2 border-accent-soft bg-surface text-foreground;
   }
+  /* Destructive admin actions. Outlined: white on --danger fails AA in dark mode. */
+  .btn-danger {
+    @apply border-2 border-danger bg-surface text-danger;
+  }
   .input {
     @apply min-h-12 w-full rounded-xl border border-border bg-surface px-4 text-base outline-none focus:border-accent-text;
   }

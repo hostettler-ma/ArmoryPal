@@ -3,7 +3,9 @@ export type NotificationPayload = {
   card?: string;
   quantity?: number;
   actor?: string;
-  reason?: "unpledged" | "left_event" | "cancelled";
+  reason?: "unpledged" | "left_event" | "cancelled" | "removed";
+  /** removed_from_event: the admin's optional reason. */
+  note?: string;
   /** new_requests: distinct cards and total copies in one add. */
   items?: number;
   copies?: number;
@@ -33,6 +35,11 @@ export const NOTIFICATION_KINDS = [
     label: "No need to bring a card",
     description: "A request you promised to bring for was cancelled.",
   },
+  {
+    kind: "removed_from_event",
+    label: "Removed from an event",
+    description: "An admin took you off an event's Going list.",
+  },
 ] as const;
 
 export type NotificationKind = (typeof NOTIFICATION_KINDS)[number]["kind"];
@@ -44,11 +51,15 @@ export function formatNotification(kind: string, payload: NotificationPayload): 
   const copies = (n = payload.quantity) => `${n ?? 1}× ${card}`;
 
   if (kind === "pledge_released") {
+    if (payload.reason === "removed") return `${actor} was removed from the event, so ${copies()} is needed again.`;
     return payload.reason === "left_event"
       ? `${actor} can't make it anymore, so ${copies()} is needed again.`
       : `${actor} can no longer bring ${copies()}. It's needed again.`;
   }
   if (kind === "request_cancelled") {
+    if (payload.reason === "removed") {
+      return `${actor} was removed from the event, so their request for ${card} is cancelled. You don't need to bring ${copies()}.`;
+    }
     return payload.reason === "left_event"
       ? `${actor} isn't going anymore and cancelled their request for ${card}. You don't need to bring ${copies()}.`
       : `${actor} no longer needs ${card}. You don't need to bring ${copies()}.`;
@@ -58,6 +69,9 @@ export function formatNotification(kind: string, payload: NotificationPayload): 
     return items > 1
       ? `${actor} needs ${payload.copies ?? items} cards: ${card} and ${items - 1} more.`
       : `${actor} needs ${copies(payload.copies)}.`;
+  }
+  if (kind === "removed_from_event") {
+    return `An admin removed you from this event.${payload.note ? ` Reason: ${payload.note}` : ""}`;
   }
   if (kind === "requests_filled") {
     const n = payload.requests ?? 1;
