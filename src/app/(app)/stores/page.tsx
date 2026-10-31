@@ -16,7 +16,7 @@ export default async function StoresPage({ searchParams }: { searchParams: Promi
 
   return (
     <main className="space-y-5">
-      <PageHeader title="Find a store" back="/" />
+      <PageHeader title="Find a store" />
 
       <form role="search" className="flex gap-2">
         <input

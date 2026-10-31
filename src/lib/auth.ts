@@ -1,11 +1,13 @@
+import { cache } from "react";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
 /**
  * For pages that need a signed-in, onboarded user. Redirects to /login or
  * /welcome otherwise. Returns the Supabase client so callers can reuse it.
+ * Cached per request, so the (app) layout and the page share one lookup.
  */
-export async function requireProfile() {
+export const requireProfile = cache(async () => {
   const supabase = await createClient();
   const {
     data: { user },
@@ -20,7 +22,7 @@ export async function requireProfile() {
   if (!profile?.display_name) redirect("/welcome");
 
   return { supabase, user, profile: { ...profile, display_name: profile.display_name } };
-}
+});
 
 /** Like requireProfile, but 404s for non-admins so the admin area stays hidden. */
 export async function requireAdmin() {

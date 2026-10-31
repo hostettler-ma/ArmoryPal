@@ -115,6 +115,7 @@
   --color-store-muted: var(--store-muted);
   --color-store-icon-fg: var(--store-icon-fg);
   --font-sans: var(--font-geist-sans), system-ui, sans-serif;
+  --font-logo: var(--font-cinzel), serif;
 }
 
 body {
