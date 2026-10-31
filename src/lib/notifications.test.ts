@@ -31,6 +31,17 @@ describe("formatNotification", () => {
     );
   });
 
+  it("explains admin removals", () => {
+    expect(formatNotification("pledge_released", { ...base, reason: "removed" })).toMatch(/was removed from the event/);
+    expect(formatNotification("request_cancelled", { ...base, actor: "Rhea", reason: "removed" })).toMatch(
+      /^Rhea was removed from the event, so their request/,
+    );
+    expect(formatNotification("removed_from_event", { note: "No-show last week" })).toBe(
+      "An admin removed you from this event. Reason: No-show last week",
+    );
+    expect(formatNotification("removed_from_event", {})).toBe("An admin removed you from this event.");
+  });
+
   it("celebrates fully covered requests", () => {
     expect(formatNotification("requests_filled", { requests: 3, copies: 5 })).toBe(
       "All 3 of your requests are covered. Someone is bringing every card you asked for.",

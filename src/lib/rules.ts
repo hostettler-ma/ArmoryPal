@@ -23,7 +23,19 @@ export type RuleError =
   | "note_too_long"
   | "no_items"
   | "card_not_found"
-  | "invalid_copy";
+  | "invalid_copy"
+  // Moderation (admin RPCs in *_admin_moderation.sql).
+  | "banned"
+  | "not_admin"
+  | "invalid_reason"
+  | "reason_too_long"
+  | "user_not_found"
+  | "cannot_ban_self"
+  | "cannot_ban_admin"
+  | "already_banned"
+  | "not_banned"
+  | "store_not_found"
+  | "store_not_archived";
 
 export type Check = { ok: true } | { ok: false; reason: RuleError };
 const ok: Check = { ok: true };
@@ -115,6 +127,17 @@ const MESSAGES: Record<RuleError, string> = {
   no_items: "Pick at least one card.",
   card_not_found: "That card isn't in the catalog.",
   invalid_copy: "Requests can only be copied from last week's event of the same slot.",
+  banned: "Your account is suspended.",
+  not_admin: "Only admins can do that.",
+  invalid_reason: "Give a reason (up to 200 characters).",
+  reason_too_long: "Keep the reason to 200 characters.",
+  user_not_found: "That player doesn't exist.",
+  cannot_ban_self: "You can't ban yourself.",
+  cannot_ban_admin: "Admins can't be banned. Remove their admin rights first.",
+  already_banned: "That player is already banned.",
+  not_banned: "That player isn't banned.",
+  store_not_found: "That store doesn't exist.",
+  store_not_archived: "That store isn't archived.",
 };
 
 /** Friendly text for an error code raised by the SQL functions (or a Check). */

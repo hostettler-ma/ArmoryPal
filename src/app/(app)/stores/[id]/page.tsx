@@ -21,7 +21,8 @@ export default async function StorePage({ params }: { params: Promise<{ id: stri
   if (!data) notFound();
   const store = data as unknown as StoreWithSchedules;
   const schedules = activeSchedules(store);
-  const events = (await getCurrentEvents(supabase, [store.id], user.id)).get(store.id) ?? [];
+  const archived = !!store.archived_at;
+  const events = archived ? [] : ((await getCurrentEvents(supabase, [store.id], user.id)).get(store.id) ?? []);
 
   return (
     <main className="space-y-5">
@@ -41,28 +42,37 @@ export default async function StorePage({ params }: { params: Promise<{ id: stri
         {store.address && <p className="text-sm text-muted">{store.address}</p>}
       </div>
 
-      <StoreNotes notes={store.notes} />
+      {archived ? (
+        <p className="card text-muted">
+          This store is archived: it no longer runs Armory events on ArmoryPal. Its past events are still below.
+        </p>
+      ) : (
+        <>
+          <StoreNotes notes={store.notes} />
+          <MyStoreButton storeId={store.id} isMine={!!mine} wide redirectOnRemove="/" />
+        </>
+      )}
 
-      <MyStoreButton storeId={store.id} isMine={!!mine} wide redirectOnRemove="/" />
-
-      <section className="space-y-3">
-        <h2 className="text-lg font-semibold">This week</h2>
-        {events.length ? (
-          <ul className="space-y-2">
-            {events.map((e) => (
-              <li key={e.id}>
-                <EventCard event={e} timezone={store.timezone} />
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="card text-muted">This store has no Armory scheduled yet.</p>
-        )}
-        {schedules.length > 0 && (
-          <p className="text-sm text-muted">Every week: {schedules.map((s) => `${s.label}, ${formatSchedule(s)}`).join(" · ")}</p>
-        )}
-        <p className="text-xs text-muted">Times are local to the store ({store.timezone.replaceAll("_", " ")}).</p>
-      </section>
+      {!archived && (
+        <section className="space-y-3">
+          <h2 className="text-lg font-semibold">This week</h2>
+          {events.length ? (
+            <ul className="space-y-2">
+              {events.map((e) => (
+                <li key={e.id}>
+                  <EventCard event={e} timezone={store.timezone} />
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="card text-muted">This store has no Armory scheduled yet.</p>
+          )}
+          {schedules.length > 0 && (
+            <p className="text-sm text-muted">Every week: {schedules.map((s) => `${s.label}, ${formatSchedule(s)}`).join(" · ")}</p>
+          )}
+          <p className="text-xs text-muted">Times are local to the store ({store.timezone.replaceAll("_", " ")}).</p>
+        </section>
+      )}
 
       <Link href={`/stores/${store.id}/history`} className="btn btn-secondary">
         Past events

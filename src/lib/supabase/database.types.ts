@@ -5,7 +5,27 @@ export type Database = {
   
   "public": {
           Tables: {
-            "attendances": {
+            "admin_actions": {
+                  Row: {
+                    "action": string,"admin_id": string | null,"created_at": string,"detail": string | null,"id": number,"target_event": string | null,"target_label": string | null,"target_store": string | null,"target_user": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "action": string,"admin_id"?: string | null,"created_at"?: string,"detail"?: string | null,"id"?: never,"target_event"?: string | null,"target_label"?: string | null,"target_store"?: string | null,"target_user"?: string | null
+                  }
+                  Update: {
+                    "action"?: string,"admin_id"?: string | null,"created_at"?: string,"detail"?: string | null,"id"?: never,"target_event"?: string | null,"target_label"?: string | null,"target_store"?: string | null,"target_user"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "admin_actions_admin_id_fkey"
+      columns: ["admin_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"attendances": {
                   Row: {
                     "created_at": string,"event_id": string,"user_id": string
                   }
@@ -27,6 +47,32 @@ isOneToOne: false
       foreignKeyName: "attendances_user_id_fkey"
       columns: ["user_id"]
 isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"bans": {
+                  Row: {
+                    "banned_by": string | null,"created_at": string,"reason": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "banned_by"?: string | null,"created_at"?: string,"reason": string,"user_id": string
+                  }
+                  Update: {
+                    "banned_by"?: string | null,"created_at"?: string,"reason"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "bans_banned_by_fkey"
+      columns: ["banned_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "bans_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: true
       referencedRelation: "profiles"
       referencedColumns: ["id"]
     }
@@ -237,14 +283,14 @@ isOneToOne: false
                   ]
                 },"stores": {
                   Row: {
-                    "address": string | null,"city": string,"country": string,"created_at": string,"created_by": string | null,"id": string,"name": string,"notes": string | null,"region": string | null,"timezone": string
+                    "address": string | null,"archived_at": string | null,"city": string,"country": string,"created_at": string,"created_by": string | null,"id": string,"name": string,"notes": string | null,"region": string | null,"timezone": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "address"?: string | null,"city": string,"country": string,"created_at"?: string,"created_by"?: string | null,"id"?: string,"name": string,"notes"?: string | null,"region"?: string | null,"timezone": string
+                    "address"?: string | null,"archived_at"?: string | null,"city": string,"country": string,"created_at"?: string,"created_by"?: string | null,"id"?: string,"name": string,"notes"?: string | null,"region"?: string | null,"timezone": string
                   }
                   Update: {
-                    "address"?: string | null,"city"?: string,"country"?: string,"created_at"?: string,"created_by"?: string | null,"id"?: string,"name"?: string,"notes"?: string | null,"region"?: string | null,"timezone"?: string
+                    "address"?: string | null,"archived_at"?: string | null,"city"?: string,"country"?: string,"created_at"?: string,"created_by"?: string | null,"id"?: string,"name"?: string,"notes"?: string | null,"region"?: string | null,"timezone"?: string
                   }
                   Relationships: [
                     {
@@ -306,6 +352,29 @@ isOneToOne: false
         isOneToOne: false
         isSetofReturn: true
       } },
+"admin_ban":
+{ Args: { "p_reason": string,"p_user_id": string }; Returns: undefined
+                           },
+"admin_delete_store":
+{ Args: { "p_store_id": string }; Returns: string
+                           },
+"admin_list_players":
+{ Args: { "p_limit"?: number,"p_query"?: string }; Returns: {
+              "banned": boolean,"created_at": string,"display_name": string,"email": string,"id": string,"is_admin": boolean,"provider": string
+            }[]
+                           },
+"admin_remove_attendee":
+{ Args: { "p_event_id": string,"p_reason"?: string,"p_user_id": string }; Returns: undefined
+                           },
+"admin_restore_store":
+{ Args: { "p_store_id": string }; Returns: undefined
+                           },
+"admin_unban":
+{ Args: { "p_user_id": string }; Returns: undefined
+                           },
+"assert_admin":
+{ Args: Record<PropertyKey, never>; Returns: undefined
+                           },
 "assert_attending":
 { Args: { "p_event_id": string }; Returns: undefined
                            },
@@ -367,6 +436,9 @@ isOneToOne: false
 "is_admin":
 { Args: Record<PropertyKey, never>; Returns: boolean
                            },
+"is_banned":
+{ Args: Record<PropertyKey, never>; Returns: boolean
+                           },
 "is_valid_timezone":
 { Args: { "tz": string }; Returns: boolean
                            },
@@ -392,6 +464,9 @@ isOneToOne: false
         isOneToOne: true
         isSetofReturn: false
       } },
+"log_admin_action":
+{ Args: { "p_action": string,"p_detail": string,"p_target_event": string,"p_target_label": string,"p_target_store": string,"p_target_user": string }; Returns: undefined
+                           },
 "mark_notifications_read":
 { Args: Record<PropertyKey, never>; Returns: undefined
                            },
@@ -420,6 +495,9 @@ isOneToOne: false
 "release_my_pledges":
 { Args: { "p_event_id": string,"p_reason": string }; Returns: undefined
                            },
+"remove_from_event":
+{ Args: { "p_event_id": string,"p_user_id": string }; Returns: undefined
+                           },
 "resolve_card_names":
 { Args: { "p_names": (string)[] }; Returns: {
               "idx": number,"input": string,"match": string,"name": string
@@ -445,6 +523,7 @@ isOneToOne: false
 "search_stores":
 { Args: { "q": string }; Returns: {
               "address": string | null,
+"archived_at": string | null,
 "city": string,
 "country": string,
 "created_at": string,

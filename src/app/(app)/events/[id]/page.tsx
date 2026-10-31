@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AttendanceButton } from "@/components/attendance-button";
 import { RealtimeRefresh } from "@/components/realtime-refresh";
+import { RemoveAttendeeButton } from "@/components/admin/moderation-buttons";
 import { AddRequestSheet } from "@/components/event/add-request-sheet";
 import { CopyRequestsBanner } from "@/components/event/copy-requests-banner";
 import { getCopyCandidate } from "@/lib/event-data";
@@ -31,7 +32,7 @@ export default async function EventPage({
   if (!isUuid(id)) notFound();
   const tabParam = (await searchParams).tab;
   const tab: Tab = TABS.includes(tabParam as Tab) ? (tabParam as Tab) : TABS[0];
-  const { supabase, user } = await requireProfile();
+  const { supabase, user, profile } = await requireProfile();
 
   const [{ data: event }, { data: requestRows }, { data: meta }] = await Promise.all([
     supabase
@@ -215,6 +216,10 @@ export default async function EventPage({
                         {p.stillNeeded === 0 ? "all covered" : `${p.stillNeeded} still needed`}
                       </span>
                     </span>
+                  )}
+                  {/* Admins can take others off an open event (admin_remove_attendee). */}
+                  {profile.is_admin && !ended && p.attending && !p.isMe && (
+                    <RemoveAttendeeButton eventId={event.id} userId={p.id} name={p.name} />
                   )}
                 </li>
               ))}

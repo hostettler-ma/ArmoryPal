@@ -5,29 +5,53 @@ import { formatLocation } from "@/lib/stores";
 
 export default async function AdminPage() {
   const { supabase } = await requireAdmin();
-  const { data: stores } = await supabase
+  const { data } = await supabase
     .from("stores")
-    .select("id, name, city, region, country, store_schedules(count)")
+    .select("id, name, city, region, country, archived_at, store_schedules(count)")
     .order("name");
+  // Archived stores last.
+  const stores = [...(data ?? [])].sort((a, b) => Number(!!a.archived_at) - Number(!!b.archived_at));
 
   return (
     <main className="space-y-5">
-      <PageHeader title="Admin · Stores" />
-      <Link href="/admin/stores/new" className="btn btn-primary">
-        + New store
-      </Link>
-      <ul className="space-y-2">
-        {(stores ?? []).map((s) => (
-          <li key={s.id}>
-            <Link href={`/admin/stores/${s.id}`} className="card block">
-              <p className="font-semibold">{s.name}</p>
-              <p className="text-sm text-muted">
-                {formatLocation(s)} · {s.store_schedules[0]?.count ?? 0} slot(s)
-              </p>
-            </Link>
-          </li>
-        ))}
-      </ul>
+      <PageHeader title="Admin" />
+
+      <nav className="grid grid-cols-2 gap-2" aria-label="Admin sections">
+        <Link href="/admin/players" className="card block font-semibold">
+          Players
+          <span className="block text-sm font-normal text-muted">Find, ban, unban</span>
+        </Link>
+        <Link href="/admin/log" className="card block font-semibold">
+          Admin log
+          <span className="block text-sm font-normal text-muted">Every admin action</span>
+        </Link>
+      </nav>
+
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold">Stores</h2>
+        <Link href="/admin/stores/new" className="btn btn-primary">
+          + New store
+        </Link>
+        <ul className="space-y-2">
+          {stores.map((s) => (
+            <li key={s.id}>
+              <Link href={`/admin/stores/${s.id}`} className={`card block ${s.archived_at ? "opacity-60" : ""}`}>
+                <p className="font-semibold">
+                  {s.name}
+                  {s.archived_at && (
+                    <span className="ml-2 rounded-full border border-border px-1.5 text-xs font-normal text-muted">
+                      Archived
+                    </span>
+                  )}
+                </p>
+                <p className="text-sm text-muted">
+                  {formatLocation(s)} · {s.store_schedules[0]?.count ?? 0} slot(s)
+                </p>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </section>
     </main>
   );
 }

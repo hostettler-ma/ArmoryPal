@@ -21,6 +21,10 @@ export const requireProfile = cache(async () => {
     .single();
   if (!profile?.display_name) redirect("/welcome");
 
+  // Banned players only see the suspended page (the database blocks their writes regardless).
+  const { data: ban } = await supabase.from("bans").select("user_id").eq("user_id", user.id).maybeSingle();
+  if (ban) redirect("/suspended");
+
   return { supabase, user, profile: { ...profile, display_name: profile.display_name } };
 });
 
