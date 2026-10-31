@@ -72,6 +72,28 @@ Dashboard → **Authentication → URL Configuration**:
    `https://<ref>.supabase.co/auth/v1/callback` (keep the local `http://127.0.0.1:54321/...` one for development).
 2. Supabase dashboard → **Authentication → Sign In / Providers → Discord**: enable, paste the Client ID and Client Secret.
 
+### Google login (optional, hidden until set up)
+
+"Continue with Google" shows only when `NEXT_PUBLIC_ENABLE_GOOGLE_LOGIN=true`.
+
+1. https://console.cloud.google.com → create a project "ArmoryPal".
+2. **APIs & Services → OAuth consent screen**: External, app name ArmoryPal, your support email, scopes
+   `openid`, `email`, `profile` (non-sensitive, so no Google review). Then **Publish app**: in "Testing" only
+   listed test users can sign in.
+3. **APIs & Services → Credentials → Create credentials → OAuth client ID** → *Web application*, with
+   **Authorized redirect URIs**:
+   - `https://<ref>.supabase.co/auth/v1/callback`
+   - `http://127.0.0.1:54321/auth/v1/callback` (local development)
+4. Supabase dashboard → **Authentication → Sign In / Providers → Google**: enable, paste the Client ID and Client Secret.
+5. Vercel → **Settings → Environment Variables** → `NEXT_PUBLIC_ENABLE_GOOGLE_LOGIN` = `true` (Production), then **Redeploy**
+   (it's baked in at build time).
+
+Players who use Discord and Google with the **same email** end up on the same account (Supabase links verified emails).
+
+Locally: put the two values in `supabase/.env` as `SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID` and
+`SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET`, set `enabled = true` under `[auth.external.google]` in `supabase/config.toml`,
+add `NEXT_PUBLIC_ENABLE_GOOGLE_LOGIN=true` to `.env.local`, then `npx supabase stop; npx supabase start`.
+
 ## 8. Email (magic links): off at launch
 
 ArmoryPal launched **Discord-only**: the email form is hidden unless `NEXT_PUBLIC_ENABLE_EMAIL_LOGIN=true`.

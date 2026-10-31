@@ -3,8 +3,9 @@ import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "./database.types";
 import { supabaseKey, supabaseUrl } from "./env";
 
-// Reachable without signing in. /~offline is served by the service worker.
-const PUBLIC_PATHS = ["/login", "/auth", "/~offline"];
+// Reachable without signing in. /~offline is served by the service worker; /privacy and /terms are
+// linked from the Google sign-in consent screen.
+const PUBLIC_PATHS = ["/login", "/auth", "/~offline", "/privacy", "/terms"];
 
 /** Refreshes the auth session cookie and sends signed-out users to /login. */
 export async function updateSession(request: NextRequest) {
