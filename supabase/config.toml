@@ -344,6 +344,15 @@ enabled = true
 client_id = "1565420411838005318"
 secret = "env(SUPABASE_AUTH_EXTERNAL_DISCORD_SECRET)"
 
+# Google login. Create a Web OAuth client at https://console.cloud.google.com/apis/credentials with the
+# redirect http://127.0.0.1:54321/auth/v1/callback, put both values in supabase/.env as
+# SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID and SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET, then set enabled = true
+# (and NEXT_PUBLIC_ENABLE_GOOGLE_LOGIN=true in .env.local). Off by default so `supabase start` works without them.
+[auth.external.google]
+enabled = false
+client_id = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID)"
+secret = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET)"
+
 # Allow Solana wallet holders to sign in to your project via the Sign in with Solana (SIWS, EIP-4361) standard.
 # You can configure "web3" rate limit in the [auth.rate_limit] section and set up [auth.captcha] if self-hosting.
 [auth.web3.solana]

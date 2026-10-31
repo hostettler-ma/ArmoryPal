@@ -10,7 +10,9 @@ test("login page loads and offers Discord", async ({ page }) => {
   const res = await page.goto("/login");
   expect(res?.status()).toBe(200);
   await expect(page.getByRole("heading", { name: "ArmoryPal" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Continue with Discord" })).toBeVisible();
+  // A link once the direct Discord URL is ready (so phones can open the Discord app), a button before.
+  const discord = { name: "Continue with Discord" };
+  await expect(page.getByRole("link", discord).or(page.getByRole("button", discord))).toBeVisible();
   // Local-only conveniences must never reach the live site.
   await expect(page.getByText("Dev sign-in")).toHaveCount(0);
   await expect(page.getByLabel("Email")).toHaveCount(0);

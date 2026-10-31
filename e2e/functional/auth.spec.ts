@@ -6,7 +6,13 @@ test.describe("signing in", () => {
     await page.goto("/");
     await expect(page).toHaveURL(/\/login$/);
     await expect(page.getByRole("heading", { name: "ArmoryPal" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Continue with Discord" })).toBeVisible();
+    // A link once the direct Discord URL is ready (so phones can open the Discord app), a button before.
+    const discord = { name: "Continue with Discord" };
+    await expect(page.getByRole("link", discord).or(page.getByRole("button", discord))).toBeVisible();
+    // Google shows only where it's configured.
+    await expect(page.getByRole("button", { name: "Continue with Google" })).toHaveCount(
+      process.env.NEXT_PUBLIC_ENABLE_GOOGLE_LOGIN === "true" ? 1 : 0,
+    );
     // Email sign-in stays hidden until magic links work (like production).
     await expect(page.getByLabel("Email")).toHaveCount(0);
 

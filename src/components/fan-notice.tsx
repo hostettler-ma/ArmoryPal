@@ -1,4 +1,6 @@
-/** Unofficial-fan-project notice and card data credit (sign-in page and profile). */
+import Link from "next/link";
+
+/** Unofficial-fan-project notice, card data credit, and legal links (sign-in page and profile). */
 export function FanNotice() {
   return (
     <footer className="space-y-1 border-t border-border pt-4 text-xs text-muted">
@@ -12,6 +14,15 @@ export function FanNotice() {
           the-fab-cube/flesh-and-blood-cards
         </a>
         .
+      </p>
+      <p>
+        <Link className="underline" href="/privacy">
+          Privacy policy
+        </Link>{" "}
+        ·{" "}
+        <Link className="underline" href="/terms">
+          Terms of service
+        </Link>
       </p>
     </footer>
   );
