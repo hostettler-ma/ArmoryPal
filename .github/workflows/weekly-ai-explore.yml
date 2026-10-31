@@ -9,15 +9,24 @@ name: Weekly AI exploratory test
 # Needs one repository secret: CLAUDE_CODE_OAUTH_TOKEN (run `claude setup-token`
 # and paste the result; uses your Claude subscription) or ANTHROPIC_API_KEY
 # (billed to the API).
+#
+# A pull request that changes this workflow or .github/explore/ runs a short
+# version (40 steps) and comments the result on the PR, to check the plumbing.
 
 on:
   schedule:
-    - cron: "43 14 * * 0" # Sundays 14:43 UTC
+    - cron: "7 8 * * 0" # Sundays 08:07 UTC = 3:07 am in New York (4:07 am during daylight saving)
   workflow_dispatch:
+  pull_request:
+    paths:
+      - .github/workflows/weekly-ai-explore.yml
+      - .github/explore/**
+      - e2e/support/explore-setup.mts
 
 permissions:
   contents: read
   issues: write
+  pull-requests: write
   id-token: write
 
 jobs:
@@ -26,6 +35,8 @@ jobs:
     timeout-minutes: 90
     env:
       CI: "true"
+      DIAG: ${{ github.workspace }}/.explore-diag
+      MAX_TURNS: ${{ github.event_name == 'pull_request' && '40' || '250' }}
     steps:
       - name: Check for Claude credentials
         env:
@@ -42,11 +53,39 @@ jobs:
 
       - name: Start the app and sign in two players
         run: |
-          npm start > "$RUNNER_TEMP/next.log" 2>&1 &
-          npx wait-on@8.0.4 --timeout 60000 http://localhost:3000/login
-          npx tsx e2e/support/explore-setup.mts http://localhost:3000
+          mkdir -p "$DIAG"
+          npm start > "$DIAG/next.log" 2>&1 &
+          if ! npx wait-on@8.0.4 --timeout 90000 http://localhost:3000/login > "$DIAG/wait-on.log" 2>&1; then
+            echo "::error title=The app didn't start::$(tail -c 1500 "$DIAG/next.log" | tr '\n' ' ')"
+            exit 1
+          fi
+          if ! npx tsx e2e/support/explore-setup.mts http://localhost:3000 > "$DIAG/setup.log" 2>&1; then
+            echo "::error title=Signing in the two test players failed::$(tail -c 1500 "$DIAG/setup.log" | tr '\n' ' ')"
+            exit 1
+          fi
+          cat "$DIAG/setup.log"
+          # The browser MCP servers load these; fail early with a clear message if they're missing.
+          for f in .explore/alice.json .explore/bob.json .explore/players.md; do
+            [ -s "$f" ] || { echo "::error title=Missing $f::explore-setup didn't write it"; exit 1; }
+          done
+
+      - name: Check the browser tools start
+        run: |
+          # Starts each Playwright MCP server the way Claude will, and checks it answers.
+          for who in alice bob; do
+            args=$(jq -r --arg w "$who" '.mcpServers[$w].args | map(@sh) | join(" ")' .github/explore/mcp.json)
+            req='{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"check","version":"1"}}}'
+            out=$( (echo "$req"; sleep 20) | eval timeout 60 npx $args 2> "$DIAG/mcp-$who.log" | head -c 2000 || true)
+            if ! echo "$out" | grep -q '"serverInfo"'; then
+              echo "::error title=Browser tool for $who didn't start::$(tail -c 1500 "$DIAG/mcp-$who.log" | tr '\n' ' ')"
+              exit 1
+            fi
+            echo "$who: browser tool OK"
+          done
 
       - name: Explore
+        id: claude
+        continue-on-error: true # a run that hits the step cap can still have written a report
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
@@ -56,34 +95,75 @@ jobs:
           claude_args: >-
             --mcp-config .github/explore/mcp.json
             --allowedTools "mcp__alice__*,mcp__bob__*,Read,Glob,Grep,Write(explore-report.md),Bash(curl:*)"
-            --max-turns 250
+            --max-turns ${{ env.MAX_TURNS }}
 
-      - name: Post the report
+      - name: Report
         if: ${{ !cancelled() }}
         uses: actions/github-script@v7
+        env:
+          EXECUTION_FILE: ${{ steps.claude.outputs.execution_file }}
+          CLAUDE_OUTCOME: ${{ steps.claude.outcome }}
+          CLAUDE_CONCLUSION: ${{ steps.claude.outputs.conclusion }}
         with:
           script: |
             const fs = require("fs");
             const run = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
-            const report = fs.existsSync("explore-report.md")
+            const hasReport = fs.existsSync("explore-report.md");
+
+            // What happened inside the Claude step, from its execution log (no secrets: just the outcome).
+            let diag = `Claude step: outcome=${process.env.CLAUDE_OUTCOME || "did not run"}, conclusion=${process.env.CLAUDE_CONCLUSION || "-"}`;
+            const file = process.env.EXECUTION_FILE;
+            if (file && fs.existsSync(file)) {
+              try {
+                const log = JSON.parse(fs.readFileSync(file, "utf8"));
+                const result = [...log].reverse().find((m) => m.type === "result");
+                const init = log.find((m) => m.type === "system" && m.subtype === "init");
+                if (init?.mcp_servers) diag += `\nBrowser tools: ${init.mcp_servers.map((s) => `${s.name}=${s.status}`).join(", ")}`;
+                if (result) diag += `\nResult: ${result.subtype}, ${result.num_turns} turns, ${Math.round((result.duration_ms ?? 0) / 60000)} min${result.is_error ? `\n${String(result.result ?? result.errors ?? "").slice(0, 1500)}` : ""}`;
+              } catch (e) {
+                diag += `\n(couldn't read the execution log: ${e.message})`;
+              }
+            } else diag += "\nNo execution log: the Claude step failed before it started (see the step's log).";
+            for (const f of ["next.log", "setup.log"]) {
+              const p = `${process.env.DIAG}/${f}`;
+              if (!hasReport && fs.existsSync(p)) diag += `\n--- tail of ${f} ---\n${fs.readFileSync(p, "utf8").slice(-800)}`;
+            }
+            if (!hasReport) core.error(diag, { title: "No exploration report" });
+            else core.info(diag);
+
+            const report = hasReport
               ? fs.readFileSync("explore-report.md", "utf8")
-              : "Claude didn't write a report this week. Check the run log.";
-            const label = "ai-exploration";
-            await github.rest.issues.createLabel({ ...context.repo, name: label, color: "5319e7" }).catch(() => {});
-            const today = new Date().toISOString().slice(0, 10);
-            await github.rest.issues.create({
-              ...context.repo,
-              title: `Weekly exploratory test (${today})`,
-              labels: [label],
-              body: `${report}\n\n---\n[Run log and browser traces](${run}) (artifact **explore-traces**)`,
-            });
+              : `Claude didn't write a report.\n\n\`\`\`\n${diag}\n\`\`\``;
+            const footer = `\n\n---\n[Run log and browser traces](${run}) (artifact **explore-traces**)`;
+
+            if (context.eventName === "pull_request") {
+              await github.rest.issues.createComment({
+                ...context.repo,
+                issue_number: context.issue.number,
+                body: `## AI exploratory test (short PR run, ${process.env.MAX_TURNS} steps): ${hasReport ? "✅ report written" : "❌ no report"}\n\n${report}${footer}`,
+              });
+            } else {
+              const label = "ai-exploration";
+              await github.rest.issues.createLabel({ ...context.repo, name: label, color: "5319e7" }).catch(() => {});
+              const today = new Date().toISOString().slice(0, 10);
+              await github.rest.issues.create({
+                ...context.repo,
+                title: `Weekly exploratory test (${today})${hasReport ? "" : ": failed"}`,
+                labels: [label],
+                body: report + footer,
+              });
+            }
+            if (!hasReport) core.setFailed("No exploration report");
 
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
         with:
           name: explore-traces
+          include-hidden-files: true
+          if-no-files-found: ignore
           path: |
             .explore/alice/
             .explore/bob/
+            .explore-diag/
             explore-report.md
           retention-days: 14
