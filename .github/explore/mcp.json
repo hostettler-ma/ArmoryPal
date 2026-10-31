@@ -9,9 +9,9 @@
         "--isolated",
         "--no-sandbox",
         "--storage-state", ".explore/alice.json",
-        "--viewport-size", "390,844",
+        "--viewport-size", "390x844",
         "--output-dir", ".explore/alice",
-        "--save-trace"
+        "--save-session"
       ]
     },
     "bob": {
@@ -23,9 +23,9 @@
         "--isolated",
         "--no-sandbox",
         "--storage-state", ".explore/bob.json",
-        "--viewport-size", "1280,800",
+        "--viewport-size", "1280x800",
         "--output-dir", ".explore/bob",
-        "--save-trace"
+        "--save-session"
       ]
     }
   }
