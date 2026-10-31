@@ -5,3 +5,4 @@
 10109	IGNORE	(Modern web application: informational)
 10104	IGNORE	(User agent fuzzer: informational)
 10202	IGNORE	(Absence of anti-CSRF tokens: Next.js server actions reject cross-origin POSTs by comparing Origin with Host, and Supabase writes need the bearer session)
+20012	IGNORE	(Anti-CSRF tokens check, active-scan variant of 10202: same reason)
