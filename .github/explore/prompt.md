@@ -44,8 +44,11 @@ For each finding, most serious first:
 - **Expected / actual:**
 - **Suggested fix:** one or two lines, referencing files if you looked at the code
 
-## Not covered by the automated tests
-Bullet list of flows or checks worth adding to e2e/.
+## Gaps in the automated tests
+Flows or checks that the specs in e2e/ really don't cover (check the spec files before listing something).
+
+## Not tried this run
+Short list of checklist items you ran out of steps for, so the next run starts there.
 
 ## What I tried that worked fine
 Short bullet list, so the next run can go deeper elsewhere.
