@@ -41,3 +41,18 @@ export async function signOut() {
   await supabase.auth.signOut();
   redirect("/login");
 }
+
+/** The getting-started guide was skipped or finished: don't pop it up again for this account. */
+export async function markGuideSeen() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return;
+  // Home is rendered per request, so the next visit reads the new value; no revalidation needed.
+  await supabase
+    .from("profiles")
+    .update({ guide_seen_at: new Date().toISOString() })
+    .eq("id", user.id)
+    .is("guide_seen_at", null);
+}

@@ -211,14 +211,14 @@ isOneToOne: false
                   ]
                 },"profiles": {
                   Row: {
-                    "created_at": string,"display_name": string | null,"gem_id": string | null,"id": string,"is_admin": boolean
+                    "created_at": string,"display_name": string | null,"gem_id": string | null,"guide_seen_at": string | null,"id": string,"is_admin": boolean
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string,"display_name"?: string | null,"gem_id"?: string | null,"id": string,"is_admin"?: boolean
+                    "created_at"?: string,"display_name"?: string | null,"gem_id"?: string | null,"guide_seen_at"?: string | null,"id": string,"is_admin"?: boolean
                   }
                   Update: {
-                    "created_at"?: string,"display_name"?: string | null,"gem_id"?: string | null,"id"?: string,"is_admin"?: boolean
+                    "created_at"?: string,"display_name"?: string | null,"gem_id"?: string | null,"guide_seen_at"?: string | null,"id"?: string,"is_admin"?: boolean
                   }
                   Relationships: [
                     

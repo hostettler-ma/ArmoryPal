@@ -16,7 +16,7 @@ export const requireProfile = cache(async () => {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, display_name, gem_id, is_admin")
+    .select("id, display_name, gem_id, is_admin, guide_seen_at")
     .eq("id", user.id)
     .single();
   if (!profile?.display_name) redirect("/welcome");

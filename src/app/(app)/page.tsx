@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { EventCard } from "@/components/event-card";
+import { FirstRunGuide } from "@/components/first-run-guide";
 import { InstallHint } from "@/components/install-hint";
 import { NextArmoryCard } from "@/components/next-armory-card";
 import { RealtimeRefresh } from "@/components/realtime-refresh";
@@ -10,7 +11,7 @@ import { requireProfile } from "@/lib/auth";
 import { getCurrentEvents, getNextAttendingEvent } from "@/lib/event-data";
 
 export default async function HomePage() {
-  const { supabase, user } = await requireProfile();
+  const { supabase, user, profile } = await requireProfile();
 
   const [{ data }, next] = await Promise.all([
     supabase
@@ -34,6 +35,8 @@ export default async function HomePage() {
     <main className="space-y-6">
       {/* The app bar carries the wordmark; this keeps a page heading for screen readers. */}
       <h1 className="sr-only">ArmoryPal</h1>
+      {/* New accounts get the getting-started guide once (also in the menu at /guide). */}
+      {!profile.guide_seen_at && <FirstRunGuide />}
 
       {next ? (
         <>

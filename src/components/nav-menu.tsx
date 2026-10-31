@@ -11,6 +11,7 @@ const SECTIONS = [
   { href: "/notifications", label: "Notifications" },
   { href: "/me", label: "Profile" },
   { href: "/settings/notifications", label: "Notification settings" },
+  { href: "/guide", label: "Getting started" },
 ];
 
 /** The section a path belongs to: exact match for Home, longest prefix otherwise. */
