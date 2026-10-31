@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { resolveDiscordAuthorizeUrl } from "@/app/actions/auth";
+import { DISCORD_LINK_MAX_AGE_MS } from "@/lib/discord-auth";
 import { createClient } from "@/lib/supabase/client";
 
 /**
@@ -33,10 +35,14 @@ export function LoginForm({ next }: { next: string }) {
     setStatus(error ? { kind: "error", message: error.message } : { kind: "sent", email: email.trim() });
   }
 
+  const discordLink = useDiscordLink(next);
+
+  // Fallback when no direct link is ready: Supabase redirects to Discord as before.
   async function signInWithDiscord() {
+    await discordLink.leaving();
     const { error } = await createClient().auth.signInWithOAuth({
       provider: "discord",
-      options: { redirectTo: callbackUrl() },
+      options: { redirectTo: callbackUrl(), queryParams: DISCORD_QUERY },
     });
     if (error) setStatus({ kind: "error", message: error.message });
   }
@@ -58,13 +64,29 @@ export function LoginForm({ next }: { next: string }) {
 
   return (
     <div className="space-y-6">
-      <button
-        type="button"
-        className={`btn ${EMAIL_LOGIN ? "btn-secondary" : "btn-primary"}`}
-        onClick={signInWithDiscord}
-      >
-        <DiscordIcon /> Continue with Discord
-      </button>
+      {discordLink.href ? (
+        // A direct discord.com link, so phones can open it in the Discord app.
+        <a
+          href={discordLink.href}
+          className={`btn ${EMAIL_LOGIN ? "btn-secondary" : "btn-primary"}`}
+          onClick={(e) => {
+            if (!discordLink.fresh()) {
+              e.preventDefault();
+              void signInWithDiscord();
+            } else void discordLink.leaving();
+          }}
+        >
+          <DiscordIcon /> Continue with Discord
+        </a>
+      ) : (
+        <button
+          type="button"
+          className={`btn ${EMAIL_LOGIN ? "btn-secondary" : "btn-primary"}`}
+          onClick={signInWithDiscord}
+        >
+          <DiscordIcon /> Continue with Discord
+        </button>
+      )}
 
       {EMAIL_LOGIN && (
         <>
@@ -78,6 +100,82 @@ export function LoginForm({ next }: { next: string }) {
       {status.kind === "error" && <p className="field-error text-center">{status.message}</p>}
     </div>
   );
+}
+
+/** Skip Discord's "Authorize" screen for players who already approved ArmoryPal. */
+const DISCORD_QUERY = { prompt: "none" };
+
+/** Running as the installed app: a handoff to the Discord app would return to the browser instead. */
+function isStandalone(): boolean {
+  return (
+    window.matchMedia("(display-mode: standalone)").matches ||
+    (navigator as Navigator & { standalone?: boolean }).standalone === true
+  );
+}
+
+/**
+ * Prepares a direct discord.com authorize link: Supabase stores the PKCE code
+ * verifier in this browser (as a normal sign-in would) and the server resolves
+ * Supabase's redirect to Discord's URL. Re-prepared when it gets stale.
+ */
+function useDiscordLink(next: string) {
+  const [link, setLinkState] = useState<{ href: string; at: number } | null>(null);
+  const linkRef = useRef(link);
+  const setLink = (value: typeof link) => {
+    linkRef.current = value;
+    setLinkState(value);
+  };
+  // Once a sign-in starts, don't prepare another one: that would replace the code verifier.
+  const leavingRef = useRef(false);
+  // Each preparation overwrites the verifier cookie, so only the latest one's link is valid.
+  const attemptRef = useRef(0);
+  // The in-flight signInWithOAuth call, which writes the verifier cookie.
+  const pendingRef = useRef<Promise<unknown>>(Promise.resolve());
+
+  const prepare = useCallback(async () => {
+    if (leavingRef.current || isStandalone()) return;
+    const attempt = ++attemptRef.current;
+    const current = () => attempt === attemptRef.current && !leavingRef.current;
+    setLink(null);
+    const oauth = createClient().auth.signInWithOAuth({
+      provider: "discord",
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
+        queryParams: DISCORD_QUERY,
+        skipBrowserRedirect: true,
+      },
+    });
+    pendingRef.current = oauth.catch(() => {});
+    const { data, error } = await oauth;
+    if (error || !data.url || !current()) return;
+    const href = await resolveDiscordAuthorizeUrl(data.url);
+    if (href && current()) setLink({ href, at: Date.now() });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- setLink only touches refs and state setters
+  }, [next]);
+
+  useEffect(() => {
+    void prepare();
+    const onVisible = () => {
+      if (document.visibilityState !== "visible") return;
+      // Coming back from Discord (bfcache) or after a while: start over if stale.
+      leavingRef.current = false;
+      const l = linkRef.current;
+      if (!l || Date.now() - l.at > DISCORD_LINK_MAX_AGE_MS) void prepare();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [prepare]);
+
+  return {
+    href: link?.href ?? null,
+    fresh: () => !!link && Date.now() - link.at <= DISCORD_LINK_MAX_AGE_MS,
+    /** Stops preparing links; resolves once no preparation can still overwrite the verifier. */
+    leaving: () => {
+      leavingRef.current = true;
+      attemptRef.current++; // drop any preparation still in flight
+      return pendingRef.current;
+    },
+  };
 }
 
 function EmailForm({
