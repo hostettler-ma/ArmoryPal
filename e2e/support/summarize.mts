@@ -88,13 +88,26 @@ if (existsSync("zap.json")) {
           .map((l) => l.split("\t")[0]),
       )
     : new Set<string>();
+  // Next.js encodes which server action to run in form fields named $ACTION_* (the action id, its
+  // bound arguments, a random key). Mangling them makes Next return a different page, which ZAP's
+  // boolean SQL-injection check reads as injection. They never reach the database, so findings on
+  // them are set aside (and counted), while the same rule still fails the run on any real parameter.
+  const frameworkParam = (p?: string) => !!p && /^\$ACTION/.test(p);
+  let setAside = 0;
   const alerts = zap.site
     .flatMap((s) => s.alerts)
     .filter((a) => !ignored.has(a.pluginid))
+    .map((a) => {
+      const real = a.instances.filter((i) => !frameworkParam(i.param));
+      setAside += a.instances.length - real.length;
+      return { ...a, instances: real };
+    })
+    .filter((a) => a.instances.length > 0)
     .sort((a, b) => Number(b.riskcode) - Number(a.riskcode));
   const high = alerts.filter((a) => a.riskcode === "3");
   if (high.length) failed = true;
   out.push("", `### ZAP security scan: ${high.length ? `❌ ${high.length} high-risk finding(s)` : "✅ no high-risk findings"}`);
+  if (setAside) out.push(`(${setAside} finding(s) on Next.js server-action internals ($ACTION_*) set aside; they never reach the database.)`);
   if (alerts.length) {
     out.push("| Risk | Finding | Rule | Example URL |", "|---|---|---|---|");
     for (const a of alerts) out.push(`| ${a.riskdesc.split(" ")[0]} | ${a.name} | ${a.pluginid} | ${a.instances[0]?.uri ?? ""} |`);

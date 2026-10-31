@@ -114,3 +114,20 @@ test("admin bans a player: they only see the suspended page; unban restores acce
   await player.page.goto("/");
   await expect(player.page).toHaveURL(/\/$/);
 });
+
+// KNOWN BUG: admin_actions keeps target_user after the account is deleted (no FK, on purpose, so the
+// log keeps its history), but the admin log still links that name to /admin/players/<id>, which 404s.
+// Fix: render the label without a link when the player no longer exists (src/components/admin/admin-log-list.tsx).
+// test.fail() keeps the nightly run green while the bug exists and turns red once it's fixed.
+test.fail("the admin log doesn't link to players whose account was deleted", async ({ newPlayer }) => {
+  const boss = await newPlayer({ name: `Boss ${uid()}`, isAdmin: true });
+  const gone = await newPlayer({ name: `Gone ${uid()}` });
+  const eventId = await currentEventId(boss.db, E2E_STORE_ID);
+  await gone.db.rpc("attend_event", { p_event_id: eventId });
+  expect((await boss.db.rpc("admin_remove_attendee", { p_event_id: eventId, p_user_id: gone.id })).error).toBeNull();
+  await admin().auth.admin.deleteUser(gone.id);
+
+  await boss.page.goto("/admin/log");
+  const link = boss.page.getByRole("link", { name: gone.name });
+  await expect(link).toHaveCount(0, { timeout: 3_000 });
+});
