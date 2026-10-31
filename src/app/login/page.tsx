@@ -25,10 +25,17 @@ export default async function LoginPage({
           <h1 className="text-3xl font-bold tracking-tight">ArmoryPal</h1>
           <p className="text-muted">Borrow and bring cards for your weekly Armory.</p>
         </header>
-        {error && (
-          <p className="card text-center text-sm text-danger">
-            That sign-in link didn&apos;t work. It may have expired. Try again.
+        {error === "other_browser" ? (
+          <p className="card text-center text-sm">
+            Almost done. You came back in a different browser than the one you started in. Sign in once more
+            here to finish.
           </p>
+        ) : (
+          error && (
+            <p className="card text-center text-sm text-danger">
+              That sign-in link didn&apos;t work. It may have expired. Try again.
+            </p>
+          )
         )}
         <LoginForm next={safeNext(next)} />
         {devLoginEnabled() && <DevLogin next={safeNext(next)} failed={Boolean(dev_error)} />}

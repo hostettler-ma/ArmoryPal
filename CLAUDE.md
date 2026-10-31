@@ -12,6 +12,9 @@ Mobile-first companion PWA for the Flesh and Blood TCG. Players coordinate card 
 - **Auth:** **Discord** OAuth, plus an email magic link. Each user has a display name and an optional GEM ID.
   - **Production is Discord-only for now:** the email form shows only when `NEXT_PUBLIC_ENABLE_EMAIL_LOGIN=true` (set in `.env.local`, unset on Vercel), until a custom SMTP provider is configured.
   - **Stray login codes:** the middleware forwards any `?code=` on a non-callback page to `/auth/callback` (a safety net for Supabase's Site URL fallback).
+  - **Discord via the phone app:** the login page prepares a direct `discord.com/oauth2/authorize` link on load: the browser client's `signInWithOAuth({ skipBrowserRedirect })` stores the PKCE verifier, and the `resolveDiscordAuthorizeUrl` server action follows Supabase's redirect one hop (URL checks in `src/lib/discord-auth.ts`). A tap on a direct link lets phones open the Discord app; a redirect wouldn't. It falls back to the normal redirect when the link isn't ready or is older than 4 minutes, and always in the installed PWA (where the handoff would return to the browser instead).
+  - **`prompt=none`** is sent on every Discord sign-in, so returning players skip Discord's Authorize screen.
+  - **Came back in another browser:** the Discord app returns to the phone's default browser. If that browser lacks the code verifier, `/auth/callback` sends `/login?error=other_browser`, which asks the player to sign in once more there.
   - **Live site:** https://armorypal.vercel.app (Supabase project `hlfjqfwiotpvbjrslrnn`).
 - **PWA:** Serwist (`@serwist/next`) + web manifest.
 - **Dates:** `@date-fns/tz`. Schedules are store-local (IANA timezone on the store).
