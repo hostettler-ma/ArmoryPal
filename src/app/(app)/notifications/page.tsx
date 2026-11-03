@@ -34,7 +34,7 @@ export default async function NotificationsPage() {
           {notifications.map((n) => (
             <li key={n.id}>
               <Link
-                href={n.event ? `/events/${n.event.id}?tab=checklist` : "/"}
+                href={n.event ? `/events/${n.event.id}?tab=${n.kind === "new_requests" || n.kind === "card_needed_again" ? "requests" : "checklist"}` : "/"}
                 className={`card block space-y-1 ${n.read_at ? "" : "border-accent"}`}
               >
                 <p className={n.read_at ? "" : "font-semibold"}>

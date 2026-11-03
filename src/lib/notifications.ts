@@ -6,7 +6,7 @@ export type NotificationPayload = {
   reason?: "unpledged" | "left_event" | "cancelled" | "removed";
   /** removed_from_event: the admin's optional reason. */
   note?: string;
-  /** new_requests: distinct cards and total copies in one add. */
+  /** new_requests, card_needed_again: distinct cards and total copies in one add or release. */
   items?: number;
   copies?: number;
   /** requests_filled: how many requests (and copies) are now all covered. */
@@ -18,7 +18,12 @@ export const NOTIFICATION_KINDS = [
   {
     kind: "new_requests",
     label: "New requests",
-    description: "Someone going to the same event asks for cards.",
+    description: "Someone asks for cards at an event you're going to or a store you saved.",
+  },
+  {
+    kind: "card_needed_again",
+    label: "Cards needed again",
+    description: "Someone can't bring cards they promised, at an event you're going to or a store you saved.",
   },
   {
     kind: "requests_filled",
@@ -69,6 +74,14 @@ export function formatNotification(kind: string, payload: NotificationPayload): 
     return items > 1
       ? `${actor} needs ${payload.copies ?? items} cards: ${card} and ${items - 1} more.`
       : `${actor} needs ${copies(payload.copies)}.`;
+  }
+  if (kind === "card_needed_again") {
+    const items = payload.items ?? 1;
+    const n = payload.copies ?? items;
+    const what = items > 1 ? `${n} cards are needed again: ${card} and ${items - 1} more` : `${copies(n)} is needed again`;
+    if (payload.reason === "left_event") return `${actor} can't make it anymore, so ${what}.`;
+    if (payload.reason === "removed") return `${actor} was removed from the event, so ${what}.`;
+    return `${copies(n)} is needed again: ${actor} can't bring it anymore.`;
   }
   if (kind === "removed_from_event") {
     return `An admin removed you from this event.${payload.note ? ` Reason: ${payload.note}` : ""}`;
