@@ -171,6 +171,7 @@ describe("notifications", () => {
 /** Cancels Rhea's active requests (quietly) and adds the given ones; returns ids in card order. */
 async function freshRequests(items: { card_id: string; quantity: number }[]): Promise<string[]> {
   await admin.from("requests").update({ status: "cancelled" }).eq("event_id", eventId).eq("status", "active");
+  await admin.from("pledges").delete().eq("event_id", eventId); // as cancel_request would
   const { data, error } = await rhea.client.rpc("add_requests", { p_event_id: eventId, p_items: items });
   if (error) throw error;
   return items.map((i) => data!.find((r) => r.card_id === i.card_id)!.id);
@@ -203,6 +204,93 @@ describe("new_requests notifications", () => {
     await freshRequests([{ card_id: CARD.id, quantity: 1 }]);
     expect(await inbox(tomas, "new_requests")).toHaveLength(1);
     expect(await inbox(uma, "new_requests")).toEqual([]);
+  });
+
+  it("also tells players who saved the store but aren't going, once each, never the requester or banned players", async () => {
+    await attendAll();
+    await uma.client.rpc("leave_event", { p_event_id: eventId });
+    for (const u of [rhea, tomas, uma]) await u.client.from("user_stores").insert({ user_id: u.id, store_id: storeId });
+    try {
+      await clearInboxes();
+      await freshRequests([{ card_id: CARD.id, quantity: 1 }]);
+      expect(await inbox(uma, "new_requests")).toHaveLength(1); // saved the store, not going
+      expect(await inbox(tomas, "new_requests")).toHaveLength(1); // going and saved: not twice
+      expect(await inbox(rhea, "new_requests")).toEqual([]);
+
+      await admin.from("bans").insert({ user_id: uma.id, reason: "test" });
+      await clearInboxes();
+      await freshRequests([{ card_id: CARD.id, quantity: 1 }]);
+      expect(await inbox(uma, "new_requests")).toEqual([]);
+    } finally {
+      await admin.from("bans").delete().eq("user_id", uma.id);
+      await admin.from("user_stores").delete().eq("store_id", storeId);
+    }
+  });
+});
+
+describe("card_needed_again notifications", () => {
+  // Uma saved the store but isn't going; Rhea (requester) saved it too.
+  beforeAll(async () => {
+    await attendAll();
+    await uma.client.rpc("leave_event", { p_event_id: eventId });
+    for (const u of [rhea, uma]) await u.client.from("user_stores").insert({ user_id: u.id, store_id: storeId });
+  });
+  afterAll(async () => {
+    await admin.from("user_stores").delete().eq("store_id", storeId);
+  });
+
+  it("tells followers once when someone un-pledges, but not the requester or the un-pledger", async () => {
+    const [red] = await freshRequests([{ card_id: CARD.id, quantity: 2 }]);
+    await tomas.client.rpc("pledge", { p_request_id: red, p_quantity: 2 });
+    await clearInboxes();
+    await tomas.client.rpc("unpledge", { p_request_id: red });
+
+    const got = await inbox(uma, "card_needed_again");
+    expect(got).toHaveLength(1);
+    expect(got[0].payload).toEqual({
+      actor: "Tomas", reason: "unpledged", card: "Notify Test Strike (Red)", items: 1, copies: 2,
+    });
+    expect(await inbox(rhea, "card_needed_again")).toEqual([]);
+    expect(await inbox(tomas, "card_needed_again")).toEqual([]);
+    expect(await inbox(rhea, "pledge_released")).toHaveLength(1);
+  });
+
+  it("sends ONE notification when leaving frees several cards", async () => {
+    await tomas.client.rpc("attend_event", { p_event_id: eventId });
+    const [red, blue] = await freshRequests([
+      { card_id: CARD.id, quantity: 2 },
+      { card_id: CARD2.id, quantity: 1 },
+    ]);
+    await tomas.client.rpc("pledge", { p_request_id: red, p_quantity: 2 });
+    await tomas.client.rpc("pledge", { p_request_id: blue, p_quantity: 1 });
+    await clearInboxes();
+    await tomas.client.rpc("leave_event", { p_event_id: eventId });
+
+    const got = await inbox(uma, "card_needed_again");
+    expect(got).toHaveLength(1);
+    expect(got[0].payload).toEqual({
+      actor: "Tomas", reason: "left_event", card: "Notify Test Strike (Red)", items: 2, copies: 3,
+    });
+  });
+
+  it("stays quiet when leaving frees nothing", async () => {
+    await tomas.client.rpc("attend_event", { p_event_id: eventId });
+    await clearInboxes();
+    await tomas.client.rpc("leave_event", { p_event_id: eventId });
+    expect(await inbox(uma, "card_needed_again")).toEqual([]);
+  });
+
+  it("announces cards freed by an admin removal", async () => {
+    const mod = await createTestUser({ name: "Mod", isAdmin: true });
+    await tomas.client.rpc("attend_event", { p_event_id: eventId });
+    const [red] = await freshRequests([{ card_id: CARD.id, quantity: 1 }]);
+    await tomas.client.rpc("pledge", { p_request_id: red, p_quantity: 1 });
+    await clearInboxes();
+    expect((await mod.client.rpc("admin_remove_attendee", { p_event_id: eventId, p_user_id: tomas.id })).error).toBeNull();
+
+    const got = await inbox(uma, "card_needed_again");
+    expect(got).toHaveLength(1);
+    expect(got[0].payload).toMatchObject({ actor: "Tomas", reason: "removed", items: 1, copies: 1 });
   });
 });
 

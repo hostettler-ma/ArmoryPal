@@ -31,6 +31,19 @@ describe("formatNotification", () => {
     );
   });
 
+  it("tells followers which cards are needed again, by reason", () => {
+    const one = { actor: "Tomas", card: "Snatch (Red)", items: 1, copies: 2 };
+    expect(formatNotification("card_needed_again", { ...one, reason: "unpledged" })).toBe(
+      "2× Snatch (Red) is needed again: Tomas can't bring it anymore.",
+    );
+    expect(formatNotification("card_needed_again", { ...one, reason: "left_event" })).toBe(
+      "Tomas can't make it anymore, so 2× Snatch (Red) is needed again.",
+    );
+    expect(formatNotification("card_needed_again", { ...one, items: 2, copies: 3, reason: "removed" })).toBe(
+      "Tomas was removed from the event, so 3 cards are needed again: Snatch (Red) and 1 more.",
+    );
+  });
+
   it("explains admin removals", () => {
     expect(formatNotification("pledge_released", { ...base, reason: "removed" })).toMatch(/was removed from the event/);
     expect(formatNotification("request_cancelled", { ...base, actor: "Rhea", reason: "removed" })).toMatch(

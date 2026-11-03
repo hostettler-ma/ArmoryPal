@@ -372,6 +372,9 @@ isOneToOne: false
 "admin_unban":
 { Args: { "p_user_id": string }; Returns: undefined
                            },
+"announce_needed_again":
+{ Args: { "p_actor": string,"p_event_id": string,"p_reason": string,"p_released": Json,"p_releaser": string }; Returns: undefined
+                           },
 "assert_admin":
 { Args: Record<PropertyKey, never>; Returns: undefined
                            },
@@ -428,6 +431,9 @@ isOneToOne: false
         isOneToOne: false
         isSetofReturn: true
       } },
+"event_audience":
+{ Args: { "p_event_id": string,"p_exclude": (string)[] }; Returns: string[]
+                           },
 "event_occurrence":
 { Args: { "p_now"?: string,"p_start_time": string,"p_timezone": string,"p_weekday": number }; Returns: {
               "ends_at": string,"event_date": string,"starts_at": string
@@ -473,6 +479,9 @@ isOneToOne: false
 "my_display_name":
 { Args: Record<PropertyKey, never>; Returns: string
                            },
+"new_request_recipients":
+{ Args: { "p_event_id": string }; Returns: string[]
+                           },
 "notify":
 { Args: { "p_event_id": string,"p_kind": string,"p_payload": Json,"p_user_id": string }; Returns: undefined
                            },
@@ -492,6 +501,9 @@ isOneToOne: false
         isOneToOne: true
         isSetofReturn: false
       } },
+"pledges_to_release":
+{ Args: { "p_event_id": string,"p_pledger_id": string }; Returns: Json
+                           },
 "release_my_pledges":
 { Args: { "p_event_id": string,"p_reason": string }; Returns: undefined
                            },

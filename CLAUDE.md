@@ -86,7 +86,8 @@ Mobile-first companion PWA for the Flesh and Blood TCG. Players coordinate card 
   - **Writing:** only SQL functions write them, via the internal `notify()`. Payloads are rendered by `formatNotification()` in `src/lib/notifications.ts`. Kinds:
     - `pledge_released`: someone un-pledged or left.
     - `request_cancelled`: the requester cancelled, or left with "cancel my requests".
-    - `new_requests`: **one** per `add_requests` call, sent to each other attendee. Payload is `{actor, card, items, copies}`.
+    - `new_requests`: **one** per `add_requests` (or `copy_open_requests`) call, sent to the event's **audience** (`event_audience(event, exclude[])`: everyone attending it **or** with its store in My stores, minus banned players), except the requester. Payload is `{actor, card, items, copies}`. The inbox links it to the Requests tab.
+    - `card_needed_again`: **one** per release (`unpledge`, leaving, admin removal or ban), sent to the event's audience except the releaser and the requesters (who get `pledge_released`). Built by `announce_needed_again()`. Payload is `{actor, reason, card, items, copies}`. The inbox links it to the Requests tab.
     - `requests_filled`: sent when a pledge covers the requester's *last* unfilled request on the event. It fires on that transition only. `pledge()` locks all of the requester's requests on the event in id order so concurrent pledges can't miss or duplicate it, and `leave_event` uses the same lock order.
     - `removed_from_event`: an admin took you off an event (`admin_remove_attendee`). Payload is `{note?}` (the admin's reason).
   - **Adding a kind:** update the SQL check constraints (on `notifications` and `notification_preferences`) and `NOTIFICATION_KINDS` in `src/lib/notifications.ts` together.
