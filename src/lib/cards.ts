@@ -1,4 +1,4 @@
-export type CardColor = "Red" | "Yellow" | "Blue";
+export type CardColor = "Red" | "Yellow" | "Blue" | "Purple";
 
 export type CardRow = {
   id: string;
@@ -30,9 +30,10 @@ export type FabCubeSet = {
 
 /**
  * Sets with at least this many distinct cards count as expansions. Main sets
- * have 250+; Armory/demo/Silver Age decks and mastery packs stay well below.
+ * have 250+; Armory/demo/Silver Age decks stay well below, but mastery packs
+ * get close (Warrior has 156).
  */
-export const EXPANSION_MIN_CARDS = 150;
+export const EXPANSION_MIN_CARDS = 160;
 
 export type LatestSet = { id: string; name: string; releasedOn: string | null };
 
@@ -59,7 +60,7 @@ export function latestExpansion(cards: FabCubeCard[], sets: FabCubeSet[]): Lates
   return best;
 }
 
-const COLORS: readonly string[] = ["Red", "Yellow", "Blue"];
+const COLORS: readonly string[] = ["Red", "Yellow", "Blue", "Purple"];
 
 export type SetInfo = {
   /** Earliest release date across editions ("YYYY-MM-DD"), or null if unknown. */
@@ -113,7 +114,7 @@ export function formatSetIds(setIds: string[], max = 5): string {
 export function toCardRow(card: FabCubeCard, sets: Map<string, SetInfo> = new Map()): CardRow {
   if (!card.unique_id || !card.name?.trim()) throw new Error(`Card missing id or name: ${JSON.stringify(card).slice(0, 120)}`);
   const pitch = card.pitch === "" ? null : Number(card.pitch);
-  if (pitch !== null && ![1, 2, 3].includes(pitch)) throw new Error(`Unexpected pitch "${card.pitch}" on ${card.name}`);
+  if (pitch !== null && ![1, 2, 3, 4].includes(pitch)) throw new Error(`Unexpected pitch "${card.pitch}" on ${card.name}`);
   return {
     id: card.unique_id,
     name: card.name.trim(),

@@ -13,6 +13,7 @@ const COLOR_WORDS: Record<string, CardColor> = {
   red: "Red", r: "Red", "1": "Red",
   yellow: "Yellow", y: "Yellow", "2": "Yellow",
   blue: "Blue", b: "Blue", "3": "Blue",
+  purple: "Purple", p: "Purple", "4": "Purple",
 };
 
 /**
