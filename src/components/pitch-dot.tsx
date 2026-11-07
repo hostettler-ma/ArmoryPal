@@ -5,6 +5,7 @@ const DOT_CLASS: Record<CardColor, string> = {
   Red: "bg-pitch-red",
   Yellow: "bg-pitch-yellow ring-1 ring-black/15 ring-inset",
   Blue: "bg-pitch-blue",
+  Purple: "bg-pitch-purple",
 };
 
 /** Colored pitch strip indicator; an empty ring for cards without pitch (heroes, equipment). */

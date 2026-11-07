@@ -29,10 +29,11 @@
   --danger: #cc0010;
   --live: #b84a12;
 
-  /* Pitch strip colors (Inochi red / Hikari yellow / Inochi blue) */
+  /* Pitch strip colors (Inochi red / Hikari yellow / Inochi blue / Umi lavender) */
   --pitch-red: #e60012;
   --pitch-yellow: #fcd700;
   --pitch-blue: #0068b7;
+  --pitch-purple: #a78ec3;
 
   /* Request status chips: open (Hikari red-orange) → partial (Hikari amber) → covered (Noyama green) */
   --chip-open-bg: #fde4d7;
@@ -70,6 +71,7 @@
     --pitch-red: #ff2a35;
     --pitch-yellow: #fcd700;
     --pitch-blue: #31ace3;
+    --pitch-purple: #a78ec3;
 
     --chip-open-bg: #4a1f0b;
     --chip-open-fg: #f7a77f;
@@ -103,6 +105,7 @@
   --color-pitch-red: var(--pitch-red);
   --color-pitch-yellow: var(--pitch-yellow);
   --color-pitch-blue: var(--pitch-blue);
+  --color-pitch-purple: var(--pitch-purple);
   --color-chip-open-bg: var(--chip-open-bg);
   --color-chip-open-fg: var(--chip-open-fg);
   --color-chip-partial-bg: var(--chip-partial-bg);

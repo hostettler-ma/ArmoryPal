@@ -50,8 +50,14 @@ describe("toCardRow", () => {
     expect(toCardRow({ ...base, printings: [{ set_id: "WTR", image_url: null }] }).image_url).toBeNull();
   });
 
+  it("keeps purple pitch-4 cards", () => {
+    const row = toCardRow({ ...base, name: "Soul of Existence", pitch: "4", color: "Purple" });
+    expect(row.pitch).toBe(4);
+    expect(row.color).toBe("Purple");
+  });
+
   it("rejects malformed entries instead of importing garbage", () => {
-    expect(() => toCardRow({ ...base, pitch: "4" })).toThrow(/pitch/);
+    expect(() => toCardRow({ ...base, pitch: "5" })).toThrow(/pitch/);
     expect(() => toCardRow({ ...base, name: " " })).toThrow(/name/);
   });
 });

@@ -25,17 +25,17 @@ Mobile-first companion PWA for the Flesh and Blood TCG. Players coordinate card 
 ## Key decisions
 - **Card model = name + pitch.** Requests reference a single card (one row per unique name+pitch). Printing, foil, and set preferences go in the free-text note.
 - **Card data** comes from [the-fab-cube/flesh-and-blood-cards](https://github.com/the-fab-cube/flesh-and-blood-cards) `json/english/card.json`.
-  - **Pinned release:** `DATASET_TAG` in `scripts/import-cards.mts` (currently v8.2.0). After a new set releases, bump it and re-run.
+  - **Pinned release:** `DATASET_TAG` in `scripts/import-cards.mts` (currently a commit on the upstream `usurp-the-shadow-throne` branch, draft PR #553, past v8.2.0). After a new set releases, bump it and re-run. Move it to a release tag once upstream publishes one.
   - **Import behavior:** the upsert is idempotent and keyed on `unique_id`. That ID is a nanoid-style string, not a UUID, so `cards.id` is `text`.
   - **Everything is imported, including tokens** (players borrow those often). Cards are never deleted because requests reference them.
-  - **What's stored:** name, pitch (1–3 or null), color, types and image_url. `(name, pitch)` is unique (`nulls not distinct`).
+  - **What's stored:** name, pitch (1–4 or null; 4 is Purple, e.g. Soul of Existence), color, types and image_url. `(name, pitch)` is unique (`nulls not distinct`).
   - **`set_ids`:** the set codes the card was printed in, ordered by `cardSetIds()` in `src/lib/cards.ts`:
     1. Regular sets, newest release first (dates from `set.json`).
     2. Undated regular sets (promos).
     3. **Armory Deck** and **Silver Age** decks at the back (`setInfo().isDeck`, matched by name prefix), newest first, undated last. Request rows show the 5 newest via `formatSetIds()`, and the pledge sheet shows all of them.
   - **License:** the dataset's README says "feel free to … use it for whatever projects you like". There's no formal license, so we credit it in the UI.
   - **After `db reset`:** the cards table is empty. Run the import again.
-  - **Latest set:** the import also reads `set.json` and writes the one-row `catalog_meta` table: the dataset tag plus the **latest expansion**. That's the most recently released set with ≥ 150 distinct cards (`EXPANSION_MIN_CARDS`); the threshold keeps Armory decks, demo decks, Silver Age decks and mastery packs from counting. The UI shows "Includes cards up to <set>".
+  - **Latest set:** the import also reads `set.json` and writes the one-row `catalog_meta` table: the dataset tag plus the **latest expansion**. That's the most recently released set with ≥ 160 distinct cards (`EXPANSION_MIN_CARDS`); the threshold keeps Armory decks, demo decks, Silver Age decks and mastery packs from counting. The UI shows "Includes cards up to <set>".
   - **Offline import:** `--dir <folder>` imports from local `card.json` and `set.json` files instead of downloading.
 - **Card search** goes through the `search_cards(q, max_results)` RPC, using pg_trgm.
   - **Ranking:** card names are ranked exact match, then prefix, then substring, then typo matches (word_similarity ≥ 0.45, tie-broken by strict_word_similarity). LIKE wildcards are escaped.

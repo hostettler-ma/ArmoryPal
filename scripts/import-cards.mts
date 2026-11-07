@@ -17,8 +17,12 @@ import { createClient } from "@supabase/supabase-js";
 import { latestExpansion, setInfo, toCardRow, type FabCubeCard, type FabCubeSet } from "../src/lib/cards";
 import type { Database } from "../src/lib/supabase/database.types";
 
-/** Bump this (and re-run) when a new set releases. */
-const DATASET_TAG = "v8.2.0";
+/**
+ * Bump this (and re-run) when a new set releases. A release tag, or a commit SHA
+ * for a set that's still on an upstream branch.
+ * Now: `usurp-the-shadow-throne` (draft PR #553), for Usurp the Shadow Throne and Mastery Pack Warrior.
+ */
+const DATASET_TAG = "ec42d952da9c56a6a94855de8f27daeef2d7730f";
 const BATCH_SIZE = 500;
 
 function arg(name: string): string | undefined {
