@@ -34,14 +34,15 @@ export function NotificationToggle({
   }
 
   return (
-    <li className="flex items-start gap-4 py-3">
+    <li className="flex items-center gap-4 py-3">
       <div className="min-w-0 flex-1">
-        <label htmlFor={id} className="font-medium">
+        <label htmlFor={id} className="text-heading-02">
           {label}
         </label>
-        <p className="text-sm text-muted">{description}</p>
+        <p className="text-body-compact text-muted">{description}</p>
         {error && <p className="field-error">{error}</p>}
       </div>
+      {/* 48px tap target around a 24×48 track; the focus ring is drawn on the track. */}
       <button
         id={id}
         type="button"
@@ -49,12 +50,16 @@ export function NotificationToggle({
         aria-checked={enabled}
         onClick={toggle}
         disabled={pending}
-        className={`relative mt-1 h-7 w-12 shrink-0 rounded-full transition-colors ${enabled ? "bg-accent" : "bg-border"}`}
+        className="group flex h-control-lg shrink-0 items-center focus-visible:outline-none"
       >
         <span
           aria-hidden
-          className={`absolute top-0.5 left-0.5 h-6 w-6 rounded-full bg-white shadow transition-transform ${enabled ? "translate-x-5" : ""}`}
-        />
+          className={`relative h-6 w-12 rounded-full transition-colors group-focus-visible:focus-ring ${enabled ? "bg-accent" : "bg-border"}`}
+        >
+          <span
+            className={`absolute top-0.5 left-0.5 size-5 rounded-full bg-white shadow-raised transition-transform ${enabled ? "translate-x-6" : ""}`}
+          />
+        </span>
       </button>
     </li>
   );

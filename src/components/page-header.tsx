@@ -12,10 +12,10 @@ export function PageHeader({ title, trail = [], action }: { title: string; trail
   return (
     <header className="space-y-0.5">
       <nav aria-label="Breadcrumb">
-        <ol className="flex min-w-0 items-center gap-1 text-sm">
+        <ol className="flex min-w-0 items-center gap-1 text-label">
           {crumbs.map((c) => (
             <li key={c.href} className="flex max-w-[45%] min-w-0 items-center gap-1">
-              <Link href={c.href} className="flex min-h-8 min-w-0 items-center font-medium text-accent-text">
+              <Link href={c.href} className="link flex min-h-control-sm min-w-0 items-center">
                 <span className="truncate">{c.label}</span>
               </Link>
               <span aria-hidden className="text-muted">
@@ -25,8 +25,8 @@ export function PageHeader({ title, trail = [], action }: { title: string; trail
           ))}
         </ol>
       </nav>
-      <div className="flex min-h-10 items-center gap-3">
-        <h1 className="flex-1 truncate text-2xl font-bold">{title}</h1>
+      <div className="flex min-h-control-md items-center gap-3">
+        <h1 className="flex-1 truncate text-heading-04">{title}</h1>
         {action}
       </div>
     </header>
