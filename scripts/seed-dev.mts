@@ -1,6 +1,7 @@
 // Creates local test players (Alice, Bob, Carol) and a realistic current event:
 // all three follow two stores and are going to Uncommons' Armory, Bob and Carol
-// request cards, and Alice and Carol pledge some of them. Safe to re-run.
+// request cards, and Alice and Carol pledge some of them. Carol owns Uncommons.
+// Safe to re-run.
 // Then sign in as any of them from the "Dev sign-in" box on localhost:3000/login.
 // Usage: npx tsx scripts/seed-dev.mts   (local Supabase only; run import-cards first for requests)
 import { config } from "dotenv";
@@ -76,6 +77,14 @@ const event = events?.[0];
 if (!event) throw new Error("Uncommons has no active schedule. Did `npx supabase db reset` run the seed?");
 for (const p of [alice, bob, carol]) check(`${p.name} attends`, await p.client.rpc("attend_event", { p_event_id: event.id }));
 console.log(`Event ${event.event_date} at Uncommons: /events/${event.id}`);
+
+// Carol runs Uncommons: she can manage it at /manage (events start without a format poll).
+check(
+  "Carol owns Uncommons",
+  await admin
+    .from("store_owners")
+    .upsert({ store_id: EVENT_STORE, user_id: carol.id }, { onConflict: "store_id,user_id", ignoreDuplicates: true }),
+);
 
 // Requests: [player, card name, colour, quantity]; pledges: [pledger, requester, card name, colour, quantity].
 const REQUESTS: [Player, string, string | null, number][] = [

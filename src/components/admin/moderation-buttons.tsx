@@ -26,10 +26,23 @@ type ConfirmProps = {
   danger?: boolean;
   run: (reason: string) => Promise<ModerationResult>;
   onDone?: (result: ModerationResult) => void;
+  /** Label for the text field (defaults to "Reason"). */
+  reasonLabel?: string;
 };
 
 /** A button that opens a confirm sheet (optionally asking for a reason) before an admin action. */
-function ConfirmButton({ label, title, description, confirmLabel, reason, compact, danger, run, onDone }: ConfirmProps) {
+export function ConfirmButton({
+  label,
+  title,
+  description,
+  confirmLabel,
+  reason,
+  compact,
+  danger,
+  run,
+  onDone,
+  reasonLabel = "Reason",
+}: ConfirmProps) {
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -60,7 +73,7 @@ function ConfirmButton({ label, title, description, confirmLabel, reason, compac
           {reason && (
             <div>
               <label className="label" htmlFor="moderation-reason">
-                Reason {reason === "optional" && <span className="font-normal text-muted">(optional)</span>}
+                {reasonLabel} {reason === "optional" && <span className="font-normal text-muted">(optional)</span>}
               </label>
               <textarea
                 id="moderation-reason"

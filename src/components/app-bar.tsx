@@ -10,16 +10,18 @@ export function AppBar({
   userId,
   displayName,
   isAdmin,
+  managesStores,
 }: {
   supabase: SupabaseClient<Database>;
   userId: string;
   displayName: string;
   isAdmin: boolean;
+  managesStores: boolean;
 }) {
   return (
     // Cancels the root layout's top/side padding so the bar sits flush, then pads for the notch itself.
     <div className="sticky top-0 z-20 -mx-4 -mt-[max(1rem,env(safe-area-inset-top))] mb-4 flex items-center gap-1 border-b border-border bg-background/90 px-2 pt-[calc(0.375rem+env(safe-area-inset-top))] pb-1.5 backdrop-blur">
-      <NavMenu isAdmin={isAdmin} />
+      <NavMenu isAdmin={isAdmin} managesStores={managesStores} />
       <Link href="/" className="font-logo min-w-0 flex-1 truncate px-1 text-xl font-bold tracking-wide">
         ArmoryPal
       </Link>

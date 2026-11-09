@@ -5,7 +5,8 @@ import { RealtimeRefresh } from "@/components/realtime-refresh";
 import { RemoveAttendeeButton } from "@/components/admin/moderation-buttons";
 import { AddRequestSheet } from "@/components/event/add-request-sheet";
 import { CopyRequestsBanner } from "@/components/event/copy-requests-banner";
-import { getCopyCandidate } from "@/lib/event-data";
+import { getCopyCandidate, getEventPoll } from "@/lib/event-data";
+import { FormatChip, FormatPoll } from "@/components/event/format-poll";
 import { RequestRow } from "@/components/event/request-row";
 import { PageHeader } from "@/components/page-header";
 import { StoreLink } from "@/components/store-link";
@@ -14,6 +15,9 @@ import { formatLocation } from "@/lib/stores";
 import { PitchDot } from "@/components/pitch-dot";
 import { isUuid, requireProfile } from "@/lib/auth";
 import { cardLabel, formatReleaseMonth } from "@/lib/cards";
+import { EventLinks } from "@/components/event/event-links";
+import { getOwnedStoreIds } from "@/lib/auth";
+import { ticketLink } from "@/lib/event-manage";
 import { eventPhase, formatEventWhen } from "@/lib/events";
 import { buildPeopleList, buildRequestViews, type LoadedRequest } from "@/lib/request-view";
 
@@ -38,7 +42,7 @@ export default async function EventPage({
     supabase
       .from("events")
       .select(
-        "*, store:stores(id, name, timezone, city, region, country, notes), schedule:store_schedules(label), attendances(user_id, created_at, profile:profiles(display_name))",
+        "*, store:stores(id, name, timezone, city, region, country, notes, ticket_url), attendances(user_id, created_at, profile:profiles(display_name))",
       )
       .eq("id", id)
       .maybeSingle(),
@@ -51,7 +55,12 @@ export default async function EventPage({
       .eq("status", "active"),
     supabase.from("catalog_meta").select("latest_set_name, latest_set_released_on").maybeSingle(),
   ]);
-  if (!event?.store || !event.schedule) notFound();
+  if (!event?.store) notFound();
+  const canManage = profile.is_admin || (await getOwnedStoreIds()).includes(event.store.id);
+  const [poll, { data: follows }] = await Promise.all([
+    getEventPoll(supabase, event, user.id),
+    supabase.from("user_stores").select("store_id").eq("user_id", user.id).eq("store_id", event.store.id).maybeSingle(),
+  ]);
 
   const phase = eventPhase(event);
   const ended = phase === "ended";
@@ -85,11 +94,19 @@ export default async function EventPage({
   return (
     <main className="space-y-5">
       <PageHeader
-        title={event.schedule.label}
+        title={event.label}
         trail={[
           { label: event.store.name, href: `/stores/${event.store.id}` },
           ...(ended ? [{ label: "Past events", href: `/stores/${event.store.id}/history` }] : []),
         ]}
+        action={
+          canManage &&
+          !ended && (
+            <Link href={`/manage/events/${event.id}`} className="text-sm font-medium text-accent-text">
+              Manage
+            </Link>
+          )
+        }
       />
       {/* Live updates: re-render when anyone changes attendance, requests, or pledges. */}
       {!ended && <RealtimeRefresh topic={`event:${event.id}`} event="change" />}
@@ -99,9 +116,18 @@ export default async function EventPage({
           {formatEventWhen(event.starts_at, event.store.timezone)}
           {phase === "live" && <span className="ml-2 text-live">● Happening now</span>}
         </p>
+        {event.moved_from && !ended && (
+          <p className="text-sm text-muted">
+            Moved from {formatEventWhen(event.moved_from, event.store.timezone)}
+          </p>
+        )}
         <StoreLink store={event.store} subtitle={formatLocation(event.store)} />
         {!ended && <StoreNotes notes={event.store.notes} />}
       </div>
+
+      {!ended && (
+        <EventLinks gemUrl={event.gem_url} gemCode={event.gem_code} ticketUrl={ticketLink(event, event.store)} />
+      )}
 
       {ended ? (
         <p className="card text-center text-muted">
@@ -118,6 +144,15 @@ export default async function EventPage({
           pledgedCards={myPledges.reduce((sum, r) => sum + r.myPledge, 0)}
           openRequests={mine.length}
         />
+      )}
+
+      {event.format && (
+        <p>
+          <FormatChip format={event.format} />
+        </p>
+      )}
+      {poll && !ended && (!event.format || poll.results.total > 0) && (
+        <FormatPoll eventId={event.id} results={poll.results} open={poll.open} canVote={attending || !!follows} />
       )}
 
       {copyCandidate && (

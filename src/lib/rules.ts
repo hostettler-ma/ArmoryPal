@@ -35,7 +35,32 @@ export type RuleError =
   | "already_banned"
   | "not_banned"
   | "store_not_found"
-  | "store_not_archived";
+  | "store_not_archived"
+  // Store owners (*_store_owners.sql).
+  | "not_store_owner"
+  | "already_owner"
+  | "request_pending"
+  | "message_too_long"
+  | "ownership_request_not_found"
+  // Event management (*_event_management.sql; mirrored in src/lib/event-manage.ts).
+  | "invalid_label"
+  | "invalid_gem_link"
+  | "invalid_ticket_link"
+  | "move_in_past"
+  | "move_too_far"
+  | "date_in_past"
+  | "too_far_ahead"
+  | "invalid_schedule"
+  | "schedule_not_found"
+  | "notes_too_long"
+  // Format polls (*_format_polls.sql; mirrored in src/lib/formats.ts).
+  | "no_poll"
+  | "poll_closed"
+  | "invalid_format"
+  | "not_in_audience"
+  | "invalid_poll_options"
+  | "poll_exists"
+  | "poll_has_votes";
 
 export type Check = { ok: true } | { ok: false; reason: RuleError };
 const ok: Check = { ok: true };
@@ -138,6 +163,28 @@ const MESSAGES: Record<RuleError, string> = {
   not_banned: "That player isn't banned.",
   store_not_found: "That store doesn't exist.",
   store_not_archived: "That store isn't archived.",
+  not_store_owner: "Only this store's owners can do that.",
+  already_owner: "You already manage this store.",
+  request_pending: "Your request is already waiting for an admin.",
+  message_too_long: "Keep the message to 200 characters.",
+  ownership_request_not_found: "That request was already handled.",
+  invalid_label: "Give the event a name (up to 40 characters).",
+  invalid_gem_link: "Use an https link on gem.fabtcg.com, or just the event code.",
+  invalid_ticket_link: "Use a full https:// link to your ticket page.",
+  move_in_past: "Pick a time that hasn't passed yet.",
+  move_too_far: "A weekly event can move by up to 6 days. To change every week, edit the weekly slot.",
+  date_in_past: "That day is already over.",
+  too_far_ahead: "Events can be planned up to 90 days ahead.",
+  invalid_schedule: "Pick a weekday and a start time.",
+  schedule_not_found: "That weekly slot doesn't exist.",
+  notes_too_long: "Keep the notes to 500 characters.",
+  no_poll: "There's no format poll for this event.",
+  poll_closed: "Voting has closed for this event.",
+  invalid_format: "Pick one of the formats on the poll.",
+  not_in_audience: "Mark yourself as going, or save the store, to vote.",
+  invalid_poll_options: "Pick at least two formats to vote on.",
+  poll_exists: "This event already has a poll.",
+  poll_has_votes: "People already voted, so the poll can't be removed. Confirm a format instead.",
 };
 
 /** Friendly text for an error code raised by the SQL functions (or a Check). */

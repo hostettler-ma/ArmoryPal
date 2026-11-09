@@ -27,7 +27,7 @@ export default async function StoreHistoryPage({
     supabase
       .from("events")
       .select(
-        "id, starts_at, schedule:store_schedules(label), attendances(count), requests(quantity, status, pledges(quantity))",
+        "id, starts_at, label, attendances(count), requests(quantity, status, pledges(quantity))",
       )
       .eq("store_id", id)
       .lte("ends_at", new Date().toISOString())
@@ -40,7 +40,7 @@ export default async function StoreHistoryPage({
     const active = e.requests.filter((r) => r.status === "active");
     return {
       id: e.id,
-      label: e.schedule?.label ?? "Armory",
+      label: e.label,
       when: formatEventWhen(e.starts_at, store.timezone),
       going: e.attendances[0]?.count ?? 0,
       requests: active.length,

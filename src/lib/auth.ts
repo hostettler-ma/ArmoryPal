@@ -35,6 +35,24 @@ export async function requireAdmin() {
   return ctx;
 }
 
+/** Ids of the stores the signed-in user owns (cached per request; the layout and pages share it). */
+export const getOwnedStoreIds = cache(async (): Promise<string[]> => {
+  const { supabase, user } = await requireProfile();
+  const { data } = await supabase.from("store_owners").select("store_id").eq("user_id", user.id);
+  return (data ?? []).map((r) => r.store_id);
+});
+
+/**
+ * For owner pages: 404s unless the user owns this store or is an admin.
+ * The owner RPCs check the same thing (can_manage_store); this only fails fast.
+ */
+export async function requireStoreManager(storeId: string) {
+  const ctx = await requireProfile();
+  if (!isUuid(storeId)) notFound();
+  if (!ctx.profile.is_admin && !(await getOwnedStoreIds()).includes(storeId)) notFound();
+  return ctx;
+}
+
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** Route params are user input; check the shape before handing them to Postgres. */
