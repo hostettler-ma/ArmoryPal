@@ -217,7 +217,7 @@
 
 /* The ArmoryPal wordmark: the only place Cinzel is used. */
 @utility wordmark {
-  font-family: var(--font-logo);
+  font-family: var(--font-cinzel), serif; /* = font-logo (an inline theme value, so not a CSS variable) */
   font-size: var(--text-heading-03);
   line-height: var(--text-heading-03--line-height);
   font-weight: 700;

@@ -19,7 +19,7 @@ export function NextArmoryCard({ next }: { next: NextArmory }) {
 
   return (
     <section className="card space-y-4" aria-label="Your next Armory">
-      <Link href={eventHref} className="interactive -m-2 flex items-start gap-3 rounded-control p-2">
+      <Link href={eventHref} className="interactive -mx-2 -mt-2 flex items-start gap-3 rounded-control p-2">
         <div className="min-w-0 flex-1">
           <p className="text-label text-muted">Your next Armory</p>
           <p className="truncate text-heading-03">{event.label}</p>
