@@ -1,12 +1,14 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, Tables } from "@/lib/supabase/database.types";
+import { pollOpen, pollResults, type PollResults } from "./formats";
 import { copySummary, type CopySummary, type PreviousRequest } from "./rollover";
 import type { BringItem } from "./request-view";
 
 export type EventSummary = Tables<"events"> & {
-  label: string;
   attendeeCount: number;
   attending: boolean;
+  /** A format poll is open and the viewer hasn't voted yet. */
+  pollWaiting: boolean;
 };
 
 /**
@@ -26,19 +28,24 @@ export async function getCurrentEvents(
   if (!events?.length) return byStore;
 
   const eventIds = events.map((e) => e.id);
-  const [{ data: attendances }, { data: schedules }] = await Promise.all([
+  const [{ data: attendances }, { data: polls }] = await Promise.all([
     supabase.from("attendances").select("event_id, user_id").in("event_id", eventIds),
-    supabase.from("store_schedules").select("id, label").in("id", events.map((e) => e.schedule_id)),
+    supabase.from("format_polls").select("event_id, closed_at, format_votes(user_id)").in("event_id", eventIds),
   ]);
-  const labels = new Map((schedules ?? []).map((s) => [s.id, s.label]));
+  const waiting = new Set(
+    (polls ?? [])
+      .filter((p) => !p.closed_at && !p.format_votes.some((v) => v.user_id === userId))
+      .map((p) => p.event_id),
+  );
 
   for (const e of events) {
     const forEvent = (attendances ?? []).filter((a) => a.event_id === e.id);
     const summary: EventSummary = {
       ...e,
-      label: labels.get(e.schedule_id) ?? "Armory",
+      label: e.label,
       attendeeCount: forEvent.length,
       attending: forEvent.some((a) => a.user_id === userId),
+      pollWaiting: waiting.has(e.id) && !e.format && new Date(e.starts_at).getTime() > Date.now(),
     };
     byStore.set(e.store_id, [...(byStore.get(e.store_id) ?? []), summary]);
   }
@@ -48,19 +55,21 @@ export async function getCurrentEvents(
 /**
  * Last week's event of the same weekly slot (the most recent ended one before
  * this event) and what the viewer could copy from it into this event.
+ * One-off events have no slot, so nothing to copy.
  */
 export async function getCopyCandidate(
   supabase: SupabaseClient<Database>,
-  event: { id: string; schedule_id: string; event_date: string },
+  event: { id: string; schedule_id: string | null; slot_date: string | null },
   userId: string,
 ): Promise<{ fromEventId: string; summary: CopySummary } | null> {
+  if (!event.schedule_id || !event.slot_date) return null;
   const { data: previous } = await supabase
     .from("events")
     .select("id")
     .eq("schedule_id", event.schedule_id)
-    .lt("event_date", event.event_date)
+    .lt("slot_date", event.slot_date)
     .lte("ends_at", new Date().toISOString())
-    .order("event_date", { ascending: false })
+    .order("slot_date", { ascending: false })
     .limit(1)
     .maybeSingle();
   if (!previous) return null;
@@ -93,6 +102,7 @@ export type NextArmory = {
     starts_at: string;
     ends_at: string;
     label: string;
+    format: string | null;
     store: { id: string; name: string; timezone: string };
   };
   attendeeCount: number;
@@ -111,7 +121,7 @@ export async function getNextAttendingEvent(
   const { data: rows, error } = await supabase
     .from("attendances")
     .select(
-      "event:events!inner(id, starts_at, ends_at, store:stores(id, name, timezone), schedule:store_schedules(label), attendances(user_id))",
+      "event:events!inner(id, starts_at, ends_at, label, format, store:stores(id, name, timezone), attendances(user_id))",
     )
     .eq("user_id", userId)
     .gt("event.ends_at", new Date().toISOString());
@@ -139,7 +149,8 @@ export async function getNextAttendingEvent(
       id: next.id,
       starts_at: next.starts_at,
       ends_at: next.ends_at,
-      label: next.schedule?.label ?? "Armory",
+      label: next.label,
+      format: next.format,
       store: next.store,
     },
     attendeeCount: next.attendances.length,
@@ -153,5 +164,26 @@ export async function getNextAttendingEvent(
         requesterName: p.request.requester?.display_name ?? "Unknown player",
       }))
       .sort((a, b) => a.requesterName.localeCompare(b.requesterName) || a.card.name.localeCompare(b.card.name)),
+  };
+}
+
+export type EventPoll = { options: string[]; open: boolean; results: PollResults };
+
+/** The event's format poll with live results for the viewer, or null if it has none. */
+export async function getEventPoll(
+  supabase: SupabaseClient<Database>,
+  event: { id: string; starts_at: string },
+  userId: string,
+): Promise<EventPoll | null> {
+  const { data: poll } = await supabase
+    .from("format_polls")
+    .select("options, closed_at, format_votes(user_id, format)")
+    .eq("event_id", event.id)
+    .maybeSingle();
+  if (!poll) return null;
+  return {
+    options: poll.options,
+    open: pollOpen(poll, event),
+    results: pollResults(poll.options, poll.format_votes, userId),
   };
 }

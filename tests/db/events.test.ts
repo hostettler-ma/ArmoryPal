@@ -86,6 +86,7 @@ describe("current_events_for_stores", () => {
   it("blocks users from creating events directly", async () => {
     const { error } = await alice.client.from("events").insert({
       schedule_id: scheduleId,
+      label: "Armory",
       store_id: storeId,
       event_date: "2030-01-01",
       starts_at: "2030-01-01T18:00:00Z",
@@ -106,6 +107,7 @@ describe("attendance", () => {
       .from("events")
       .insert({
         schedule_id: scheduleId,
+        label: "Armory",
         store_id: storeId,
         event_date: "2026-01-06",
         starts_at: "2026-01-07T00:30:00Z",

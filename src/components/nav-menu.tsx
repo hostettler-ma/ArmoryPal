@@ -23,11 +23,15 @@ function currentSection(pathname: string, hrefs: string[]): string | undefined {
 }
 
 /** Burger button that opens a left-side drawer for jumping between sections. */
-export function NavMenu({ isAdmin }: { isAdmin: boolean }) {
+export function NavMenu({ isAdmin, managesStores }: { isAdmin: boolean; managesStores: boolean }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDialogElement>(null);
   const pathname = usePathname();
-  const sections = isAdmin ? [...SECTIONS, { href: "/admin", label: "Admin" }] : SECTIONS;
+  const sections = [
+    ...SECTIONS,
+    ...(managesStores ? [{ href: "/manage", label: "Manage my store" }] : []),
+    ...(isAdmin ? [{ href: "/admin", label: "Admin" }] : []),
+  ];
   const active = currentSection(pathname, sections.map((s) => s.href));
 
   useEffect(() => {

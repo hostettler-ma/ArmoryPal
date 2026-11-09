@@ -107,14 +107,14 @@ isOneToOne: true
                   ]
                 },"events": {
                   Row: {
-                    "created_at": string,"ends_at": string,"event_date": string,"id": string,"schedule_id": string,"starts_at": string,"store_id": string
+                    "created_at": string,"ends_at": string,"event_date": string,"format": string | null,"gem_code": string | null,"gem_url": string | null,"id": string,"label": string,"moved_from": string | null,"schedule_id": string | null,"slot_date": string | null,"starts_at": string,"store_id": string,"ticket_url": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string,"ends_at": string,"event_date": string,"id"?: string,"schedule_id": string,"starts_at": string,"store_id": string
+                    "created_at"?: string,"ends_at": string,"event_date": string,"format"?: string | null,"gem_code"?: string | null,"gem_url"?: string | null,"id"?: string,"label": string,"moved_from"?: string | null,"schedule_id"?: string | null,"slot_date"?: string | null,"starts_at": string,"store_id": string,"ticket_url"?: string | null
                   }
                   Update: {
-                    "created_at"?: string,"ends_at"?: string,"event_date"?: string,"id"?: string,"schedule_id"?: string,"starts_at"?: string,"store_id"?: string
+                    "created_at"?: string,"ends_at"?: string,"event_date"?: string,"format"?: string | null,"gem_code"?: string | null,"gem_url"?: string | null,"id"?: string,"label"?: string,"moved_from"?: string | null,"schedule_id"?: string | null,"slot_date"?: string | null,"starts_at"?: string,"store_id"?: string,"ticket_url"?: string | null
                   }
                   Relationships: [
                     {
@@ -128,6 +128,58 @@ isOneToOne: false
       columns: ["store_id"]
 isOneToOne: false
       referencedRelation: "stores"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"format_polls": {
+                  Row: {
+                    "closed_at": string | null,"created_at": string,"created_by": string | null,"event_id": string,"options": (string)[],"weekly": boolean
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "closed_at"?: string | null,"created_at"?: string,"created_by"?: string | null,"event_id": string,"options": (string)[],"weekly"?: boolean
+                  }
+                  Update: {
+                    "closed_at"?: string | null,"created_at"?: string,"created_by"?: string | null,"event_id"?: string,"options"?: (string)[],"weekly"?: boolean
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "format_polls_created_by_fkey"
+      columns: ["created_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "format_polls_event_id_fkey"
+      columns: ["event_id"]
+isOneToOne: true
+      referencedRelation: "events"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"format_votes": {
+                  Row: {
+                    "event_id": string,"format": string,"updated_at": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "event_id": string,"format": string,"updated_at"?: string,"user_id": string
+                  }
+                  Update: {
+                    "event_id"?: string,"format"?: string,"updated_at"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "format_votes_event_id_fkey"
+      columns: ["event_id"]
+isOneToOne: false
+      referencedRelation: "format_polls"
+      referencedColumns: ["event_id"]
+    },{
+      foreignKeyName: "format_votes_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
       referencedColumns: ["id"]
     }
                   ]
@@ -261,16 +313,80 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
-                },"store_schedules": {
+                },"store_owner_requests": {
                   Row: {
-                    "active": boolean,"created_at": string,"id": string,"label": string,"start_time": string,"store_id": string,"weekday": number
+                    "created_at": string,"decided_at": string | null,"decided_by": string | null,"decision_note": string | null,"id": string,"message": string | null,"status": string,"store_id": string,"user_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "active"?: boolean,"created_at"?: string,"id"?: string,"label"?: string,"start_time": string,"store_id": string,"weekday": number
+                    "created_at"?: string,"decided_at"?: string | null,"decided_by"?: string | null,"decision_note"?: string | null,"id"?: string,"message"?: string | null,"status"?: string,"store_id": string,"user_id": string
                   }
                   Update: {
-                    "active"?: boolean,"created_at"?: string,"id"?: string,"label"?: string,"start_time"?: string,"store_id"?: string,"weekday"?: number
+                    "created_at"?: string,"decided_at"?: string | null,"decided_by"?: string | null,"decision_note"?: string | null,"id"?: string,"message"?: string | null,"status"?: string,"store_id"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "store_owner_requests_decided_by_fkey"
+      columns: ["decided_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "store_owner_requests_store_id_fkey"
+      columns: ["store_id"]
+isOneToOne: false
+      referencedRelation: "stores"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "store_owner_requests_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"store_owners": {
+                  Row: {
+                    "created_at": string,"granted_by": string | null,"store_id": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"granted_by"?: string | null,"store_id": string,"user_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"granted_by"?: string | null,"store_id"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "store_owners_granted_by_fkey"
+      columns: ["granted_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "store_owners_store_id_fkey"
+      columns: ["store_id"]
+isOneToOne: false
+      referencedRelation: "stores"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "store_owners_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"store_schedules": {
+                  Row: {
+                    "active": boolean,"created_at": string,"id": string,"label": string,"poll_options": (string)[],"start_time": string,"store_id": string,"weekday": number,"weekly_format_poll": boolean
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "active"?: boolean,"created_at"?: string,"id"?: string,"label"?: string,"poll_options"?: (string)[],"start_time": string,"store_id": string,"weekday": number,"weekly_format_poll"?: boolean
+                  }
+                  Update: {
+                    "active"?: boolean,"created_at"?: string,"id"?: string,"label"?: string,"poll_options"?: (string)[],"start_time"?: string,"store_id"?: string,"weekday"?: number,"weekly_format_poll"?: boolean
                   }
                   Relationships: [
                     {
@@ -283,14 +399,14 @@ isOneToOne: false
                   ]
                 },"stores": {
                   Row: {
-                    "address": string | null,"archived_at": string | null,"city": string,"country": string,"created_at": string,"created_by": string | null,"id": string,"name": string,"notes": string | null,"region": string | null,"timezone": string
+                    "address": string | null,"archived_at": string | null,"city": string,"country": string,"created_at": string,"created_by": string | null,"id": string,"name": string,"notes": string | null,"region": string | null,"ticket_url": string | null,"timezone": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "address"?: string | null,"archived_at"?: string | null,"city": string,"country": string,"created_at"?: string,"created_by"?: string | null,"id"?: string,"name": string,"notes"?: string | null,"region"?: string | null,"timezone": string
+                    "address"?: string | null,"archived_at"?: string | null,"city": string,"country": string,"created_at"?: string,"created_by"?: string | null,"id"?: string,"name": string,"notes"?: string | null,"region"?: string | null,"ticket_url"?: string | null,"timezone": string
                   }
                   Update: {
-                    "address"?: string | null,"archived_at"?: string | null,"city"?: string,"country"?: string,"created_at"?: string,"created_by"?: string | null,"id"?: string,"name"?: string,"notes"?: string | null,"region"?: string | null,"timezone"?: string
+                    "address"?: string | null,"archived_at"?: string | null,"city"?: string,"country"?: string,"created_at"?: string,"created_by"?: string | null,"id"?: string,"name"?: string,"notes"?: string | null,"region"?: string | null,"ticket_url"?: string | null,"timezone"?: string
                   }
                   Relationships: [
                     {
@@ -355,6 +471,9 @@ isOneToOne: false
 "admin_ban":
 { Args: { "p_reason": string,"p_user_id": string }; Returns: undefined
                            },
+"admin_decide_ownership_request":
+{ Args: { "p_approve": boolean,"p_note"?: string,"p_request_id": string }; Returns: undefined
+                           },
 "admin_delete_store":
 { Args: { "p_store_id": string }; Returns: string
                            },
@@ -366,11 +485,20 @@ isOneToOne: false
 "admin_remove_attendee":
 { Args: { "p_event_id": string,"p_reason"?: string,"p_user_id": string }; Returns: undefined
                            },
+"admin_remove_store_owner":
+{ Args: { "p_store_id": string,"p_user_id": string }; Returns: undefined
+                           },
 "admin_restore_store":
 { Args: { "p_store_id": string }; Returns: undefined
                            },
 "admin_unban":
 { Args: { "p_user_id": string }; Returns: undefined
+                           },
+"announce_event_moved":
+{ Args: { "p_event_id": string,"p_from": string }; Returns: undefined
+                           },
+"announce_format":
+{ Args: { "p_event_id": string,"p_format": string,"p_kind": string }; Returns: undefined
                            },
 "announce_needed_again":
 { Args: { "p_actor": string,"p_event_id": string,"p_reason": string,"p_released": Json,"p_releaser": string }; Returns: undefined
@@ -381,15 +509,25 @@ isOneToOne: false
 "assert_attending":
 { Args: { "p_event_id": string }; Returns: undefined
                            },
+"assert_can_manage":
+{ Args: { "p_store_id": string }; Returns: undefined
+                           },
 "assert_event_open":
 { Args: { "p_event_id": string }; Returns: {
               "created_at": string,
 "ends_at": string,
 "event_date": string,
+"format": string | null,
+"gem_code": string | null,
+"gem_url": string | null,
 "id": string,
-"schedule_id": string,
+"label": string,
+"moved_from": string | null,
+"schedule_id": string | null,
+"slot_date": string | null,
 "starts_at": string,
-"store_id": string
+"store_id": string,
+"ticket_url": string | null
             }
                           SetofOptions: {
         from: "*"
@@ -397,8 +535,20 @@ isOneToOne: false
         isOneToOne: true
         isSetofReturn: false
       } },
+"assert_valid_label":
+{ Args: { "p_label": string }; Returns: undefined
+                           },
+"assert_valid_links":
+{ Args: { "p_gem_code": string,"p_gem_url": string,"p_ticket_url": string }; Returns: undefined
+                           },
 "attend_event":
 { Args: { "p_event_id": string }; Returns: undefined
+                           },
+"can_manage_store":
+{ Args: { "p_store_id": string }; Returns: boolean
+                           },
+"cancel_ownership_request":
+{ Args: { "p_request_id": string }; Returns: undefined
                            },
 "cancel_request":
 { Args: { "p_request_id": string }; Returns: undefined
@@ -412,6 +562,9 @@ isOneToOne: false
 "card_name_key":
 { Args: { "p_name": string }; Returns: string
                            },
+"clear_format_vote":
+{ Args: { "p_event_id": string }; Returns: undefined
+                           },
 "copy_open_requests":
 { Args: { "p_from_event": string,"p_to_event": string }; Returns: number
                            },
@@ -420,10 +573,17 @@ isOneToOne: false
               "created_at": string,
 "ends_at": string,
 "event_date": string,
+"format": string | null,
+"gem_code": string | null,
+"gem_url": string | null,
 "id": string,
-"schedule_id": string,
+"label": string,
+"moved_from": string | null,
+"schedule_id": string | null,
+"slot_date": string | null,
 "starts_at": string,
-"store_id": string
+"store_id": string,
+"ticket_url": string | null
             }[]
                           SetofOptions: {
         from: "*"
@@ -439,11 +599,31 @@ isOneToOne: false
               "ends_at": string,"event_date": string,"starts_at": string
             }[]
                            },
+"event_times":
+{ Args: { "p_date": string,"p_start_time": string,"p_timezone": string }; Returns: {
+              "ends_at": string,"starts_at": string
+            }[]
+                           },
+"format_event_time":
+{ Args: { "p_at": string,"p_timezone": string }; Returns: string
+                           },
 "is_admin":
 { Args: Record<PropertyKey, never>; Returns: boolean
                            },
 "is_banned":
 { Args: Record<PropertyKey, never>; Returns: boolean
+                           },
+"is_format":
+{ Args: { "p_format": string }; Returns: boolean
+                           },
+"is_gem_url":
+{ Args: { "p_url": string }; Returns: boolean
+                           },
+"is_https_url":
+{ Args: { "p_url": string }; Returns: boolean
+                           },
+"is_store_owner":
+{ Args: { "p_store_id": string }; Returns: boolean
                            },
 "is_valid_timezone":
 { Args: { "tz": string }; Returns: boolean
@@ -485,6 +665,65 @@ isOneToOne: false
 "notify":
 { Args: { "p_event_id": string,"p_kind": string,"p_payload": Json,"p_user_id": string }; Returns: undefined
                            },
+"owner_add_schedule":
+{ Args: { "p_label": string,"p_start_time": string,"p_store_id": string,"p_weekday": number }; Returns: string
+                           },
+"owner_confirm_format":
+{ Args: { "p_event_id": string,"p_format": string }; Returns: undefined
+                           },
+"owner_create_event":
+{ Args: { "p_date": string,"p_gem_code"?: string,"p_gem_url"?: string,"p_label": string,"p_start_time": string,"p_store_id": string,"p_ticket_url"?: string }; Returns: string
+                           },
+"owner_delete_poll":
+{ Args: { "p_event_id": string }; Returns: undefined
+                           },
+"owner_move_event":
+{ Args: { "p_date": string,"p_event_id": string,"p_start_time": string }; Returns: undefined
+                           },
+"owner_open_poll":
+{ Args: { "p_event_id": string,"p_options": (string)[] }; Returns: undefined
+                           },
+"owner_rename_event":
+{ Args: { "p_event_id": string,"p_label": string }; Returns: undefined
+                           },
+"owner_set_schedule_active":
+{ Args: { "p_active": boolean,"p_schedule_id": string }; Returns: undefined
+                           },
+"owner_set_weekly_poll":
+{ Args: { "p_on": boolean,"p_options": (string)[],"p_schedule_id": string }; Returns: undefined
+                           },
+"owner_upcoming_events":
+{ Args: { "p_store_id": string,"p_weeks"?: number }; Returns: {
+              "created_at": string,
+"ends_at": string,
+"event_date": string,
+"format": string | null,
+"gem_code": string | null,
+"gem_url": string | null,
+"id": string,
+"label": string,
+"moved_from": string | null,
+"schedule_id": string | null,
+"slot_date": string | null,
+"starts_at": string,
+"store_id": string,
+"ticket_url": string | null
+            }[]
+                          SetofOptions: {
+        from: "*"
+        to: "events"
+        isOneToOne: false
+        isSetofReturn: true
+      } },
+"owner_update_event_links":
+{ Args: { "p_event_id": string,"p_gem_code": string,"p_gem_url": string,"p_ticket_url": string }; Returns: undefined
+                           },
+"owner_update_schedule":
+{ Args: { "p_label": string,"p_schedule_id": string,"p_start_time": string,"p_weekday": number }; Returns: undefined
+                           },
+"owner_update_store_info":
+{ Args: { "p_notes": string,"p_store_id": string,"p_ticket_url": string }; Returns: undefined
+                           },
 "pledge":
 { Args: { "p_quantity": number,"p_request_id": string }; Returns: {
               "created_at": string,
@@ -509,6 +748,9 @@ isOneToOne: false
                            },
 "remove_from_event":
 { Args: { "p_event_id": string,"p_user_id": string }; Returns: undefined
+                           },
+"request_store_ownership":
+{ Args: { "p_message"?: string,"p_store_id": string }; Returns: string
                            },
 "resolve_card_names":
 { Args: { "p_names": (string)[] }; Returns: {
@@ -544,6 +786,7 @@ isOneToOne: false
 "name": string,
 "notes": string | null,
 "region": string | null,
+"ticket_url": string | null,
 "timezone": string
             }[]
                           SetofOptions: {
@@ -573,7 +816,13 @@ isOneToOne: false
         to: "requests"
         isOneToOne: true
         isSetofReturn: false
-      } }
+      } },
+"valid_format_options":
+{ Args: { "p_options": (string)[] }; Returns: boolean
+                           },
+"vote_format":
+{ Args: { "p_event_id": string,"p_format": string }; Returns: undefined
+                           }
           }
           Enums: {
             [_ in never]: never

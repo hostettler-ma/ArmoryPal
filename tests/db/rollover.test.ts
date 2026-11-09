@@ -60,6 +60,7 @@ beforeAll(async () => {
     .insert([
       {
         schedule_id: scheduleId,
+        label: "Armory",
         store_id: storeId,
         event_date: lastWeekDate,
         starts_at: `${lastWeekDate}T18:00:00Z`,
@@ -67,6 +68,7 @@ beforeAll(async () => {
       },
       {
         schedule_id: otherScheduleId,
+        label: "Armory",
         store_id: storeId,
         // The Friday 11 days before this Tuesday: always in the past, never the
         // Friday slot's own current event.

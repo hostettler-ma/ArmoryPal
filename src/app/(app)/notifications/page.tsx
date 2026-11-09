@@ -2,14 +2,14 @@ import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
 import { requireProfile } from "@/lib/auth";
 import { formatEventWhen } from "@/lib/events";
-import { formatNotification, formatRelative, type NotificationPayload } from "@/lib/notifications";
+import { formatNotification, formatRelative, notificationHref, type NotificationPayload } from "@/lib/notifications";
 
 export default async function NotificationsPage() {
   const { supabase, user } = await requireProfile();
 
   const { data: notifications } = await supabase
     .from("notifications")
-    .select("id, kind, payload, read_at, created_at, event:events(id, starts_at, store:stores(name, timezone), schedule:store_schedules(label))")
+    .select("id, kind, payload, read_at, created_at, event:events(id, starts_at, label, store:stores(name, timezone))")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
     .limit(50);
@@ -34,7 +34,7 @@ export default async function NotificationsPage() {
           {notifications.map((n) => (
             <li key={n.id}>
               <Link
-                href={n.event ? `/events/${n.event.id}?tab=${n.kind === "new_requests" || n.kind === "card_needed_again" ? "requests" : "checklist"}` : "/"}
+                href={notificationHref(n.kind, n.event?.id, n.payload as NotificationPayload)}
                 className={`card block space-y-1 ${n.read_at ? "" : "border-accent"}`}
               >
                 <p className={n.read_at ? "" : "font-semibold"}>
@@ -42,8 +42,8 @@ export default async function NotificationsPage() {
                   {formatNotification(n.kind, n.payload as NotificationPayload)}
                 </p>
                 <p className="text-sm text-muted">
-                  {n.event?.store && n.event.schedule
-                    ? `${n.event.schedule.label} at ${n.event.store.name} · ${formatEventWhen(n.event.starts_at, n.event.store.timezone)} · `
+                  {n.event?.store
+                    ? `${n.event.label} at ${n.event.store.name} · ${formatEventWhen(n.event.starts_at, n.event.store.timezone)} · `
                     : ""}
                   {formatRelative(n.created_at)}
                 </p>

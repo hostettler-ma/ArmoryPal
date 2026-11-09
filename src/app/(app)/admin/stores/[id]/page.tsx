@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { setScheduleActive } from "@/app/actions/admin";
 import { DeleteStoreButton, RestoreStoreButton } from "@/components/admin/moderation-buttons";
+import { RemoveOwnerButton } from "@/components/ownership-buttons";
 import { ScheduleForm } from "@/components/admin/schedule-form";
 import { StoreForm } from "@/components/admin/store-form";
 import { PageHeader } from "@/components/page-header";
@@ -13,10 +14,15 @@ export default async function EditStorePage({ params }: { params: Promise<{ id: 
   if (!isUuid(id)) notFound();
   const { supabase } = await requireAdmin();
 
-  const [{ data: store }, { data: schedules }, { count: eventCount }] = await Promise.all([
+  const [{ data: store }, { data: schedules }, { count: eventCount }, { data: owners }] = await Promise.all([
     supabase.from("stores").select("*").eq("id", id).maybeSingle(),
     supabase.from("store_schedules").select("*").eq("store_id", id).order("weekday").order("start_time"),
     supabase.from("events").select("id", { count: "exact", head: true }).eq("store_id", id),
+    supabase
+      .from("store_owners")
+      .select("user_id, created_at, profile:profiles!store_owners_user_id_fkey(display_name)")
+      .eq("store_id", id)
+      .order("created_at"),
   ]);
   if (!store) notFound();
 
@@ -69,6 +75,33 @@ export default async function EditStorePage({ params }: { params: Promise<{ id: 
           ))}
         </ul>
         <ScheduleForm storeId={store.id} />
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold">Owners</h2>
+        {(owners ?? []).length === 0 ? (
+          <p className="text-muted">
+            No owners yet. Players ask from the store page; requests show up in{" "}
+            <Link href="/admin/owners" className="text-accent-text">
+              Owner requests
+            </Link>
+            .
+          </p>
+        ) : (
+          <ul className="card divide-y divide-border !py-0">
+            {(owners ?? []).map((o) => {
+              const name = o.profile?.display_name ?? "Unknown player";
+              return (
+                <li key={o.user_id} className="flex min-h-12 items-center gap-3 py-2">
+                  <Link href={`/admin/players/${o.user_id}`} className="min-w-0 flex-1 truncate text-accent-text">
+                    {name}
+                  </Link>
+                  <RemoveOwnerButton storeId={store.id} userId={o.user_id} name={name} />
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </section>
 
       <section className="space-y-3">

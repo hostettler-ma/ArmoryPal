@@ -58,6 +58,10 @@ Mobile-first companion PWA for the Flesh and Blood TCG. Players coordinate card 
   - **Banner:** the TS mirror `copySummary()` in `src/lib/rollover.ts` and `getCopyCandidate()` in `src/lib/event-data.ts` drive it. "Not now" is remembered per device in localStorage.
 - **Which event is current** is decided by SQL `public.event_occurrence(weekday, start_time, tz, now)`: the next `weekday` in store-local time, counting today until local midnight. Its TS mirror is `currentEventFor()` in `src/lib/events.ts`. **Change both together.** `tests/db/events.test.ts` checks that they agree across DST changes, offsets and year boundaries.
 - **Events are created lazily** by the `current_events_for_stores(store_ids)` RPC, which is idempotent and called on page views. Users can't insert events. Server code uses `getCurrentEvents()` in `src/lib/event-data.ts`.
+  - **`slot_date` is the weekly slot's identity** (migration `*_event_management.sql`). Lazy creation dedupes on `(schedule_id, slot_date)`, never `event_date`, so a moved event (different `event_date`/`starts_at`) can't get a duplicate. A slot's current event is the earliest not-ended one within ±7 days of `event_occurrence`; if this week's was moved earlier and is over, next week's is created.
+  - **One-off events** have `schedule_id` and `slot_date` null (check constraint). They're listed by `current_events_for_stores` when they start within 14 days. The copy banner and `copy_open_requests` skip them.
+  - **`events.label`** is stored on the event (filled from the schedule by the `events_fill_defaults` trigger). Display `event.label`, not the schedule's.
+  - **`moved_from`** is the start time before the first move ("Moved from …"); moving back clears it.
 - **Attendance** goes only through the `attend_event` / `leave_event` RPCs, which reject ended events via the internal `assert_event_open`. The table has no write policies. Attendee lists are visible to all signed-in users.
 - **FKs to schedules and stores from events are `on delete restrict`.** Schedules get deactivated, never deleted.
 - **Requests and pledges** (migration `*_requests_pledges.sql`) are written only through RPCs:
@@ -94,6 +98,17 @@ Mobile-first companion PWA for the Flesh and Blood TCG. Players coordinate card 
   - **Preferences** live in `notification_preferences` (user, kind, enabled). A missing row means on. `notify()` skips disabled kinds, so they're never stored. The settings page is `/settings/notifications`, linked from the inbox and `/me`.
   - **Reading:** users read only their own. `/notifications` marks them read (`mark_notifications_read()`), and the bell (`NotificationBell`) shows the unread count live.
 - **Leaving an event:** `leave_event(event, cancel_requests)` always releases your pledges and notifies the requesters. Cancelling your requests is optional (the UI checkbox is on by default) and notifies their pledgers. Kept requests show a "Not going" badge.
+- **Store owners** (migrations `*_store_owners.sql`, `*_event_management.sql`, `*_attendee_left.sql`, `*_format_polls.sql`; UI under `/manage`):
+  - **Becoming one:** a player taps "I run this store" (`request_store_ownership`), and an admin approves or rejects it at `/admin/owners` (`admin_decide_ownership_request`, logged, `ownership_decided` notification). Admins remove owners on the admin store page. A ban deletes the player's ownerships (trigger on `bans`).
+  - **Checks:** `can_manage_store(store)` = admin or owner. Every owner RPC calls the internal `assert_can_manage` (`not_store_owner`); owners never write tables directly. Pages use `requireStoreManager(storeId)` (404) and `getOwnedStoreIds()` from `src/lib/auth.ts`.
+  - **Owner RPCs:** `owner_update_event_links` (GEM link on fabtcg.com **or** GEM code, ticket link; https only), `owner_move_event` (within ±6 days of the slot, not in the past; one-offs ≤ 90 days ahead), `owner_create_event` (one-off), `owner_rename_event` (one event's label; a slot rename only relabels events still carrying the slot's old name), `owner_add_schedule` / `owner_update_schedule` / `owner_set_schedule_active`, `owner_upcoming_events(store, weeks ≤ 8)` (pre-creates future weeks), `owner_update_store_info` (notes + the store's default `ticket_url`). Link and move rules are mirrored in `src/lib/event-manage.ts`.
+  - **Moving the weekly slot** (`owner_update_schedule`): every open event's `slot_date` shifts by the same number of days (to the new weekday's occurrence), and events not moved by hand also take the new date and time. Moves keep attendance, requests and pledges and send `event_moved` to the audience.
+  - **`attendee_left`** goes to the store's owners when a player leaves (`leave_event`, not admin removal). It's in settings only for owners (`ownersOnly` in `NOTIFICATION_KINDS`).
+- **Format polls** (`format_polls`, `format_votes`; codes `draft`, `cc`, `silver_age`, `csp` in `FORMATS`, `src/lib/formats.ts`, mirroring `is_format()`):
+  - One poll per event, 2–4 options. One-time polls come from `owner_open_poll` (notifies the audience with `format_poll_opened`). Weekly polls come from `store_schedules.weekly_format_poll`: the `events_weekly_poll` trigger adds one to every new event of the slot, **silently** (players see "Vote on the format" on the event card instead). Those polls have `format_polls.weekly = true`; turning weekly polls off deletes the slot's open weekly polls that have no votes yet (one-time polls and voted ones stay).
+  - `vote_format` / `clear_format_vote`: one vote per player, changeable. The voter must be in `event_audience` (`not_in_audience`). Voting closes when `closed_at` is set or the event starts (`poll_closed`).
+  - `owner_confirm_format` sets `events.format`, closes the poll and sends `format_confirmed` (only when the format changes). It works without a poll too. `owner_delete_poll` only works while nobody has voted.
+  - Results: `pollResults()`; loader `getEventPoll()` in `src/lib/event-data.ts`. Polls and votes broadcast on the event topic.
 - **Moderation** (migration `*_admin_moderation.sql`, admin UI under `/admin`): every action goes through an admin RPC that checks `is_admin()` (`not_admin`) and writes a row to `admin_actions` (shown at `/admin/log`).
   - **Remove from event:** `admin_remove_attendee(event, user, reason?)` (Going tab "Remove"). It uses the internal `remove_from_event(event, user)`, which does what `leave_event` does for any user: release their pledges, cancel their requests (notifications carry `reason: 'removed'`) and drop the attendance. The player gets a `removed_from_event` notification. They can re-join.
   - **Bans:** `admin_ban(user, reason)` / `admin_unban`, stored in `bans`, a separate table so reasons aren't world-readable (admins read all, users read their own). A ban removes the player from every open event and cancels their open kept requests. You can't ban yourself (`cannot_ban_self`) or an admin (`cannot_ban_admin`; revoke admin first).
@@ -112,7 +127,7 @@ Mobile-first companion PWA for the Flesh and Blood TCG. Players coordinate card 
 - **Security baseline:** every public table has RLS. `next.config.ts` sets X-Frame-Options, nosniff, Referrer-Policy and Permissions-Policy on every response (no CSP yet). No security-definer function is executable by `anon`; check this after adding functions. Internal helpers revoke `execute` from `authenticated` too.
 
 ## Data model (summary)
-`profiles`, `stores`, `store_schedules`, `user_stores`, `events`, `cards`, `attendances`, `requests`, `pledges`, `notifications`, and view `request_status` (pledged / remaining / open|partial|covered). Migrations live in `supabase/migrations/`, seed data in `supabase/seed.sql`.
+`profiles`, `stores`, `store_schedules`, `user_stores`, `store_owners`, `store_owner_requests`, `events`, `cards`, `attendances`, `requests`, `pledges`, `format_polls`, `format_votes`, `notifications`, and view `request_status` (pledged / remaining / open|partial|covered). Migrations live in `supabase/migrations/`, seed data in `supabase/seed.sql`.
 
 ## Out of scope (for now)
 Trading/pricing, deck building, payments, chat, push notifications.
@@ -141,7 +156,7 @@ npm run typecheck; npm run lint
 npm run test:db             # RLS/RPC integration tests against local Supabase (tests/db/**)
 npm run test:e2e            # Playwright: builds + starts the app, phone/desktop/security (local Supabase only)
 npm run audit:check         # dependency audit with the accepted-advisory allowlist
-npm run db:seed-dev         # local test players Alice/Bob/Carol + a current event with requests and pledges (after import-cards)
+npm run db:seed-dev         # local test players Alice/Bob/Carol + a current event with requests and pledges (after import-cards); Carol owns Uncommons
 npx tsx scripts/make-admin.mts you@example.com [--revoke] [--env .env.production.local]
 npx tsx scripts/import-cards.mts [--env .env.production.local]
 npm run build; npm start    # production build incl. service worker (stop `npm run dev` first: both use .next)

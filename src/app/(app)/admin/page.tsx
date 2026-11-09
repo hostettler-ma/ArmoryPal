@@ -5,10 +5,10 @@ import { formatLocation } from "@/lib/stores";
 
 export default async function AdminPage() {
   const { supabase } = await requireAdmin();
-  const { data } = await supabase
-    .from("stores")
-    .select("id, name, city, region, country, archived_at, store_schedules(count)")
-    .order("name");
+  const [{ data }, { count: pendingOwners }] = await Promise.all([
+    supabase.from("stores").select("id, name, city, region, country, archived_at, store_schedules(count)").order("name"),
+    supabase.from("store_owner_requests").select("id", { count: "exact", head: true }).eq("status", "pending"),
+  ]);
   // Archived stores last.
   const stores = [...(data ?? [])].sort((a, b) => Number(!!a.archived_at) - Number(!!b.archived_at));
 
@@ -24,6 +24,10 @@ export default async function AdminPage() {
         <Link href="/admin/log" className="card block font-semibold">
           Admin log
           <span className="block text-sm font-normal text-muted">Every admin action</span>
+        </Link>
+        <Link href="/admin/owners" className="card block font-semibold">
+          Owner requests{pendingOwners ? ` (${pendingOwners})` : ""}
+          <span className="block text-sm font-normal text-muted">Who may manage a store</span>
         </Link>
       </nav>
 

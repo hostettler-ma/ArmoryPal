@@ -24,4 +24,7 @@ export const ADMIN_ACTION_LABELS: Record<string, string> = {
   archive_store: "Archived store",
   restore_store: "Restored store",
   delete_store: "Deleted store",
+  approve_owner: "Approved store owner",
+  reject_owner: "Rejected store owner",
+  remove_owner: "Removed store owner",
 };

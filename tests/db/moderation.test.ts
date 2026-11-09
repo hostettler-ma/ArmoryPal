@@ -63,6 +63,7 @@ beforeAll(async () => {
     .from("events")
     .insert({
       schedule_id: scheduleId,
+      label: "Armory",
       store_id: storeId,
       event_date: "2026-01-08",
       starts_at: "2026-01-08T18:00:00Z",

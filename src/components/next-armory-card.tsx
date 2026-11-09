@@ -4,6 +4,7 @@ import { StoreLink } from "@/components/store-link";
 import { cardLabel } from "@/lib/cards";
 import type { NextArmory } from "@/lib/event-data";
 import { eventPhase, formatEventWhen } from "@/lib/events";
+import { formatLabel } from "@/lib/formats";
 import { summarizeBringing } from "@/lib/request-view";
 
 /**
@@ -26,6 +27,7 @@ export function NextArmoryCard({ next }: { next: NextArmory }) {
             {formatEventWhen(event.starts_at, event.store.timezone)}
             {live && <span className="ml-2 text-live">● Happening now</span>}
           </p>
+          {event.format && <p className="text-sm">{formatLabel(event.format)}</p>}
         </div>
         <div className="shrink-0 rounded-xl bg-highlight px-3 py-2 text-center text-highlight-foreground">
           <p className="text-2xl leading-none font-bold">{attendeeCount}</p>
