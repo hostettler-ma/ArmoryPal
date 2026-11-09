@@ -325,25 +325,25 @@ export function CreateEventButton(props: React.ComponentProps<typeof CreateEvent
   );
 }
 
-/** Copies the GEM IDs of everyone going, one per line, for registering them in GEM. */
-export function CopyGemIdsButton({ ids }: { ids: string[] }) {
+/** Copies one player's GEM ID, for registering them in GEM. */
+export function CopyGemIdButton({ gemId, name }: { gemId: string; name: string }) {
   const [copied, setCopied] = useState(false);
-  if (ids.length === 0) return null;
   return (
     <button
       type="button"
-      className="btn btn-secondary"
+      className="btn btn-secondary !min-h-10 !w-auto shrink-0 px-3 text-sm"
+      aria-label={copied ? `Copied ${name}'s GEM ID` : `Copy ${name}'s GEM ID`}
       onClick={async () => {
         try {
-          await navigator.clipboard.writeText(ids.join("\n"));
+          await navigator.clipboard.writeText(gemId);
           setCopied(true);
           setTimeout(() => setCopied(false), 2000);
         } catch {
-          // Clipboard blocked (e.g. insecure context); the IDs are visible in the list anyway.
+          // Clipboard blocked (e.g. insecure context); the ID is visible and selectable anyway.
         }
       }}
     >
-      {copied ? "Copied ✓" : `Copy ${ids.length} GEM ${ids.length === 1 ? "ID" : "IDs"}`}
+      {copied ? "Copied ✓" : "Copy"}
     </button>
   );
 }

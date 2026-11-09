@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { CopyGemIdsButton, EventLinksForm, MoveEventButton, RenameEventButton } from "@/components/manage/manage-forms";
+import { CopyGemIdButton, EventLinksForm, MoveEventButton, RenameEventButton } from "@/components/manage/manage-forms";
 import { OwnerPollControls } from "@/components/manage/poll-controls";
 import { PageHeader } from "@/components/page-header";
 import { RealtimeRefresh } from "@/components/realtime-refresh";
@@ -37,7 +37,6 @@ export default async function ManageEventPage({ params }: { params: Promise<{ id
   const attendees = [...event.attendances].sort((a, b) => a.created_at.localeCompare(b.created_at));
   const requestCount = new Map<string, number>();
   for (const r of requests ?? []) requestCount.set(r.requester_id, (requestCount.get(r.requester_id) ?? 0) + 1);
-  const gemIds = attendees.map((a) => a.profile?.gem_id).filter((g): g is string => !!g);
   const current = toLocalInputs(event.starts_at, tz);
   const poll = await getEventPoll(supabase, event, user.id);
 
@@ -109,36 +108,35 @@ export default async function ManageEventPage({ params }: { params: Promise<{ id
         {attendees.length === 0 ? (
           <p className="card text-muted">Nobody has said they&apos;re going yet.</p>
         ) : (
-          <>
-            <ol className="card divide-y divide-border !py-0">
-              {attendees.map((a, i) => {
-                const n = requestCount.get(a.user_id) ?? 0;
-                return (
-                  <li key={a.user_id} className="flex min-h-12 items-center gap-3 py-2">
-                    <span className="w-6 shrink-0 text-right text-sm text-muted">{i + 1}.</span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate">{a.profile?.display_name ?? "Unknown player"}</span>
-                      <span className="block text-xs text-muted">
-                        {a.profile?.gem_id ? (
-                          <>
-                            GEM ID <span className="font-mono select-all">{a.profile.gem_id}</span>
-                          </>
-                        ) : (
-                          "No GEM ID"
-                        )}
-                      </span>
+          <ol className="card divide-y divide-border !py-0">
+            {attendees.map((a, i) => {
+              const n = requestCount.get(a.user_id) ?? 0;
+              const name = a.profile?.display_name ?? "Unknown player";
+              return (
+                <li key={a.user_id} className="flex min-h-12 items-center gap-3 py-2">
+                  <span className="w-6 shrink-0 text-right text-sm text-muted">{i + 1}.</span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate">{name}</span>
+                    <span className="block text-xs text-muted">
+                      {a.profile?.gem_id ? (
+                        <>
+                          GEM ID <span className="font-mono select-all">{a.profile.gem_id}</span>
+                        </>
+                      ) : (
+                        "No GEM ID"
+                      )}
                     </span>
-                    {n > 0 && (
-                      <span className="shrink-0 text-sm text-muted">
-                        {n} {n === 1 ? "request" : "requests"}
-                      </span>
-                    )}
-                  </li>
-                );
-              })}
-            </ol>
-            <CopyGemIdsButton ids={gemIds} />
-          </>
+                  </span>
+                  {n > 0 && (
+                    <span className="shrink-0 text-sm text-muted">
+                      {n} {n === 1 ? "request" : "requests"}
+                    </span>
+                  )}
+                  {a.profile?.gem_id && <CopyGemIdButton gemId={a.profile.gem_id} name={name} />}
+                </li>
+              );
+            })}
+          </ol>
         )}
         <p className="text-xs text-muted">You get a notification when someone who was going leaves.</p>
       </section>
