@@ -45,13 +45,13 @@ export default async function ManageStorePage({
         title={store.name}
         trail={[{ label: "Manage", href: "/manage" }]}
         action={
-          <Link href={`/stores/${store.id}`} className="text-sm font-medium text-accent-text">
+          <Link href={`/stores/${store.id}`} className="text-label link">
             View
           </Link>
         }
       />
 
-      <nav className="flex gap-1 rounded-xl bg-surface p-1 ring-1 ring-border" aria-label="Store sections">
+      <nav className="tab-bar" aria-label="Store sections">
         {TABS.map((t) => (
           <Link
             key={t}
@@ -59,7 +59,7 @@ export default async function ManageStorePage({
             replace
             scroll={false}
             aria-current={t === tab ? "page" : undefined}
-            className={`flex-auto rounded-lg px-2 py-2 text-center text-sm font-medium whitespace-nowrap ${t === tab ? "bg-accent text-accent-foreground" : "text-muted"}`}
+            className="tab"
           >
             {TAB_LABEL[t]}
           </Link>
@@ -104,36 +104,36 @@ async function UpcomingTab({ supabase, store }: { supabase: Supabase; store: Sto
       {events.length === 0 ? (
         <p className="card text-muted">
           No events coming up. Add a one-off event below, or a weekly Armory in the{" "}
-          <Link href={`/manage/stores/${store.id}?tab=weekly`} replace className="font-medium text-accent-text">
+          <Link href={`/manage/stores/${store.id}?tab=weekly`} replace className="font-semibold link">
             Weekly Armories
           </Link>{" "}
           tab.
         </p>
       ) : (
-        <ul className="card divide-y divide-border !py-0">
+        <ul className="card-list">
           {events.map((e) => {
             const linked = e.gem_url || e.gem_code;
             return (
               <li key={e.id}>
-                <Link href={`/manage/events/${e.id}`} className="flex min-h-14 items-center gap-3 py-2">
+                <Link href={`/manage/events/${e.id}`} className="list-row flex min-h-control-lg items-center gap-3 py-2">
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate font-semibold">
+                    <span className="block truncate text-heading-02">
                       {e.label}
                       {!e.schedule_id && (
-                        <span className="ml-2 rounded-full border border-border px-1.5 text-xs font-normal">One-off</span>
+                        <span className="ml-2 rounded-full border border-border px-2 text-helper">One-off</span>
                       )}
                       {e.moved_from && (
-                        <span className="ml-2 rounded-full border border-border px-1.5 text-xs font-normal">Moved</span>
+                        <span className="ml-2 rounded-full border border-border px-2 text-helper">Moved</span>
                       )}
                     </span>
-                    <span className="block text-sm text-muted">
+                    <span className="block text-body-compact text-muted">
                       {formatEventWhen(e.starts_at, store.timezone)}
                       {e.format && ` · ${formatLabel(e.format)}`}
                       {!linked && " · no GEM link yet"}
                     </span>
                   </span>
-                  <span className="shrink-0 text-sm text-muted">{going.get(e.id) ?? 0} going</span>
-                  <span aria-hidden className="shrink-0 text-2xl leading-none text-muted">
+                  <span className="shrink-0 text-body-compact text-muted">{going.get(e.id) ?? 0} going</span>
+                  <span aria-hidden className="shrink-0 text-glyph text-muted">
                     ›
                   </span>
                 </Link>
@@ -162,10 +162,10 @@ async function WeeklyTab({ supabase, storeId }: { supabase: Supabase; storeId: s
         {(schedules ?? []).map((s) => (
           <li key={s.id} className={`card flex items-center gap-2 ${s.active ? "" : "opacity-60"}`}>
             <div className="min-w-0 flex-1">
-              <p className="truncate font-semibold">
-                {s.label} {!s.active && <span className="text-sm font-normal text-muted">(paused)</span>}
+              <p className="truncate text-heading-02">
+                {s.label} {!s.active && <span className="text-body-compact text-muted">(paused)</span>}
               </p>
-              <p className="text-sm text-muted">{formatSchedule(s)}</p>
+              <p className="text-body-compact text-muted">{formatSchedule(s)}</p>
             </div>
             {s.active && (
               <WeeklyPollToggle scheduleId={s.id} storeId={storeId} on={s.weekly_format_poll} options={s.poll_options} />
@@ -175,7 +175,7 @@ async function WeeklyTab({ supabase, storeId }: { supabase: Supabase; storeId: s
               <input type="hidden" name="scheduleId" value={s.id} />
               <input type="hidden" name="storeId" value={storeId} />
               <input type="hidden" name="active" value={String(!s.active)} />
-              <button className="btn btn-secondary !min-h-10 !w-auto px-3 text-sm">{s.active ? "Pause" : "Resume"}</button>
+              <button className="btn btn-secondary btn-compact">{s.active ? "Pause" : "Resume"}</button>
             </form>
           </li>
         ))}

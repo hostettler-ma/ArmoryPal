@@ -18,18 +18,18 @@ export default async function SuspendedPage() {
   if (!ban) redirect("/");
 
   return (
-    <main className="flex min-h-[80dvh] flex-col justify-center gap-5">
+    <main className="flex min-h-[80dvh] flex-col justify-center gap-6">
       <header className="space-y-1 text-center">
-        <p className="font-logo text-xl font-bold tracking-wide">ArmoryPal</p>
-        <h1 className="text-2xl font-bold">Your account is suspended</h1>
+        <p className="wordmark">ArmoryPal</p>
+        <h1 className="text-heading-04">Your account is suspended</h1>
       </header>
       <div className="card space-y-2">
-        <p className="text-sm text-muted">Reason</p>
+        <p className="text-body-compact text-muted">Reason</p>
         <p>{ban.reason}</p>
       </div>
-      <p className="text-center text-sm text-muted">
+      <p className="text-center text-body-compact text-muted">
         If you think this is a mistake, email{" "}
-        <a className="font-medium text-accent-text" href={`mailto:${CONTACT_EMAIL}`}>
+        <a className="font-semibold link" href={`mailto:${CONTACT_EMAIL}`}>
           {CONTACT_EMAIL}
         </a>
         .

@@ -32,7 +32,7 @@ export default async function EditStorePage({ params }: { params: Promise<{ id: 
         title={store.name}
         trail={[{ label: "Admin", href: "/admin" }]}
         action={
-          <Link href={`/stores/${store.id}`} className="text-sm font-medium text-accent-text">
+          <Link href={`/stores/${store.id}`} className="text-label link">
             View
           </Link>
         }
@@ -52,22 +52,22 @@ export default async function EditStorePage({ params }: { params: Promise<{ id: 
       )}
 
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold">Weekly slots</h2>
+        <h2 className="text-heading-03">Weekly slots</h2>
         {(schedules ?? []).length === 0 && <p className="text-muted">No slots yet. Add one below.</p>}
         <ul className="space-y-2">
           {(schedules ?? []).map((s) => (
             <li key={s.id} className={`card flex items-center gap-3 ${s.active ? "" : "opacity-60"}`}>
               <div className="min-w-0 flex-1">
-                <p className="font-semibold">
-                  {s.label} {!s.active && <span className="text-sm font-normal text-muted">(inactive)</span>}
+                <p className="text-heading-02">
+                  {s.label} {!s.active && <span className="text-body-compact text-muted">(inactive)</span>}
                 </p>
-                <p className="text-sm text-muted">{formatSchedule(s)}</p>
+                <p className="text-body-compact text-muted">{formatSchedule(s)}</p>
               </div>
               <form action={setScheduleActive}>
                 <input type="hidden" name="scheduleId" value={s.id} />
                 <input type="hidden" name="storeId" value={store.id} />
                 <input type="hidden" name="active" value={String(!s.active)} />
-                <button className="btn btn-secondary !min-h-10 !w-auto px-3 text-sm">
+                <button className="btn btn-secondary btn-compact">
                   {s.active ? "Deactivate" : "Activate"}
                 </button>
               </form>
@@ -78,22 +78,22 @@ export default async function EditStorePage({ params }: { params: Promise<{ id: 
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold">Owners</h2>
+        <h2 className="text-heading-03">Owners</h2>
         {(owners ?? []).length === 0 ? (
           <p className="text-muted">
             No owners yet. Players ask from the store page; requests show up in{" "}
-            <Link href="/admin/owners" className="text-accent-text">
+            <Link href="/admin/owners" className="link">
               Owner requests
             </Link>
             .
           </p>
         ) : (
-          <ul className="card divide-y divide-border !py-0">
+          <ul className="card-list">
             {(owners ?? []).map((o) => {
               const name = o.profile?.display_name ?? "Unknown player";
               return (
-                <li key={o.user_id} className="flex min-h-12 items-center gap-3 py-2">
-                  <Link href={`/admin/players/${o.user_id}`} className="min-w-0 flex-1 truncate text-accent-text">
+                <li key={o.user_id} className="flex min-h-control-lg items-center gap-3 py-2">
+                  <Link href={`/admin/players/${o.user_id}`} className="min-w-0 flex-1 truncate link">
                     {name}
                   </Link>
                   <RemoveOwnerButton storeId={store.id} userId={o.user_id} name={name} />
@@ -105,13 +105,13 @@ export default async function EditStorePage({ params }: { params: Promise<{ id: 
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold">Store details</h2>
+        <h2 className="text-heading-03">Store details</h2>
         <StoreForm store={store} />
       </section>
 
       {!store.archived_at && (
         <section className="space-y-3">
-          <h2 className="text-lg font-semibold text-danger">Danger zone</h2>
+          <h2 className="text-heading-03 text-danger">Danger zone</h2>
           <DeleteStoreButton storeId={store.id} name={store.name} eventCount={eventCount ?? 0} />
         </section>
       )}

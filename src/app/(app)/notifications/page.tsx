@@ -18,11 +18,11 @@ export default async function NotificationsPage() {
   if (notifications?.some((n) => !n.read_at)) await supabase.rpc("mark_notifications_read");
 
   return (
-    <main className="space-y-5">
+    <main className="space-y-6">
       <PageHeader
         title="Notifications"
         action={
-          <Link href="/settings/notifications" className="text-sm font-medium text-accent-text">
+          <Link href="/settings/notifications" className="text-label link">
             Settings
           </Link>
         }
@@ -35,13 +35,13 @@ export default async function NotificationsPage() {
             <li key={n.id}>
               <Link
                 href={notificationHref(n.kind, n.event?.id, n.payload as NotificationPayload)}
-                className={`card block space-y-1 ${n.read_at ? "" : "border-accent"}`}
+                className={`card interactive block space-y-1 ${n.read_at ? "" : "border-accent"}`}
               >
                 <p className={n.read_at ? "" : "font-semibold"}>
                   {!n.read_at && <span className="mr-1 text-accent-text" aria-label="New">●</span>}
                   {formatNotification(n.kind, n.payload as NotificationPayload)}
                 </p>
-                <p className="text-sm text-muted">
+                <p className="text-body-compact text-muted">
                   {n.event?.store
                     ? `${n.event.label} at ${n.event.store.name} · ${formatEventWhen(n.event.starts_at, n.event.store.timezone)} · `
                     : ""}

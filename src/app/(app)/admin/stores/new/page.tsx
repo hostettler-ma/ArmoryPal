@@ -5,7 +5,7 @@ import { requireAdmin } from "@/lib/auth";
 export default async function NewStorePage() {
   await requireAdmin();
   return (
-    <main className="space-y-5">
+    <main className="space-y-6">
       <PageHeader title="New store" trail={[{ label: "Admin", href: "/admin" }]} />
       <StoreForm />
     </main>

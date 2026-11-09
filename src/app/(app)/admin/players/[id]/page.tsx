@@ -39,7 +39,7 @@ export default async function AdminPlayerPage({ params }: { params: Promise<{ id
         ]}
       />
 
-      <dl className="card grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
+      <dl className="card grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-body-compact">
         <dt className="text-muted">Joined</dt>
         <dd>{new Date(profile.created_at).toLocaleDateString("en-US", { dateStyle: "medium" })}</dd>
         <dt className="text-muted">GEM ID</dt>
@@ -51,13 +51,13 @@ export default async function AdminPlayerPage({ params }: { params: Promise<{ id
       </dl>
 
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold">Moderation</h2>
+        <h2 className="text-heading-03">Moderation</h2>
         {ban ? (
           <>
             <div className="card space-y-1 border border-danger">
-              <p className="font-semibold text-danger">Banned</p>
+              <p className="text-heading-02 text-danger">Banned</p>
               <p>“{ban.reason}”</p>
-              <p className="text-sm text-muted">
+              <p className="text-body-compact text-muted">
                 by {(ban.by as { display_name: string | null } | null)?.display_name ?? "a former admin"} on{" "}
                 {new Date(ban.created_at).toLocaleDateString("en-US", { dateStyle: "medium" })}
               </p>
@@ -65,9 +65,9 @@ export default async function AdminPlayerPage({ params }: { params: Promise<{ id
             <UnbanButton userId={profile.id} name={name} />
           </>
         ) : profile.id === user.id ? (
-          <p className="card text-sm text-muted">This is you.</p>
+          <p className="card text-body-compact text-muted">This is you.</p>
         ) : profile.is_admin ? (
-          <p className="card text-sm text-muted">
+          <p className="card text-body-compact text-muted">
             Admins can&apos;t be banned. Revoke admin rights first (
             <code>npx tsx scripts/make-admin.mts &lt;email&gt; --revoke</code>).
           </p>
@@ -77,7 +77,7 @@ export default async function AdminPlayerPage({ params }: { params: Promise<{ id
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold">History</h2>
+        <h2 className="text-heading-03">History</h2>
         <AdminLogList rows={(log ?? []) as unknown as AdminLogRow[]} />
       </section>
     </main>

@@ -54,9 +54,9 @@ export default async function HomePage() {
 
       <section className="space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold">My stores</h2>
+          <h2 className="text-heading-03">My stores</h2>
           {stores.length > 0 && (
-            <Link href="/stores" className="text-sm font-medium text-accent-text">
+            <Link href="/stores" className="text-label link">
               Find stores
             </Link>
           )}
@@ -76,7 +76,7 @@ export default async function HomePage() {
                       ))}
                     </ul>
                   ) : (
-                    <p className="rounded-xl bg-surface p-3 text-sm text-muted">No Armory scheduled.</p>
+                    <p className="rounded-container bg-surface p-3 text-body-compact text-muted">No Armory scheduled.</p>
                   )}
                 </StoreLink>
               </li>

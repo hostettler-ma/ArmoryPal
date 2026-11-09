@@ -49,7 +49,7 @@ export default async function ManageEventPage({ params }: { params: Promise<{ id
           { label: event.store.name, href: `/manage/stores/${event.store.id}` },
         ]}
         action={
-          <Link href={`/events/${event.id}`} className="text-sm font-medium text-accent-text">
+          <Link href={`/events/${event.id}`} className="text-label link">
             Player view
           </Link>
         }
@@ -58,9 +58,9 @@ export default async function ManageEventPage({ params }: { params: Promise<{ id
 
       <div className="flex items-start gap-3">
         <div className="min-w-0 flex-1 space-y-1">
-          <p className="font-semibold">{formatEventWhen(event.starts_at, tz)}</p>
-          {event.moved_from && <p className="text-sm text-muted">Moved from {formatEventWhen(event.moved_from, tz)}</p>}
-          {!event.schedule_id && <p className="text-sm text-muted">One-off event</p>}
+          <p className="text-heading-02">{formatEventWhen(event.starts_at, tz)}</p>
+          {event.moved_from && <p className="text-body-compact text-muted">Moved from {formatEventWhen(event.moved_from, tz)}</p>}
+          {!event.schedule_id && <p className="text-body-compact text-muted">One-off event</p>}
         </div>
         {!ended && (
           <RenameEventButton eventId={event.id} storeId={event.store.id} label={event.label} weekly={!!event.schedule_id} />
@@ -80,7 +80,7 @@ export default async function ManageEventPage({ params }: { params: Promise<{ id
           />
 
           <section className="space-y-3">
-            <h2 className="text-lg font-semibold">Format</h2>
+            <h2 className="text-heading-03">Format</h2>
             <OwnerPollControls
               eventId={event.id}
               results={poll?.results ?? null}
@@ -91,7 +91,7 @@ export default async function ManageEventPage({ params }: { params: Promise<{ id
           </section>
 
           <section className="space-y-3">
-            <h2 className="text-lg font-semibold">Links</h2>
+            <h2 className="text-heading-03">Links</h2>
             <EventLinksForm
               eventId={event.id}
               storeId={event.store.id}
@@ -104,20 +104,20 @@ export default async function ManageEventPage({ params }: { params: Promise<{ id
       )}
 
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold">Players going ({attendees.length})</h2>
+        <h2 className="text-heading-03">Players going ({attendees.length})</h2>
         {attendees.length === 0 ? (
           <p className="card text-muted">Nobody has said they&apos;re going yet.</p>
         ) : (
-          <ol className="card divide-y divide-border !py-0">
+          <ol className="card-list">
             {attendees.map((a, i) => {
               const n = requestCount.get(a.user_id) ?? 0;
               const name = a.profile?.display_name ?? "Unknown player";
               return (
-                <li key={a.user_id} className="flex min-h-12 items-center gap-3 py-2">
-                  <span className="w-6 shrink-0 text-right text-sm text-muted">{i + 1}.</span>
+                <li key={a.user_id} className="flex min-h-control-lg items-center gap-3 py-2">
+                  <span className="w-6 shrink-0 text-right text-body-compact text-muted">{i + 1}.</span>
                   <span className="min-w-0 flex-1">
                     <span className="block truncate">{name}</span>
-                    <span className="block text-xs text-muted">
+                    <span className="block text-helper text-muted">
                       {a.profile?.gem_id ? (
                         <>
                           GEM ID <span className="font-mono select-all">{a.profile.gem_id}</span>
@@ -128,7 +128,7 @@ export default async function ManageEventPage({ params }: { params: Promise<{ id
                     </span>
                   </span>
                   {n > 0 && (
-                    <span className="shrink-0 text-sm text-muted">
+                    <span className="shrink-0 text-body-compact text-muted">
                       {n} {n === 1 ? "request" : "requests"}
                     </span>
                   )}
@@ -138,7 +138,7 @@ export default async function ManageEventPage({ params }: { params: Promise<{ id
             })}
           </ol>
         )}
-        <p className="text-xs text-muted">You get a notification when someone who was going leaves.</p>
+        <p className="text-helper text-muted">You get a notification when someone who was going leaves.</p>
       </section>
     </main>
   );
