@@ -73,7 +73,7 @@ test("admins can create a store and add a weekly slot; others can't see admin", 
   const storeName = `E2E Admin Store ${Date.now()}`;
 
   await page.goto("/");
-  await page.getByRole("button", { name: "Menu" }).click();
+  await page.getByRole("button", { name: "Menu", exact: true }).click();
   await page.getByRole("dialog", { name: "Menu" }).getByRole("link", { name: "Admin", exact: true }).click();
   await page.getByRole("link", { name: "+ New store" }).click();
 
@@ -122,7 +122,7 @@ test("admins can create a store and add a weekly slot; others can't see admin", 
   expect((await regular.page.goto(`/admin/stores/${storeId}`))?.status()).toBe(404);
   expect((await regular.page.goto("/admin/stores/new"))?.status()).toBe(404);
   await regular.page.goto("/");
-  await regular.page.getByRole("button", { name: "Menu" }).click();
+  await regular.page.getByRole("button", { name: "Menu", exact: true }).click();
   const menu = regular.page.getByRole("dialog", { name: "Menu" });
   await expect(menu.getByRole("link", { name: "Find a store" })).toBeVisible();
   await expect(menu.getByRole("link", { name: "Admin", exact: true })).toHaveCount(0);
