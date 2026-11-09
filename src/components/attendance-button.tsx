@@ -35,16 +35,16 @@ export function AttendanceButton({
       {/* Once the leave succeeds, needsConfirm turns false and this closes. */}
       {confirming && needsConfirm ? (
         <div className="card space-y-3 border-live">
-          <p className="font-semibold">Can&apos;t make it?</p>
+          <p className="text-heading-02">Can&apos;t make it?</p>
           {pledgedCards > 0 && (
-            <p className="text-sm">
+            <p className="text-body-compact">
               You&apos;re bringing {plural(pledgedCards, "card", "cards")} for others.{" "}
               {pledgedCards === 1 ? "It goes" : "They go"} back to being needed, and the requesters are told.
             </p>
           )}
           {openRequests > 0 && (
-            <label className="flex items-start gap-3 text-sm">
-              <input type="checkbox" name="cancelRequests" defaultChecked className="mt-0.5 h-5 w-5 accent-[var(--accent)]" />
+            <label className="flex items-start gap-3 text-body-compact">
+              <input type="checkbox" name="cancelRequests" defaultChecked className="mt-0.5 size-icon-md accent-accent" />
               <span>
                 Also cancel my {plural(openRequests, "request", "requests")}. Anyone bringing{" "}
                 {openRequests === 1 ? "it" : "them"} will be told. Leave unchecked if someone will pick them up for you.

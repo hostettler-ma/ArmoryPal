@@ -7,7 +7,7 @@ import { formatLabel, type PollResults } from "@/lib/formats";
 /** "Format: Draft" once the store has confirmed it. */
 export function FormatChip({ format }: { format: string }) {
   return (
-    <span className="inline-block rounded-full bg-highlight px-2 py-0.5 text-xs font-semibold text-highlight-foreground">
+    <span className="inline-block rounded-full bg-highlight px-2 py-0.5 text-tag text-highlight-foreground">
       Format: {formatLabel(format)}
     </span>
   );
@@ -44,8 +44,8 @@ export function FormatPoll({
   return (
     <section className="card space-y-3" aria-label="Format poll">
       <div className="flex items-baseline justify-between gap-3">
-        <h2 className="font-semibold">Which format this week?</h2>
-        <span className="shrink-0 text-sm text-muted">
+        <h2 className="text-heading-02">Which format this week?</h2>
+        <span className="shrink-0 text-body-compact text-muted">
           {results.total} {results.total === 1 ? "vote" : "votes"}
         </span>
       </div>
@@ -57,15 +57,15 @@ export function FormatPoll({
             <>
               <span
                 aria-hidden
-                className={`absolute inset-y-0 left-0 rounded-lg ${mine ? "bg-highlight" : "bg-accent-soft/50"}`}
+                className={`absolute inset-y-0 left-0 rounded-control ${mine ? "bg-highlight" : "bg-accent-soft/50"}`}
                 style={{ width: `${Math.round(o.share * 100)}%` }}
               />
               <span className="relative flex items-center justify-between gap-2">
                 <span className={leading ? "font-semibold" : ""}>
                   {o.label}
-                  {mine && <span className="ml-1 text-sm">✓</span>}
+                  {mine && <span className="ml-1 text-body-compact">✓</span>}
                 </span>
-                <span className="text-sm">{o.votes}</span>
+                <span className="text-body-compact">{o.votes}</span>
               </span>
             </>
           );
@@ -77,19 +77,19 @@ export function FormatPoll({
                   aria-pressed={mine}
                   disabled={pending}
                   onClick={() => vote(o.code)}
-                  className={`relative block min-h-11 w-full overflow-hidden rounded-lg px-3 py-2 text-left ring-1 ${mine ? "ring-accent-text" : "ring-border"}`}
+                  className={`interactive relative block min-h-control-lg w-full overflow-hidden rounded-control border px-3 py-2 text-left ${mine ? "border-accent-text" : "border-border"}`}
                 >
                   {bar}
                 </button>
               ) : (
-                <div className="relative min-h-11 overflow-hidden rounded-lg px-3 py-2 ring-1 ring-border">{bar}</div>
+                <div className="relative min-h-control-lg overflow-hidden rounded-control border border-border px-3 py-2">{bar}</div>
               )}
             </li>
           );
         })}
       </ul>
       {error && <p className="field-error">{error}</p>}
-      <p className="text-xs text-muted">
+      <p className="text-helper text-muted">
         {!open
           ? "Voting has closed."
           : canVote

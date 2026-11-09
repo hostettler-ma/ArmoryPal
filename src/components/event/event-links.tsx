@@ -25,7 +25,7 @@ export function EventLinks({
         </a>
       )}
       {!gemUrl && gemCode && (
-        <p className="card text-sm">
+        <p className="card text-body-compact">
           GEM event code: <span className="font-mono font-semibold select-all">{gemCode}</span>
         </p>
       )}

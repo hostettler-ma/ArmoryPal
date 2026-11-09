@@ -20,31 +20,31 @@ export function EventCard({
   return (
     <Link
       href={href}
-      className="flex min-h-14 items-center gap-3 rounded-xl border border-store/30 bg-surface p-3 text-foreground transition active:scale-[0.99] active:opacity-80"
+      className="interactive flex min-h-control-lg items-center gap-3 rounded-control border border-store/30 bg-surface p-3 text-foreground"
     >
       <div className="min-w-0 flex-1">
-        <p className="truncate font-semibold">{event.label}</p>
-        <p className="text-sm text-muted">
+        <p className="truncate text-heading-02">{event.label}</p>
+        <p className="text-body-compact text-muted">
           {formatEventWhen(event.starts_at, timezone)}
           {event.moved_from && (
-            <span className="ml-2 rounded-full border border-border px-1.5 text-xs">Moved</span>
+            <span className="ml-2 rounded-full border border-border px-2 text-helper">Moved</span>
           )}
         </p>
         {event.format ? (
-          <p className="text-sm">{formatLabel(event.format)}</p>
+          <p className="text-body-compact">{formatLabel(event.format)}</p>
         ) : (
-          event.pollWaiting && <p className="text-sm font-medium text-accent-text">Vote on the format</p>
+          event.pollWaiting && <p className="text-label text-accent-text">Vote on the format</p>
         )}
       </div>
-      <div className="shrink-0 text-right text-sm">
+      <div className="shrink-0 text-right text-body-compact">
         {event.attending && (
-          <span className="mb-1 block rounded-full bg-highlight px-2 py-0.5 text-xs font-semibold text-highlight-foreground">
+          <span className="mb-1 block rounded-full bg-highlight px-2 py-0.5 text-tag text-highlight-foreground">
             You&apos;re going
           </span>
         )}
         <span className="text-muted">{event.attendeeCount} going</span>
       </div>
-      <span aria-hidden className="shrink-0 text-2xl leading-none text-muted">
+      <span aria-hidden className="shrink-0 text-glyph text-muted">
         ›
       </span>
     </Link>

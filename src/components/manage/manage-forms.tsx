@@ -35,7 +35,7 @@ export function SheetButton({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className={`btn ${primary ? "btn-primary" : "btn-secondary"} ${compact ? "!min-h-10 !w-auto px-3 text-sm" : ""}`}
+        className={`btn ${primary ? "btn-primary" : "btn-secondary"} ${compact ? "btn-compact" : ""}`}
       >
         {label}
       </button>
@@ -65,7 +65,7 @@ function Field({
         {label}
       </label>
       {children}
-      {hint && <p className="mt-1 text-xs text-muted">{hint}</p>}
+      {hint && <p className="mt-1 text-helper text-muted">{hint}</p>}
       {error && <p className="field-error">{error}</p>}
     </div>
   );
@@ -169,7 +169,7 @@ export function RenameEventForm({
         />
       </Field>
       {weekly && (
-        <p className="text-sm text-muted">Only this event is renamed. To rename every week, edit the weekly slot.</p>
+        <p className="text-body-compact text-muted">Only this event is renamed. To rename every week, edit the weekly slot.</p>
       )}
       {state.errors?.form && <p className="field-error">{state.errors.form}</p>}
       <SaveButton pending={pending} label="Save name" />
@@ -215,7 +215,7 @@ export function MoveEventForm({
           <input id="move-time" name="time" type="time" className="input" defaultValue={time} required />
         </Field>
       </div>
-      <p className="text-sm text-muted">
+      <p className="text-body-compact text-muted">
         Players stay signed up and keep their requests. Everyone going or following your store gets a notification.
         {weekly && " This only moves this week; to move every week, edit the weekly slot."}
       </p>
@@ -331,7 +331,7 @@ export function CopyGemIdButton({ gemId, name }: { gemId: string; name: string }
   return (
     <button
       type="button"
-      className="btn btn-secondary !min-h-10 !w-auto shrink-0 px-3 text-sm"
+      className="btn btn-secondary btn-compact"
       aria-label={copied ? `Copied ${name}'s GEM ID` : `Copy ${name}'s GEM ID`}
       onClick={async () => {
         try {

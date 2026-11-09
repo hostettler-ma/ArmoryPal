@@ -14,7 +14,7 @@ export function EditRequestButton({ eventId, request }: { eventId: string; reque
   const [open, setOpen] = useState(false);
   return (
     <>
-      <button className="btn btn-secondary !min-h-10 !w-auto px-3 text-sm" onClick={() => setOpen(true)}>
+      <button className="btn btn-secondary btn-compact" onClick={() => setOpen(true)}>
         Edit
       </button>
       <Sheet open={open} onClose={() => setOpen(false)} title="Edit request">
@@ -43,11 +43,11 @@ function EditRequestForm({ eventId, request, onDone }: { eventId: string; reques
     <div className="space-y-4">
       <div className="flex items-center gap-3">
         <PitchDot color={request.card.color} />
-        <p className="font-semibold">{cardLabel(request.card)}</p>
+        <p className="text-heading-02">{cardLabel(request.card)}</p>
       </div>
 
       <div className="flex items-center justify-between">
-        <span className="font-medium">How many do you need?</span>
+        <span className="font-semibold">How many do you need?</span>
         <QuantityStepper
           label="How many do you need"
           value={quantity}
@@ -57,7 +57,7 @@ function EditRequestForm({ eventId, request, onDone }: { eventId: string; reques
         />
       </div>
       {request.pledged > 0 && (
-        <p className="text-sm text-muted">
+        <p className="text-body-compact text-muted">
           {request.pledged} already pledged, so you can&apos;t go below that.
         </p>
       )}
@@ -86,7 +86,7 @@ function EditRequestForm({ eventId, request, onDone }: { eventId: string; reques
 
       {confirmCancel ? (
         <div className="card space-y-3 border-danger">
-          <p className="text-sm">
+          <p className="text-body-compact">
             Cancel this request?
             {request.pledgers.length > 0 &&
               ` ${request.pledgers.map((p) => p.name).join(", ")} won't need to bring it anymore.`}

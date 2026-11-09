@@ -63,7 +63,7 @@ export function ConfirmButton({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className={`btn ${danger ? "btn-danger" : "btn-secondary"} ${compact ? "!min-h-10 !w-auto px-3 text-sm" : ""}`}
+        className={`btn ${danger ? "btn-danger" : "btn-secondary"} ${compact ? "btn-compact" : ""}`}
       >
         {label}
       </button>

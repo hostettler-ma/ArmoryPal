@@ -62,8 +62,8 @@ export function InstallHint() {
 
   return (
     <div className="card space-y-3">
-      <p className="font-semibold">Put ArmoryPal on your home screen</p>
-      <p className="text-sm text-muted">
+      <p className="text-heading-02">Put ArmoryPal on your home screen</p>
+      <p className="text-body-compact text-muted">
         {mode === "ios" ? (
           <>
             In Safari, tap <span className="font-semibold text-foreground">Share</span> then{" "}

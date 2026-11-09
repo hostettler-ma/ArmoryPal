@@ -16,7 +16,7 @@ export function PledgeButton({ eventId, request }: { eventId: string; request: R
   return (
     <>
       <button
-        className={`btn !min-h-10 !w-auto px-3 text-sm ${request.myPledge > 0 ? "btn-secondary" : "btn-primary"}`}
+        className={`btn btn-compact ${request.myPledge > 0 ? "btn-secondary" : "btn-primary"}`}
         onClick={() => setOpen(true)}
       >
         {label}
@@ -46,24 +46,24 @@ function PledgeForm({ eventId, request, onDone }: { eventId: string; request: Re
       <div className="flex items-center gap-3">
         <PitchDot color={request.card.color} />
         <div className="min-w-0">
-          <p className="font-semibold">{cardLabel(request.card)}</p>
-          <p className="text-sm text-muted">
+          <p className="text-heading-02">{cardLabel(request.card)}</p>
+          <p className="text-body-compact text-muted">
             for {request.requesterName} · needs {request.quantity}
             {request.pledged > request.myPledge && `, ${request.pledged - request.myPledge} already coming`}
           </p>
-          {request.note && <p className="text-sm italic text-muted">“{request.note}”</p>}
+          {request.note && <p className="text-body-compact italic text-muted">“{request.note}”</p>}
         </div>
       </div>
 
       {request.card.set_ids.length > 0 && (
         <div>
-          <p className="text-sm font-medium">Printed in</p>
-          <p className="font-mono text-sm text-muted">{request.card.set_ids.join(" · ")}</p>
+          <p className="text-label">Printed in</p>
+          <p className="font-mono text-body-compact text-muted">{request.card.set_ids.join(" · ")}</p>
         </div>
       )}
 
       <div className="flex items-center justify-between">
-        <span className="font-medium">How many will you bring?</span>
+        <span className="font-semibold">How many will you bring?</span>
         <QuantityStepper label="How many will you bring" value={quantity} max={request.maxPledge} onChange={setQuantity} />
       </div>
 
