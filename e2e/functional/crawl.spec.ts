@@ -65,7 +65,8 @@ for (const role of ["player", "admin"] as const) {
     expect(visited.some((p) => p.startsWith("/events/")), "reached an event page").toBe(true);
     expect(visited.some((p) => p.includes("tab=checklist")), "reached the checklist tab").toBe(true);
     expect(visited).toEqual(expect.arrayContaining(["/", "/stores", "/me", "/notifications", "/settings/notifications"]));
-    if (role === "admin") expect(visited).toEqual(expect.arrayContaining(["/admin", "/admin/stores/new"]));
+    // Admins reach /manage through a store's "Manage" link and the breadcrumb; it lists every store for them.
+    if (role === "admin") expect(visited).toEqual(expect.arrayContaining(["/admin", "/admin/stores/new", "/manage"]));
     // The browser also logs the known dead links' 404s; those are covered by the known-bug test.
     const isKnown = (e: string) => [...knownDeadLinks].some((p) => e.includes(p));
     expect(consoleErrors.filter((e) => !isKnown(e))).toEqual([]);

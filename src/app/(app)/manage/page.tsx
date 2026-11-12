@@ -4,19 +4,21 @@ import { StoreLink } from "@/components/store-link";
 import { getOwnedStoreIds, requireProfile } from "@/lib/auth";
 import { formatLocation } from "@/lib/stores";
 
-/** The stores I manage. With just one, go straight to it. */
+/**
+ * The stores I manage. With just one, go straight to it.
+ * Admins can manage every store (same rule as requireStoreManager), so they see them all.
+ */
 export default async function ManagePage() {
-  const { supabase } = await requireProfile();
-  const ids = await getOwnedStoreIds();
-  if (ids.length === 0) notFound();
-  if (ids.length === 1) redirect(`/manage/stores/${ids[0]}`);
+  const { supabase, profile } = await requireProfile();
 
-  const { data: stores } = await supabase
-    .from("stores")
-    .select("id, name, city, region, country")
-    .in("id", ids)
-    .is("archived_at", null)
-    .order("name");
+  let query = supabase.from("stores").select("id, name, city, region, country").is("archived_at", null);
+  if (!profile.is_admin) {
+    const ids = await getOwnedStoreIds();
+    if (ids.length === 0) notFound();
+    if (ids.length === 1) redirect(`/manage/stores/${ids[0]}`);
+    query = query.in("id", ids);
+  }
+  const { data: stores } = await query.order("name");
 
   return (
     <main className="space-y-6">
