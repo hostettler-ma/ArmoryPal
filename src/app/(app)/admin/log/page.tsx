@@ -11,9 +11,9 @@ export default async function AdminLogPage() {
     .limit(100);
 
   return (
-    <main className="space-y-5">
+    <main className="space-y-6">
       <PageHeader title="Admin log" trail={[{ label: "Admin", href: "/admin" }]} />
-      <p className="text-sm text-muted">The last 100 bans, removals and store changes.</p>
+      <p className="text-body-compact text-muted">The last 100 bans, removals and store changes.</p>
       <AdminLogList rows={(data ?? []) as unknown as AdminLogRow[]} />
     </main>
   );

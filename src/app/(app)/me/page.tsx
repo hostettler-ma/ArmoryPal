@@ -11,7 +11,7 @@ export default async function MePage() {
   return (
     <main className="space-y-6">
       <PageHeader title="Profile" />
-      <p className="text-sm text-muted">Signed in as {user.email ?? "Discord user"}</p>
+      <p className="text-body-compact text-muted">Signed in as {user.email ?? "Discord user"}</p>
       <ProfileForm displayName={profile.display_name} gemId={profile.gem_id ?? ""} submitLabel="Save" />
       <Link href="/settings/notifications" className="btn btn-secondary">
         Notification settings

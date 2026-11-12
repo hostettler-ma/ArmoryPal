@@ -37,18 +37,18 @@ export default async function StorePage({ params }: { params: Promise<{ id: stri
   const ownerNames = (owners ?? []).map((o) => o.profile?.display_name).filter(Boolean);
 
   return (
-    <main className="space-y-5">
+    <main className="space-y-6">
       <PageHeader
         title={store.name}
         action={
           <>
             {!archived && (ownership === "owner" || profile.is_admin) && (
-              <Link href={`/manage/stores/${store.id}`} className="text-sm font-medium text-accent-text">
+              <Link href={`/manage/stores/${store.id}`} className="text-label link">
                 Manage
               </Link>
             )}
             {profile.is_admin && (
-              <Link href={`/admin/stores/${store.id}`} className="text-sm font-medium text-accent-text">
+              <Link href={`/admin/stores/${store.id}`} className="text-label link">
                 Edit
               </Link>
             )}
@@ -58,8 +58,8 @@ export default async function StorePage({ params }: { params: Promise<{ id: stri
 
       <div className="space-y-1">
         <p>{formatLocation(store)}</p>
-        {store.address && <p className="text-sm text-muted">{store.address}</p>}
-        {ownerNames.length > 0 && <p className="text-sm text-muted">Run by {ownerNames.join(", ")}</p>}
+        {store.address && <p className="text-body-compact text-muted">{store.address}</p>}
+        {ownerNames.length > 0 && <p className="text-body-compact text-muted">Run by {ownerNames.join(", ")}</p>}
       </div>
 
       {archived ? (
@@ -75,7 +75,7 @@ export default async function StorePage({ params }: { params: Promise<{ id: stri
 
       {!archived && (
         <section className="space-y-3">
-          <h2 className="text-lg font-semibold">This week</h2>
+          <h2 className="text-heading-03">This week</h2>
           {events.length ? (
             <ul className="space-y-2">
               {events.map((e) => (
@@ -88,9 +88,9 @@ export default async function StorePage({ params }: { params: Promise<{ id: stri
             <p className="card text-muted">This store has no Armory scheduled yet.</p>
           )}
           {schedules.length > 0 && (
-            <p className="text-sm text-muted">Every week: {schedules.map((s) => `${s.label}, ${formatSchedule(s)}`).join(" · ")}</p>
+            <p className="text-body-compact text-muted">Every week: {schedules.map((s) => `${s.label}, ${formatSchedule(s)}`).join(" · ")}</p>
           )}
-          <p className="text-xs text-muted">Times are local to the store ({store.timezone.replaceAll("_", " ")}).</p>
+          <p className="text-helper text-muted">Times are local to the store ({store.timezone.replaceAll("_", " ")}).</p>
         </section>
       )}
 
@@ -101,7 +101,7 @@ export default async function StorePage({ params }: { params: Promise<{ id: stri
       {!archived && ownership === "none" && <RequestOwnershipButton storeId={store.id} storeName={store.name} />}
       {!archived && ownership === "pending" && pendingRequest && (
         <div className="card flex items-center gap-3">
-          <p className="min-w-0 flex-1 text-sm text-muted">Your request to manage this store is waiting for an admin.</p>
+          <p className="min-w-0 flex-1 text-body-compact text-muted">Your request to manage this store is waiting for an admin.</p>
           <CancelOwnershipRequestButton requestId={pendingRequest.id} storeId={store.id} />
         </div>
       )}

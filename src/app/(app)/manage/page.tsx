@@ -19,7 +19,7 @@ export default async function ManagePage() {
     .order("name");
 
   return (
-    <main className="space-y-5">
+    <main className="space-y-6">
       <PageHeader title="Manage my stores" />
       <ul className="space-y-2">
         {(stores ?? []).map((s) => (

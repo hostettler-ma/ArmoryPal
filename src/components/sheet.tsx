@@ -29,12 +29,18 @@ export function Sheet({
       onClose={onClose}
       onClick={(e) => e.target === ref.current && onClose()}
       aria-label={title}
-      className="fixed inset-x-0 top-auto bottom-0 mx-auto mb-0 max-h-[90dvh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-surface p-0 text-foreground backdrop:bg-black/50"
+      // .sheet (globals.css) slides it up at moderate-02 expressive and fades the scrim.
+      className="sheet fixed inset-x-0 top-auto bottom-0 mx-auto mb-0 max-h-[90dvh] w-full max-w-lg overflow-y-auto rounded-t-container bg-surface p-0 text-foreground shadow-overlay"
     >
       <div className="space-y-4 p-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
         <div className="flex items-center justify-between gap-3">
-          <h2 className="text-lg font-semibold">{title}</h2>
-          <button type="button" onClick={onClose} aria-label="Close" className="-mr-2 h-10 w-10 text-xl text-muted">
+          <h2 className="text-heading-03">{title}</h2>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className="interactive -mr-3 flex size-control-lg shrink-0 items-center justify-center rounded-full text-glyph text-muted"
+          >
             ✕
           </button>
         </div>

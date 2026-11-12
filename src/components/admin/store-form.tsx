@@ -54,11 +54,11 @@ export function StoreForm({ store }: { store?: Tables<"stores"> }) {
           placeholder="e.g. Pre-register at the store's website"
           defaultValue={store?.notes ?? ""}
         />
-        <p className="mt-1 text-sm text-muted">Shown to players on the store and event pages.</p>
+        <p className="mt-1 text-body-compact text-muted">Shown to players on the store and event pages.</p>
         {state.errors?.notes && <p className="field-error">{state.errors.notes}</p>}
       </div>
       {state.errors?.form && <p className="field-error">{state.errors.form}</p>}
-      {state.saved && !pending && <p className="text-sm text-muted">Saved.</p>}
+      {state.saved && !pending && <p className="text-body-compact text-muted">Saved.</p>}
       <button className="btn btn-primary" disabled={pending}>
         {pending ? "Saving…" : store ? "Save store" : "Create store"}
       </button>

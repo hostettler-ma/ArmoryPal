@@ -25,10 +25,10 @@ function FormatChecklist({ value, onChange }: { value: FormatCode[]; onChange: (
     <fieldset className="space-y-1">
       <legend className="label">Formats to vote on</legend>
       {FORMATS.map((f) => (
-        <label key={f.code} className="flex min-h-11 items-center gap-3">
+        <label key={f.code} className="flex min-h-control-lg items-center gap-3">
           <input
             type="checkbox"
-            className="h-5 w-5 accent-[var(--accent)]"
+            className="size-icon-md accent-accent"
             checked={value.includes(f.code)}
             onChange={(e) =>
               onChange(
@@ -51,7 +51,7 @@ function StartPollForm({ eventId, onDone }: { eventId: string; onDone: () => voi
   return (
     <div className="space-y-4">
       <FormatChecklist value={options} onChange={setOptions} />
-      <p className="text-sm text-muted">
+      <p className="text-body-compact text-muted">
         Everyone going or following your store can vote, and gets a notification. Voting closes when you confirm a
         format or the event starts.
       </p>
@@ -100,21 +100,21 @@ export function OwnerPollControls({
         <div className="card space-y-2">
           <p className="flex items-baseline justify-between">
             <span className="font-semibold">{pollOpen ? "Poll is open" : "Poll closed"}</span>
-            <span className="text-sm text-muted">
+            <span className="text-body-compact text-muted">
               {results.total} {results.total === 1 ? "vote" : "votes"}
             </span>
           </p>
           <ul className="divide-y divide-border">
             {results.options.map((o) => (
-              <li key={o.code} className="flex min-h-12 items-center gap-3 py-1">
+              <li key={o.code} className="flex min-h-control-lg items-center gap-3 py-1">
                 <span className="min-w-0 flex-1">
                   <span className={results.leaders.includes(o.code) ? "font-semibold" : ""}>{o.label}</span>
-                  <span className="ml-2 text-sm text-muted">{o.votes}</span>
+                  <span className="ml-2 text-body-compact text-muted">{o.votes}</span>
                 </span>
                 {format !== o.code && (
                   <button
                     type="button"
-                    className="btn btn-secondary !min-h-10 !w-auto px-3 text-sm"
+                    className="btn btn-secondary btn-compact"
                     disabled={pending}
                     onClick={() => run(() => confirmFormat(eventId, o.code))}
                   >
@@ -125,12 +125,12 @@ export function OwnerPollControls({
             ))}
           </ul>
           {results.leaders.length > 1 && pollOpen && (
-            <p className="text-sm text-muted">It&apos;s a tie: {results.leaders.map(formatLabel).join(" and ")}.</p>
+            <p className="text-body-compact text-muted">It&apos;s a tie: {results.leaders.map(formatLabel).join(" and ")}.</p>
           )}
           {results.total === 0 && (
             <button
               type="button"
-              className="text-sm font-medium text-accent-text"
+              className="link text-label"
               disabled={pending}
               onClick={() => run(() => deletePoll(eventId))}
             >
@@ -197,7 +197,7 @@ export function WeeklyPollToggle({
             you confirm the format.
           </p>
           {on && (
-            <p className="text-sm text-muted">
+            <p className="text-body-compact text-muted">
               Turning it off removes the weekly polls nobody has voted in yet. Polls with votes stay until you confirm a
               format.
             </p>

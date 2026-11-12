@@ -22,17 +22,17 @@ export default async function LoginPage({
     <>
       <main className="flex min-h-[80dvh] flex-col justify-center gap-8">
         <header className="space-y-2 text-center">
-          <h1 className="text-3xl font-bold tracking-tight">ArmoryPal</h1>
+          <h1 className="text-heading-05">ArmoryPal</h1>
           <p className="text-muted">Borrow and bring cards for your weekly Armory.</p>
         </header>
         {error === "other_browser" ? (
-          <p className="card text-center text-sm">
+          <p className="card text-center text-body-compact">
             Almost done. You came back in a different browser than the one you started in. Sign in once more
             here to finish.
           </p>
         ) : (
           error && (
-            <p className="card text-center text-sm text-danger">
+            <p className="card text-center text-body-compact text-danger">
               That sign-in link didn&apos;t work. It may have expired. Try again.
             </p>
           )

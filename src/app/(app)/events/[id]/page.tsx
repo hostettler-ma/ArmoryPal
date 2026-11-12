@@ -92,7 +92,7 @@ export default async function EventPage({
   };
 
   return (
-    <main className="space-y-5">
+    <main className="space-y-6">
       <PageHeader
         title={event.label}
         trail={[
@@ -102,7 +102,7 @@ export default async function EventPage({
         action={
           canManage &&
           !ended && (
-            <Link href={`/manage/events/${event.id}`} className="text-sm font-medium text-accent-text">
+            <Link href={`/manage/events/${event.id}`} className="text-label link">
               Manage
             </Link>
           )
@@ -112,12 +112,12 @@ export default async function EventPage({
       {!ended && <RealtimeRefresh topic={`event:${event.id}`} event="change" />}
 
       <div className="space-y-2">
-        <p className="font-semibold">
+        <p className="text-heading-02">
           {formatEventWhen(event.starts_at, event.store.timezone)}
           {phase === "live" && <span className="ml-2 text-live">● Happening now</span>}
         </p>
         {event.moved_from && !ended && (
-          <p className="text-sm text-muted">
+          <p className="text-body-compact text-muted">
             Moved from {formatEventWhen(event.moved_from, event.store.timezone)}
           </p>
         )}
@@ -132,7 +132,7 @@ export default async function EventPage({
       {ended ? (
         <p className="card text-center text-muted">
           This event has ended. Lists are read-only.{" "}
-          <Link href={`/stores/${event.store.id}/history`} className="font-medium text-accent-text">
+          <Link href={`/stores/${event.store.id}/history`} className="font-semibold link">
             Past events
           </Link>
         </p>
@@ -159,7 +159,7 @@ export default async function EventPage({
         <CopyRequestsBanner eventId={event.id} fromEventId={copyCandidate.fromEventId} summary={copyCandidate.summary} />
       )}
 
-      <nav className="flex gap-1 rounded-xl bg-surface p-1 ring-1 ring-border" aria-label="Event sections">
+      <nav className="tab-bar" aria-label="Event sections">
         {TABS.map((t) => (
           <Link
             key={t}
@@ -167,7 +167,7 @@ export default async function EventPage({
             replace
             scroll={false}
             aria-current={t === tab ? "page" : undefined}
-            className={`flex-auto rounded-lg px-2 py-2 text-center text-sm font-medium whitespace-nowrap ${t === tab ? "bg-accent text-accent-foreground" : "text-muted"}`}
+            className="tab"
           >
             {tabLabel[t]}
           </Link>
@@ -177,7 +177,7 @@ export default async function EventPage({
       {tab === "requests" && (
         <section className="space-y-3">
           {!ended && !attending && (
-            <p className="card text-sm text-muted">Mark yourself as going to request cards or bring them for others.</p>
+            <p className="card text-body-compact text-muted">Mark yourself as going to request cards or bring them for others.</p>
           )}
           {!ended && attending && <AddRequestSheet eventId={event.id} catalogNote={catalogNote} />}
           {requests.length === 0 ? (
@@ -195,18 +195,18 @@ export default async function EventPage({
       {tab === "checklist" && (
         <>
           <section className="space-y-3">
-            <h2 className="text-lg font-semibold">Cards I&apos;m bringing</h2>
+            <h2 className="text-heading-03">Cards I&apos;m bringing</h2>
             {myPledges.length === 0 ? (
               <p className="card text-muted">You haven&apos;t promised to bring anything.</p>
             ) : (
-              <ul className="card divide-y divide-border !py-0">
+              <ul className="card-list">
                 {myPledges.map((r) => (
-                  <li key={r.id} className="flex min-h-12 items-center gap-3 py-2">
+                  <li key={r.id} className="flex min-h-control-lg items-center gap-3 py-2">
                     <PitchDot color={r.card.color} />
                     <span className="min-w-0 flex-1 truncate">
                       {r.myPledge}× {cardLabel(r.card)}
                     </span>
-                    <span className="shrink-0 text-sm text-muted">for {r.requesterName}</span>
+                    <span className="shrink-0 text-body-compact text-muted">for {r.requesterName}</span>
                   </li>
                 ))}
               </ul>
@@ -214,7 +214,7 @@ export default async function EventPage({
           </section>
 
           <section className="space-y-3">
-            <h2 className="text-lg font-semibold">Cards I need</h2>
+            <h2 className="text-heading-03">Cards I need</h2>
             {!ended && attending && <AddRequestSheet eventId={event.id} catalogNote={catalogNote} />}
             {mine.length === 0 ? (
               <p className="card text-muted">You haven&apos;t requested any cards.</p>
@@ -234,20 +234,20 @@ export default async function EventPage({
           {people.length === 0 ? (
             <p className="card text-muted">Nobody has said they&apos;re going yet.</p>
           ) : (
-            <ul className="card divide-y divide-border !py-0">
+            <ul className="card-list">
               {people.map((p) => (
-                <li key={p.id} className="flex min-h-12 items-center gap-3 py-2">
+                <li key={p.id} className="flex min-h-control-lg items-center gap-3 py-2">
                   <span className="min-w-0 flex-1 truncate">
                     {p.name}
-                    {p.isMe && <span className="ml-1 text-sm text-muted">(you)</span>}
+                    {p.isMe && <span className="ml-1 text-body-compact text-muted">(you)</span>}
                     {!p.attending && (
-                      <span className="ml-2 rounded-full border border-border px-1.5 text-xs text-muted">Not going</span>
+                      <span className="ml-2 rounded-full border border-border px-2 text-helper text-muted">Not going</span>
                     )}
                   </span>
                   {p.requests > 0 && (
-                    <span className="shrink-0 text-right text-sm">
+                    <span className="shrink-0 text-right text-body-compact">
                       {p.requests} {p.requests === 1 ? "request" : "requests"}
-                      <span className="block text-xs text-muted">
+                      <span className="block text-helper text-muted">
                         {p.stillNeeded === 0 ? "all covered" : `${p.stillNeeded} still needed`}
                       </span>
                     </span>

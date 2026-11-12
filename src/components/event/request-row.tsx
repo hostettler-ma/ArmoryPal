@@ -18,7 +18,7 @@ export function CoverageChip({ request }: { request: RequestView }) {
       : request.coverage === "partial"
         ? `${request.pledged} of ${request.quantity} coming`
         : `Covered · ${request.quantity}`;
-  return <span className={`rounded-full px-2 py-0.5 text-xs font-semibold whitespace-nowrap ${CHIP[request.coverage]}`}>{text}</span>;
+  return <span className={`rounded-full px-2 py-0.5 text-tag whitespace-nowrap ${CHIP[request.coverage]}`}>{text}</span>;
 }
 
 /**
@@ -44,16 +44,16 @@ export function RequestRow({
           <PitchDot color={request.card.color} />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="font-semibold">{cardLabel(request.card)}</p>
+          <p className="text-heading-02">{cardLabel(request.card)}</p>
           {request.card.set_ids.length > 0 && (
-            <p className="font-mono text-xs text-muted" title={`Printed in: ${request.card.set_ids.join(", ")}`}>
+            <p className="font-mono text-helper text-muted" title={`Printed in: ${request.card.set_ids.join(", ")}`}>
               {formatSetIds(request.card.set_ids)}
             </p>
           )}
-          <p className="text-sm text-muted">
+          <p className="text-body-compact text-muted">
             {mode === "bring" && (request.isMine ? "Your request" : `for ${request.requesterName}`)}
             {mode === "bring" && !request.requesterAttending && (
-              <span className="ml-1 rounded-full border border-border px-1.5 text-xs">Not going</span>
+              <span className="ml-1 rounded-full border border-border px-2 text-helper">Not going</span>
             )}
             {mode === "bring" && request.note && " · "}
             {request.note && <span className="italic">“{request.note}”</span>}
@@ -63,7 +63,7 @@ export function RequestRow({
       </div>
 
       {mode === "mine" && (
-        <p className="text-sm">
+        <p className="text-body-compact">
           {request.pledgers.length === 0 ? (
             <span className="text-muted">Nobody is bringing this yet.</span>
           ) : (

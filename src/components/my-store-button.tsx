@@ -27,7 +27,7 @@ export function MyStoreButton({
 
 function SubmitButton({ isMine, wide }: { isMine: boolean; wide?: boolean }) {
   const { pending } = useFormStatus();
-  const size = wide ? "" : "!min-h-10 !w-auto px-3 text-sm";
+  const size = wide ? "" : "btn-compact";
   return (
     <button
       className={`btn ${isMine ? "btn-secondary" : "btn-primary"} ${size}`}

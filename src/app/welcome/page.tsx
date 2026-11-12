@@ -18,7 +18,7 @@ export default async function WelcomePage() {
   return (
     <main className="space-y-6 pt-8">
       <header className="space-y-1">
-        <h1 className="text-2xl font-bold">Welcome to ArmoryPal</h1>
+        <h1 className="text-heading-04">Welcome to ArmoryPal</h1>
         <p className="text-muted">What should other players call you?</p>
       </header>
       <ProfileForm

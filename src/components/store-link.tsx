@@ -25,21 +25,21 @@ export function StoreLink({
   children?: React.ReactNode;
 }) {
   return (
-    <div className="rounded-2xl border border-store/40 bg-store-bg text-store-fg">
+    <div className="rounded-container border border-store/40 bg-store-bg text-store-fg">
       <div className="flex items-stretch">
         <Link
           href={href}
-          className="flex min-h-14 min-w-0 flex-1 items-center gap-3 rounded-2xl p-3 transition active:scale-[0.99] active:opacity-80"
+          className="interactive flex min-h-control-lg min-w-0 flex-1 items-center gap-3 rounded-container p-3"
         >
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-store text-store-icon-fg">
+          <span className="flex size-control-md shrink-0 items-center justify-center rounded-control bg-store text-store-icon-fg">
             <StorefrontIcon />
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block truncate font-semibold">{store.name}</span>
-            {subtitle && <span className="block truncate text-sm text-store-muted">{subtitle}</span>}
-            {detail && <span className="mt-0.5 block truncate text-sm">{detail}</span>}
+            <span className="block truncate text-heading-02">{store.name}</span>
+            {subtitle && <span className="block truncate text-body-compact text-store-muted">{subtitle}</span>}
+            {detail && <span className="mt-0.5 block truncate text-body-compact">{detail}</span>}
           </span>
-          <span aria-hidden className="shrink-0 text-2xl leading-none text-store-muted">
+          <span aria-hidden className="shrink-0 text-glyph text-store-muted">
             ›
           </span>
         </Link>
@@ -52,7 +52,7 @@ export function StoreLink({
 
 function StorefrontIcon() {
   return (
-    <svg aria-hidden viewBox="0 0 24 24" className="h-5 w-5 fill-none stroke-current" strokeWidth={2}>
+    <svg aria-hidden viewBox="0 0 24 24" className="size-icon-md fill-none stroke-current" strokeWidth={2}>
       <path d="M3 9l1.5-5h15L21 9" strokeLinejoin="round" />
       <path d="M3 9a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0" strokeLinejoin="round" />
       <path d="M5 11.5V20h14v-8.5" strokeLinejoin="round" />

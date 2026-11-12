@@ -16,7 +16,7 @@ export default async function OwnerRequestsPage() {
     .order("created_at");
 
   return (
-    <main className="space-y-5">
+    <main className="space-y-6">
       <PageHeader title="Owner requests" trail={[{ label: "Admin", href: "/admin" }]} />
       {!requests?.length ? (
         <p className="card text-muted">No requests waiting.</p>
@@ -28,12 +28,12 @@ export default async function OwnerRequestsPage() {
             return (
               <li key={r.id} className="card space-y-2">
                 <p>
-                  <Link href={`/admin/players/${r.user_id}`} className="font-semibold text-accent-text">
+                  <Link href={`/admin/players/${r.user_id}`} className="font-semibold link">
                     {name}
                   </Link>{" "}
                   wants to manage{" "}
                   {r.store ? (
-                    <Link href={`/admin/stores/${r.store.id}`} className="font-semibold text-accent-text">
+                    <Link href={`/admin/stores/${r.store.id}`} className="font-semibold link">
                       {store}
                     </Link>
                   ) : (
@@ -41,8 +41,8 @@ export default async function OwnerRequestsPage() {
                   )}
                   {r.store?.city && <span className="text-muted"> ({r.store.city})</span>}
                 </p>
-                {r.message && <p className="text-sm">“{r.message}”</p>}
-                <p className="text-xs text-muted">{formatRelative(r.created_at)}</p>
+                {r.message && <p className="text-body-compact">“{r.message}”</p>}
+                <p className="text-helper text-muted">{formatRelative(r.created_at)}</p>
                 <DecideOwnershipButtons requestId={r.id} name={name} store={store} />
               </li>
             );

@@ -44,7 +44,7 @@ export function ScheduleForm({
     <form ref={formRef} action={action} className={bare ? "space-y-3" : "card space-y-3"}>
       <input type="hidden" name="storeId" value={storeId} />
       {schedule && <input type="hidden" name="scheduleId" value={schedule.id} />}
-      {!bare && <p className="font-semibold">{title}</p>}
+      {!bare && <p className="text-heading-02">{title}</p>}
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="label" htmlFor={`${idPrefix}weekday`}>
@@ -97,7 +97,7 @@ export function ScheduleForm({
         />
         {state.errors?.label && <p className="field-error">{state.errors.label}</p>}
       </div>
-      {note && <p className="text-sm text-muted">{note}</p>}
+      {note && <p className="text-body-compact text-muted">{note}</p>}
       {state.errors?.form && <p className="field-error">{state.errors.form}</p>}
       <button className={schedule ? "btn btn-primary" : "btn btn-secondary"} disabled={pending}>
         {pending ? "Saving…" : submitLabel}

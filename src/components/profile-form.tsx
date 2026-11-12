@@ -32,7 +32,7 @@ export function ProfileForm({
           required
           autoComplete="nickname"
         />
-        <p className="mt-1 text-sm text-muted">Other players at your store will see this.</p>
+        <p className="mt-1 text-body-compact text-muted">Other players at your store will see this.</p>
         {state.errors?.displayName && <p className="field-error">{state.errors.displayName}</p>}
       </div>
       <div>
@@ -43,7 +43,7 @@ export function ProfileForm({
         {state.errors?.gemId && <p className="field-error">{state.errors.gemId}</p>}
       </div>
       {state.errors?.form && <p className="field-error">{state.errors.form}</p>}
-      {state.saved && !pending && <p className="text-sm text-muted">Saved.</p>}
+      {state.saved && !pending && <p className="text-body-compact text-muted">Saved.</p>}
       <button className="btn btn-primary" disabled={pending}>
         {pending ? "Saving…" : submitLabel}
       </button>

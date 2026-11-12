@@ -11,10 +11,10 @@ export default async function NotificationSettingsPage() {
   const isOwner = (await getOwnedStoreIds()).length > 0;
 
   return (
-    <main className="space-y-5">
+    <main className="space-y-6">
       <PageHeader title="Notification settings" trail={[{ label: "Notifications", href: "/notifications" }]} />
-      <p className="text-sm text-muted">Choose what shows up in your notifications. Everything is on by default.</p>
-      <ul className="card divide-y divide-border !py-0">
+      <p className="text-body-compact text-muted">Choose what shows up in your notifications. Everything is on by default.</p>
+      <ul className="card-list">
         {NOTIFICATION_KINDS.filter((k) => isOwner || !k.ownersOnly).map((k) => (
           <NotificationToggle
             key={k.kind}

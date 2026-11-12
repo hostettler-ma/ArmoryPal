@@ -15,7 +15,7 @@ export default async function StoresPage({ searchParams }: { searchParams: Promi
   const results = (stores ?? []) as unknown as StoreWithSchedules[];
 
   return (
-    <main className="space-y-5">
+    <main className="space-y-6">
       <PageHeader title="Find a store" />
 
       <form role="search" className="flex gap-2">
@@ -28,7 +28,7 @@ export default async function StoresPage({ searchParams }: { searchParams: Promi
           className="input"
           enterKeyHint="search"
         />
-        <button className="btn btn-primary !w-auto">Search</button>
+        <button className="btn btn-primary w-auto">Search</button>
       </form>
 
       {error ? (

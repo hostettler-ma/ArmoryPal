@@ -129,13 +129,13 @@ export function CardAutocomplete({
           onKeyDown={onKeyDown}
         />
         {loading && (
-          <span className="pointer-events-none absolute top-1/2 right-4 -translate-y-1/2 text-sm text-muted">…</span>
+          <span className="pointer-events-none absolute top-1/2 right-4 -translate-y-1/2 text-body-compact text-muted">…</span>
         )}
         {showList && (
           <ul
             id={listId}
             role="listbox"
-            className="absolute z-20 mt-1 max-h-[50dvh] w-full overflow-y-auto rounded-xl border border-border bg-surface shadow-lg"
+            className="absolute z-20 mt-1 max-h-[50dvh] w-full overflow-y-auto rounded-container border border-border bg-surface shadow-overlay"
           >
             {results.length === 0 && !loading ? (
               <li className="px-4 py-3 text-muted">No cards match.</li>
@@ -152,11 +152,11 @@ export function CardAutocomplete({
                     chooseGroup(g);
                   }}
                   onMouseEnter={() => setActive(i)}
-                  className={`flex min-h-12 cursor-pointer items-center gap-3 px-4 py-2 ${i === active ? "bg-background" : ""}`}
+                  className={`flex min-h-control-lg cursor-pointer items-center gap-3 px-4 py-2 ${i === active ? "bg-background" : ""}`}
                 >
                   <span className="min-w-0 flex-1">
                     <span className="block truncate">{g.name}</span>
-                    <span className="block truncate text-xs text-muted">
+                    <span className="block truncate text-helper text-muted">
                       {g.types.filter((t) => t !== "Generic").join(" · ")}
                     </span>
                   </span>
@@ -186,7 +186,7 @@ export function CardAutocomplete({
                   type="button"
                   aria-pressed={selected}
                   onClick={() => toggleVariant(v)}
-                  className={`btn !min-h-12 gap-2 border ${selected ? "border-accent-text bg-highlight text-highlight-foreground" : "border-accent-soft bg-surface"}`}
+                  className={`btn gap-2 border ${selected ? "border-accent-text bg-highlight text-highlight-foreground" : "border-accent-soft bg-surface"}`}
                 >
                   <PitchDot color={v.color} />
                   {v.color ?? "No pitch"}

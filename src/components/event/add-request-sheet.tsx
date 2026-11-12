@@ -30,7 +30,7 @@ export function AddRequestSheet({ eventId, catalogNote }: { eventId: string; cat
       </button>
       <Sheet open={open} onClose={() => setOpen(false)} title="Request cards">
         {open && <AddRequestForm key={formKey} eventId={eventId} onDone={() => setOpen(false)} />}
-        {catalogNote && <p className="text-xs text-muted">{catalogNote}</p>}
+        {catalogNote && <p className="text-helper text-muted">{catalogNote}</p>}
       </Sheet>
     </>
   );
@@ -40,7 +40,7 @@ function AddRequestForm({ eventId, onDone }: { eventId: string; onDone: () => vo
   const [mode, setMode] = useState<Mode>("search");
   return (
     <div className="space-y-4">
-      <div className="flex gap-1 rounded-xl bg-background p-1 ring-1 ring-border" role="tablist" aria-label="How to add cards">
+      <div className="tab-bar bg-background" role="tablist" aria-label="How to add cards">
         {(["search", "paste"] as const).map((m) => (
           <button
             key={m}
@@ -48,7 +48,7 @@ function AddRequestForm({ eventId, onDone }: { eventId: string; onDone: () => vo
             role="tab"
             aria-selected={mode === m}
             onClick={() => setMode(m)}
-            className={`flex-1 rounded-lg px-2 py-2 text-sm font-medium ${mode === m ? "bg-accent text-accent-foreground" : "text-muted"}`}
+            className="tab flex-1"
           >
             {m === "search" ? "Search" : "Paste list"}
           </button>
@@ -191,7 +191,7 @@ function PasteForm({ eventId, onDone }: { eventId: string; onDone: () => void })
         </label>
         <textarea
           id="paste-list"
-          className="input min-h-48 py-3 font-mono text-sm"
+          className="input min-h-48 py-3 font-mono text-body-compact"
           placeholder={EXAMPLE}
           value={text}
           onChange={(e) => setText(e.target.value)}
@@ -199,7 +199,7 @@ function PasteForm({ eventId, onDone }: { eventId: string; onDone: () => void })
           autoCapitalize="none"
           autoCorrect="off"
         />
-        <p className="text-sm text-muted">
+        <p className="text-body-compact text-muted">
           One card per line, like <code>2 Boulder Drop</code>. Add a color with <code>(Blue)</code>; otherwise
           multi-color cards default to Red.
         </p>
@@ -214,12 +214,12 @@ function PasteForm({ eventId, onDone }: { eventId: string; onDone: () => void })
   const copies = importCopies(items);
   return (
     <div className="space-y-4">
-      <p className="font-semibold">
+      <p className="text-heading-02">
         {items.length ? `Found ${cardsLabel(copies)}. Check before requesting:` : "No cards from this list could be imported."}
       </p>
 
       {items.length > 0 && (
-        <ul className="card divide-y divide-border !py-0">
+        <ul className="card-list">
           {items.map((it, i) => (
             <li key={`${it.card.id}-${i}`} className="space-y-1 py-2">
               <div className="flex items-center gap-3">
@@ -231,13 +231,13 @@ function PasteForm({ eventId, onDone }: { eventId: string; onDone: () => void })
                   type="button"
                   aria-label={`Don't import ${cardLabel(it.card)}`}
                   onClick={() => setItems((list) => list.filter((_, j) => j !== i))}
-                  className="-mr-2 h-9 w-9 shrink-0 text-muted"
+                  className="interactive -mr-2 flex size-control-md shrink-0 items-center justify-center rounded-full text-muted"
                 >
                   ✕
                 </button>
               </div>
               {it.variants.length > 1 && (
-                <div className="flex items-center gap-2 pl-6 text-xs text-muted">
+                <div className="flex items-center gap-2 pl-6 text-helper text-muted">
                   {it.defaultedToRed ? "Red by default · switch:" : "Color:"}
                   {it.variants.map((v) => (
                     <button
@@ -246,7 +246,7 @@ function PasteForm({ eventId, onDone }: { eventId: string; onDone: () => void })
                       aria-pressed={v.id === it.card.id}
                       aria-label={`Use ${v.color ?? "no pitch"}`}
                       onClick={() => switchColor(i, v)}
-                      className={`flex h-8 w-8 items-center justify-center rounded-full ${v.id === it.card.id ? "bg-highlight" : ""}`}
+                      className={`interactive flex size-control-sm items-center justify-center rounded-full ${v.id === it.card.id ? "bg-highlight" : ""}`}
                     >
                       <PitchDot color={v.color} />
                     </button>
@@ -254,9 +254,9 @@ function PasteForm({ eventId, onDone }: { eventId: string; onDone: () => void })
                 </div>
               )}
               {it.typedAs.length > 0 && (
-                <p className="pl-6 text-xs text-muted">You typed “{it.typedAs.join("”, “")}”</p>
+                <p className="pl-6 text-helper text-muted">You typed “{it.typedAs.join("”, “")}”</p>
               )}
-              {it.capped && <p className="pl-6 text-xs text-muted">Capped at {MAX_QUANTITY}</p>}
+              {it.capped && <p className="pl-6 text-helper text-muted">Capped at {MAX_QUANTITY}</p>}
             </li>
           ))}
         </ul>
@@ -264,8 +264,8 @@ function PasteForm({ eventId, onDone }: { eventId: string; onDone: () => void })
 
       {preview.skipped.length > 0 && (
         <div className="space-y-1">
-          <p className="text-sm font-semibold text-danger">Not found / not imported ({preview.skipped.length})</p>
-          <ul className="card space-y-1 text-sm">
+          <p className="text-heading-01 text-danger">Not found / not imported ({preview.skipped.length})</p>
+          <ul className="card space-y-1 text-body-compact">
             {preview.skipped.map((s) => (
               <li key={s.lineNo} className="flex gap-2">
                 <span className="min-w-0 flex-1 truncate font-mono">{s.raw}</span>

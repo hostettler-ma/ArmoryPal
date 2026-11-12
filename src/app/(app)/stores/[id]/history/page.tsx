@@ -50,7 +50,7 @@ export default async function StoreHistoryPage({
   const hasMore = (events ?? []).length > PAGE_SIZE;
 
   return (
-    <main className="space-y-5">
+    <main className="space-y-6">
       <PageHeader title="Past events" trail={[{ label: store.name, href: `/stores/${store.id}` }]} />
       <StoreLink store={store} subtitle={formatLocation(store)} />
 
@@ -60,12 +60,12 @@ export default async function StoreHistoryPage({
         <ul className="space-y-2">
           {rows.map((e) => (
             <li key={e.id}>
-              <Link href={`/events/${e.id}`} className="card flex items-center gap-3">
+              <Link href={`/events/${e.id}`} className="card interactive flex items-center gap-3">
                 <div className="min-w-0 flex-1">
-                  <p className="font-semibold">{e.label}</p>
-                  <p className="text-sm text-muted">{e.when}</p>
+                  <p className="text-heading-02">{e.label}</p>
+                  <p className="text-body-compact text-muted">{e.when}</p>
                 </div>
-                <div className="shrink-0 text-right text-sm text-muted">
+                <div className="shrink-0 text-right text-body-compact text-muted">
                   <p>{e.going} went</p>
                   {e.requests > 0 && (
                     <p>
@@ -80,16 +80,16 @@ export default async function StoreHistoryPage({
       )}
 
       {(page > 1 || hasMore) && (
-        <nav className="flex justify-between text-sm font-medium">
+        <nav className="flex justify-between text-label">
           {page > 1 ? (
-            <Link href={`/stores/${store.id}/history?page=${page - 1}`} className="text-accent-text">
+            <Link href={`/stores/${store.id}/history?page=${page - 1}`} className="link">
               ← Newer
             </Link>
           ) : (
             <span />
           )}
           {hasMore && (
-            <Link href={`/stores/${store.id}/history?page=${page + 1}`} className="text-accent-text">
+            <Link href={`/stores/${store.id}/history?page=${page + 1}`} className="link">
               Older →
             </Link>
           )}

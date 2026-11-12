@@ -6,8 +6,8 @@ export function DevLogin({ next, failed }: { next: string; failed: boolean }) {
   return (
     <section className="card space-y-3" aria-label="Dev sign-in">
       <div>
-        <p className="font-semibold">Dev sign-in</p>
-        <p className="text-sm text-muted">Local only. Use two browsers (or a private window) to act as two players.</p>
+        <p className="text-heading-02">Dev sign-in</p>
+        <p className="text-body-compact text-muted">Local only. Use two browsers (or a private window) to act as two players.</p>
       </div>
       {failed && (
         <p className="field-error">

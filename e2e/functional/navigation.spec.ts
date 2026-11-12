@@ -22,7 +22,7 @@ test("new accounts get the getting-started guide once; it's in the menu after th
   await expect(page.getByRole("dialog", { name: "Getting started" })).toHaveCount(0);
 
   // Still reachable from the menu.
-  await page.getByRole("button", { name: "Menu" }).click();
+  await page.getByRole("button", { name: "Menu", exact: true }).click();
   await page.getByRole("dialog", { name: "Menu" }).getByRole("link", { name: "Getting started" }).click();
   await expect(page).toHaveURL(/\/guide$/);
   await expect(page.locator("h1").first()).toBeVisible();
@@ -38,12 +38,12 @@ test("the menu reaches every section and marks where you are", async ({ newPlaye
     ["Notification settings", "/settings/notifications"],
     ["Home", "/"],
   ] as const) {
-    await page.getByRole("button", { name: "Menu" }).click();
+    await page.getByRole("button", { name: "Menu", exact: true }).click();
     const menu = page.getByRole("dialog", { name: "Menu" });
     await menu.getByRole("link", { name: label, exact: true }).click();
     await expect(page).toHaveURL(new RegExp(`${path.replace("/", "\\/")}$`));
     await expect(menu).toBeHidden(); // closes after navigating
-    await page.getByRole("button", { name: "Menu" }).click();
+    await page.getByRole("button", { name: "Menu", exact: true }).click();
     await expect(menu.getByRole("link", { name: label, exact: true })).toHaveAttribute("aria-current", "page");
     await menu.getByRole("button", { name: "Close menu" }).click();
   }
