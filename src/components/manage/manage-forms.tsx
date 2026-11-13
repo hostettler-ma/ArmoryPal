@@ -3,7 +3,9 @@
 import { useActionState, useEffect, useState } from "react";
 import type { FormState } from "@/app/actions/admin";
 import {
+  cancelEvent,
   createOneOffEvent,
+  deleteEvent,
   moveEvent,
   renameEvent,
   saveEventLinks,
@@ -12,7 +14,7 @@ import {
 } from "@/app/actions/manage";
 import { ScheduleForm } from "@/components/admin/schedule-form";
 import { Sheet } from "@/components/sheet";
-import { MAX_EVENT_LABEL, MAX_URL_LENGTH } from "@/lib/event-manage";
+import { MAX_CANCEL_NOTE, MAX_EVENT_LABEL, MAX_URL_LENGTH } from "@/lib/event-manage";
 import { MAX_STORE_NOTES } from "@/lib/stores";
 
 /** A button that opens a bottom sheet; `children` gets a `close` callback. */
@@ -20,12 +22,14 @@ export function SheetButton({
   label,
   title,
   primary,
+  danger,
   compact,
   children,
 }: {
   label: string;
   title: string;
   primary?: boolean;
+  danger?: boolean;
   compact?: boolean;
   children: (close: () => void) => React.ReactNode;
 }) {
@@ -35,7 +39,7 @@ export function SheetButton({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className={`btn ${primary ? "btn-primary" : "btn-secondary"} ${compact ? "btn-compact" : ""}`}
+        className={`btn ${primary ? "btn-primary" : danger ? "btn-danger" : "btn-secondary"} ${compact ? "btn-compact" : ""}`}
       >
         {label}
       </button>
@@ -222,6 +226,72 @@ export function MoveEventForm({
       {state.errors?.form && <p className="field-error">{state.errors.form}</p>}
       <SaveButton pending={pending} label="Move event" />
     </form>
+  );
+}
+
+/** Cancel this event with an optional message; players still see it, marked cancelled. */
+export function CancelEventForm({ eventId, storeId, onSaved }: { eventId: string; storeId: string; onSaved?: () => void }) {
+  const [state, action, pending] = useActionState<FormState, FormData>(cancelEvent, {});
+  useSavedEffect(state, onSaved);
+  return (
+    <form action={action} className="space-y-3">
+      <input type="hidden" name="eventId" value={eventId} />
+      <input type="hidden" name="storeId" value={storeId} />
+      <Field id="cancel-note" label={<>Message for players {optional}</>} error={state.errors?.note}>
+        <input
+          id="cancel-note"
+          name="note"
+          className="input"
+          maxLength={MAX_CANCEL_NOTE}
+          placeholder="Closed for Thanksgiving"
+          autoFocus
+        />
+      </Field>
+      <p className="text-body-compact text-muted">
+        The event stays on the schedule, marked as cancelled, and can no longer be changed. Everyone going or following
+        your store gets a notification. This can&apos;t be undone.
+      </p>
+      {state.errors?.form && <p className="field-error">{state.errors.form}</p>}
+      <button className="btn btn-danger" disabled={pending}>
+        {pending ? "Cancelling…" : "Cancel event"}
+      </button>
+    </form>
+  );
+}
+
+export function CancelEventButton(props: Omit<React.ComponentProps<typeof CancelEventForm>, "onSaved">) {
+  return (
+    <SheetButton danger label="Cancel this event" title="Cancel this event">
+      {(close) => <CancelEventForm {...props} onSaved={close} />}
+    </SheetButton>
+  );
+}
+
+/** Delete this event outright, with everything on it. Nobody is notified. */
+export function DeleteEventForm({ eventId, storeId, weekly }: { eventId: string; storeId: string; weekly: boolean }) {
+  const [state, action, pending] = useActionState<FormState, FormData>(deleteEvent, {});
+  return (
+    <form action={action} className="space-y-3">
+      <input type="hidden" name="eventId" value={eventId} />
+      <input type="hidden" name="storeId" value={storeId} />
+      <p className="text-body">
+        The event disappears for everyone, with its Going list, card requests and pledges. Nobody gets a notification.
+        {weekly && " Only this week is deleted; the weekly slot carries on next week."}
+      </p>
+      <p className="text-body-compact text-muted">To let players know, cancel the event instead.</p>
+      {state.errors?.form && <p className="field-error">{state.errors.form}</p>}
+      <button className="btn btn-danger" disabled={pending}>
+        {pending ? "Deleting…" : "Delete event"}
+      </button>
+    </form>
+  );
+}
+
+export function DeleteEventButton(props: React.ComponentProps<typeof DeleteEventForm>) {
+  return (
+    <SheetButton danger label="Delete this event" title="Delete this event?">
+      {() => <DeleteEventForm {...props} />}
+    </SheetButton>
   );
 }
 

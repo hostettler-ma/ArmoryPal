@@ -3,6 +3,8 @@
 // of truth; this copy drives the UI (what to show/enable) and is unit-tested.
 // Change both together.
 
+import { MAX_CANCEL_NOTE } from "./event-manage";
+
 export const MAX_QUANTITY = 20;
 export const MAX_NOTE_LENGTH = 200;
 
@@ -53,6 +55,9 @@ export type RuleError =
   | "invalid_schedule"
   | "schedule_not_found"
   | "notes_too_long"
+  // Cancelling and deleting events (*_cancel_delete_events.sql).
+  | "event_cancelled"
+  | "cancel_note_too_long"
   // Format polls (*_format_polls.sql; mirrored in src/lib/formats.ts).
   | "no_poll"
   | "poll_closed"
@@ -178,6 +183,8 @@ const MESSAGES: Record<RuleError, string> = {
   invalid_schedule: "Pick a weekday and a start time.",
   schedule_not_found: "That weekly slot doesn't exist.",
   notes_too_long: "Keep the notes to 500 characters.",
+  event_cancelled: "This event was cancelled.",
+  cancel_note_too_long: `Keep the message to ${MAX_CANCEL_NOTE} characters.`,
   no_poll: "There's no format poll for this event.",
   poll_closed: "Voting has closed for this event.",
   invalid_format: "Pick one of the formats on the poll.",

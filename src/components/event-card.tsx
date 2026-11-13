@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CancelledBadge } from "@/components/event/cancelled-notice";
 import type { EventSummary } from "@/lib/event-data";
 import { formatEventWhen } from "@/lib/events";
 import { formatLabel } from "@/lib/formats";
@@ -26,11 +27,17 @@ export function EventCard({
         <p className="truncate text-heading-02">{event.label}</p>
         <p className="text-body-compact text-muted">
           {formatEventWhen(event.starts_at, timezone)}
-          {event.moved_from && (
+          {event.cancelled_at ? (
+            <span className="ml-2">
+              <CancelledBadge />
+            </span>
+          ) : event.moved_from && (
             <span className="ml-2 rounded-full border border-border px-2 text-helper">Moved</span>
           )}
         </p>
-        {event.format ? (
+        {event.cancelled_at ? (
+          event.cancel_note && <p className="truncate text-body-compact">{event.cancel_note}</p>
+        ) : event.format ? (
           <p className="text-body-compact">{formatLabel(event.format)}</p>
         ) : (
           event.pollWaiting && <p className="text-label text-accent-text">Vote on the format</p>

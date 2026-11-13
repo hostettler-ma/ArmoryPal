@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { FormState } from "@/app/actions/admin";
 import { isUuid, requireProfile } from "@/lib/auth";
-import { MAX_EVENT_LABEL, parseEventLinks } from "@/lib/event-manage";
+import { MAX_EVENT_LABEL, parseCancelNote, parseEventLinks } from "@/lib/event-manage";
 import { ruleMessage } from "@/lib/rules";
 import { MAX_STORE_NOTES, parseScheduleInput } from "@/lib/stores";
 
@@ -69,6 +69,31 @@ export async function moveEvent(_prev: FormState, formData: FormData): Promise<F
   if (error) return { errors: { form: ruleMessage(error.message) } };
   revalidateEvent(eventId, text(formData, "storeId"));
   return { saved: true };
+}
+
+/** Cancels the event; it stays visible as cancelled and its audience is notified. */
+export async function cancelEvent(_prev: FormState, formData: FormData): Promise<FormState> {
+  const eventId = text(formData, "eventId");
+  if (!isUuid(eventId)) return { errors: { form: ruleMessage("event_not_found") } };
+  const note = parseCancelNote(formData.get("note"));
+  if (!note.ok) return { errors: { note: ruleMessage("cancel_note_too_long") } };
+  const { supabase } = await requireProfile();
+  const { error } = await supabase.rpc("owner_cancel_event", { p_event_id: eventId, p_note: note.value ?? "" });
+  if (error) return { errors: { form: ruleMessage(error.message) } };
+  revalidateEvent(eventId, text(formData, "storeId"));
+  return { saved: true };
+}
+
+/** Deletes the event and everything on it, without notifying anyone. */
+export async function deleteEvent(_prev: FormState, formData: FormData): Promise<FormState> {
+  const eventId = text(formData, "eventId");
+  const storeId = text(formData, "storeId");
+  if (!isUuid(eventId) || !isUuid(storeId)) return { errors: { form: ruleMessage("event_not_found") } };
+  const { supabase } = await requireProfile();
+  const { error } = await supabase.rpc("owner_delete_event", { p_event_id: eventId });
+  if (error) return { errors: { form: ruleMessage(error.message) } };
+  revalidateEvent(eventId, storeId);
+  redirect(`/manage/stores/${storeId}`);
 }
 
 export async function createOneOffEvent(_prev: FormState, formData: FormData): Promise<FormState> {

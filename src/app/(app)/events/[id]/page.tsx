@@ -4,6 +4,7 @@ import { AttendanceButton } from "@/components/attendance-button";
 import { RealtimeRefresh } from "@/components/realtime-refresh";
 import { RemoveAttendeeButton } from "@/components/admin/moderation-buttons";
 import { AddRequestSheet } from "@/components/event/add-request-sheet";
+import { CancelledNotice } from "@/components/event/cancelled-notice";
 import { CopyRequestsBanner } from "@/components/event/copy-requests-banner";
 import { getCopyCandidate, getEventPoll } from "@/lib/event-data";
 import { FormatChip, FormatPoll } from "@/components/event/format-poll";
@@ -64,13 +65,16 @@ export default async function EventPage({
 
   const phase = eventPhase(event);
   const ended = phase === "ended";
+  const cancelled = !!event.cancelled_at;
+  // Cancelled events are read-only, like ended ones.
+  const closed = ended || cancelled;
   const attendees = [...event.attendances].sort((a, b) => a.created_at.localeCompare(b.created_at));
   const attending = attendees.some((a) => a.user_id === user.id);
   // Only attendees of an open event can copy last week's unfilled requests in.
-  const copyCandidate = !ended && attending ? await getCopyCandidate(supabase, event, user.id) : null;
+  const copyCandidate = !closed && attending ? await getCopyCandidate(supabase, event, user.id) : null;
   const requests = buildRequestViews(
     (requestRows ?? []) as LoadedRequest[],
-    { id: user.id, attending, eventEnded: ended },
+    { id: user.id, attending, eventEnded: closed },
     new Set(attendees.map((a) => a.user_id)),
   );
   const mine = requests.filter((r) => r.isMine);
@@ -114,18 +118,18 @@ export default async function EventPage({
       <div className="space-y-2">
         <p className="text-heading-02">
           {formatEventWhen(event.starts_at, event.store.timezone)}
-          {phase === "live" && <span className="ml-2 text-live">● Happening now</span>}
+          {phase === "live" && !cancelled && <span className="ml-2 text-live">● Happening now</span>}
         </p>
-        {event.moved_from && !ended && (
+        {event.moved_from && !closed && (
           <p className="text-body-compact text-muted">
             Moved from {formatEventWhen(event.moved_from, event.store.timezone)}
           </p>
         )}
         <StoreLink store={event.store} subtitle={formatLocation(event.store)} />
-        {!ended && <StoreNotes notes={event.store.notes} />}
+        {!closed && <StoreNotes notes={event.store.notes} />}
       </div>
 
-      {!ended && (
+      {!closed && (
         <EventLinks gemUrl={event.gem_url} gemCode={event.gem_code} ticketUrl={ticketLink(event, event.store)} />
       )}
 
@@ -136,6 +140,8 @@ export default async function EventPage({
             Past events
           </Link>
         </p>
+      ) : cancelled ? (
+        <CancelledNotice note={event.cancel_note} />
       ) : (
         <AttendanceButton
           key={String(attending)} // fresh state (no stale confirmation) after attending changes
@@ -151,7 +157,7 @@ export default async function EventPage({
           <FormatChip format={event.format} />
         </p>
       )}
-      {poll && !ended && (!event.format || poll.results.total > 0) && (
+      {poll && !closed && (!event.format || poll.results.total > 0) && (
         <FormatPoll eventId={event.id} results={poll.results} open={poll.open} canVote={attending || !!follows} />
       )}
 
@@ -176,16 +182,16 @@ export default async function EventPage({
 
       {tab === "requests" && (
         <section className="space-y-3">
-          {!ended && !attending && (
+          {!closed && !attending && (
             <p className="card text-body-compact text-muted">Mark yourself as going to request cards or bring them for others.</p>
           )}
-          {!ended && attending && <AddRequestSheet eventId={event.id} catalogNote={catalogNote} />}
+          {!closed && attending && <AddRequestSheet eventId={event.id} catalogNote={catalogNote} />}
           {requests.length === 0 ? (
             <p className="card text-muted">No card requests yet.</p>
           ) : (
             <ul className="space-y-2">
               {requests.map((r) => (
-                <RequestRow key={r.id} eventId={event.id} request={r} mode="bring" editable={!ended && attending} />
+                <RequestRow key={r.id} eventId={event.id} request={r} mode="bring" editable={!closed && attending} />
               ))}
             </ul>
           )}
@@ -215,13 +221,13 @@ export default async function EventPage({
 
           <section className="space-y-3">
             <h2 className="text-heading-03">Cards I need</h2>
-            {!ended && attending && <AddRequestSheet eventId={event.id} catalogNote={catalogNote} />}
+            {!closed && attending && <AddRequestSheet eventId={event.id} catalogNote={catalogNote} />}
             {mine.length === 0 ? (
               <p className="card text-muted">You haven&apos;t requested any cards.</p>
             ) : (
               <ul className="space-y-2">
                 {mine.map((r) => (
-                  <RequestRow key={r.id} eventId={event.id} request={r} mode="mine" editable={!ended} />
+                  <RequestRow key={r.id} eventId={event.id} request={r} mode="mine" editable={!closed} />
                 ))}
               </ul>
             )}
@@ -253,7 +259,7 @@ export default async function EventPage({
                     </span>
                   )}
                   {/* Admins can take others off an open event (admin_remove_attendee). */}
-                  {profile.is_admin && !ended && p.attending && !p.isMe && (
+                  {profile.is_admin && !closed && p.attending && !p.isMe && (
                     <RemoveAttendeeButton eventId={event.id} userId={p.id} name={p.name} />
                   )}
                 </li>

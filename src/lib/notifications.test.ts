@@ -91,6 +91,19 @@ describe("formatNotification", () => {
     expect(formatNotification("event_moved", {})).toBe("The Armory moved to a new time.");
   });
 
+  it("says when an event is cancelled", () => {
+    expect(
+      formatNotification("event_cancelled", {
+        label: "Armory",
+        store: "Dragon's Den",
+        when: "Thu, Nov 26 · 6:30 PM",
+        note: "Closed for Thanksgiving.",
+      }),
+    ).toBe("Armory at Dragon's Den (Thu, Nov 26 · 6:30 PM) is cancelled. Closed for Thanksgiving.");
+    expect(formatNotification("event_cancelled", {})).toBe("The Armory is cancelled.");
+    expect(notificationHref("event_cancelled", "e1", {})).toBe("/events/e1");
+  });
+
   it("answers ownership requests", () => {
     expect(formatNotification("ownership_decided", { approved: true, store: "Dragon's Den" })).toBe(
       "You can now manage Dragon's Den in ArmoryPal.",

@@ -107,14 +107,14 @@ isOneToOne: true
                   ]
                 },"events": {
                   Row: {
-                    "created_at": string,"ends_at": string,"event_date": string,"format": string | null,"gem_code": string | null,"gem_url": string | null,"id": string,"label": string,"moved_from": string | null,"schedule_id": string | null,"slot_date": string | null,"starts_at": string,"store_id": string,"ticket_url": string | null
+                    "cancel_note": string | null,"cancelled_at": string | null,"created_at": string,"deleted_at": string | null,"ends_at": string,"event_date": string,"format": string | null,"gem_code": string | null,"gem_url": string | null,"id": string,"label": string,"moved_from": string | null,"schedule_id": string | null,"slot_date": string | null,"starts_at": string,"store_id": string,"ticket_url": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string,"ends_at": string,"event_date": string,"format"?: string | null,"gem_code"?: string | null,"gem_url"?: string | null,"id"?: string,"label": string,"moved_from"?: string | null,"schedule_id"?: string | null,"slot_date"?: string | null,"starts_at": string,"store_id": string,"ticket_url"?: string | null
+                    "cancel_note"?: string | null,"cancelled_at"?: string | null,"created_at"?: string,"deleted_at"?: string | null,"ends_at": string,"event_date": string,"format"?: string | null,"gem_code"?: string | null,"gem_url"?: string | null,"id"?: string,"label": string,"moved_from"?: string | null,"schedule_id"?: string | null,"slot_date"?: string | null,"starts_at": string,"store_id": string,"ticket_url"?: string | null
                   }
                   Update: {
-                    "created_at"?: string,"ends_at"?: string,"event_date"?: string,"format"?: string | null,"gem_code"?: string | null,"gem_url"?: string | null,"id"?: string,"label"?: string,"moved_from"?: string | null,"schedule_id"?: string | null,"slot_date"?: string | null,"starts_at"?: string,"store_id"?: string,"ticket_url"?: string | null
+                    "cancel_note"?: string | null,"cancelled_at"?: string | null,"created_at"?: string,"deleted_at"?: string | null,"ends_at"?: string,"event_date"?: string,"format"?: string | null,"gem_code"?: string | null,"gem_url"?: string | null,"id"?: string,"label"?: string,"moved_from"?: string | null,"schedule_id"?: string | null,"slot_date"?: string | null,"starts_at"?: string,"store_id"?: string,"ticket_url"?: string | null
                   }
                   Relationships: [
                     {
@@ -514,7 +514,10 @@ isOneToOne: false
                            },
 "assert_event_open":
 { Args: { "p_event_id": string }; Returns: {
-              "created_at": string,
+              "cancel_note": string | null,
+"cancelled_at": string | null,
+"created_at": string,
+"deleted_at": string | null,
 "ends_at": string,
 "event_date": string,
 "format": string | null,
@@ -570,7 +573,10 @@ isOneToOne: false
                            },
 "current_events_for_stores":
 { Args: { "p_store_ids": (string)[] }; Returns: {
-              "created_at": string,
+              "cancel_note": string | null,
+"cancelled_at": string | null,
+"created_at": string,
+"deleted_at": string | null,
 "ends_at": string,
 "event_date": string,
 "format": string | null,
@@ -668,11 +674,17 @@ isOneToOne: false
 "owner_add_schedule":
 { Args: { "p_label": string,"p_start_time": string,"p_store_id": string,"p_weekday": number }; Returns: string
                            },
+"owner_cancel_event":
+{ Args: { "p_event_id": string,"p_note"?: string }; Returns: undefined
+                           },
 "owner_confirm_format":
 { Args: { "p_event_id": string,"p_format": string }; Returns: undefined
                            },
 "owner_create_event":
 { Args: { "p_date": string,"p_gem_code"?: string,"p_gem_url"?: string,"p_label": string,"p_start_time": string,"p_store_id": string,"p_ticket_url"?: string }; Returns: string
+                           },
+"owner_delete_event":
+{ Args: { "p_event_id": string }; Returns: undefined
                            },
 "owner_delete_poll":
 { Args: { "p_event_id": string }; Returns: undefined
@@ -694,7 +706,10 @@ isOneToOne: false
                            },
 "owner_upcoming_events":
 { Args: { "p_store_id": string,"p_weeks"?: number }; Returns: {
-              "created_at": string,
+              "cancel_note": string | null,
+"cancelled_at": string | null,
+"created_at": string,
+"deleted_at": string | null,
 "ends_at": string,
 "event_date": string,
 "format": string | null,

@@ -1,6 +1,14 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { CopyGemIdButton, EventLinksForm, MoveEventButton, RenameEventButton } from "@/components/manage/manage-forms";
+import {
+  CancelEventButton,
+  CopyGemIdButton,
+  DeleteEventButton,
+  EventLinksForm,
+  MoveEventButton,
+  RenameEventButton,
+} from "@/components/manage/manage-forms";
+import { CancelledNotice } from "@/components/event/cancelled-notice";
 import { OwnerPollControls } from "@/components/manage/poll-controls";
 import { PageHeader } from "@/components/page-header";
 import { RealtimeRefresh } from "@/components/realtime-refresh";
@@ -33,6 +41,7 @@ export default async function ManageEventPage({ params }: { params: Promise<{ id
   if (!event?.store) notFound();
 
   const ended = eventPhase(event) === "ended";
+  const cancelled = !!event.cancelled_at;
   const tz = event.store.timezone;
   const attendees = [...event.attendances].sort((a, b) => a.created_at.localeCompare(b.created_at));
   const requestCount = new Map<string, number>();
@@ -62,13 +71,15 @@ export default async function ManageEventPage({ params }: { params: Promise<{ id
           {event.moved_from && <p className="text-body-compact text-muted">Moved from {formatEventWhen(event.moved_from, tz)}</p>}
           {!event.schedule_id && <p className="text-body-compact text-muted">One-off event</p>}
         </div>
-        {!ended && (
+        {!ended && !cancelled && (
           <RenameEventButton eventId={event.id} storeId={event.store.id} label={event.label} weekly={!!event.schedule_id} />
         )}
       </div>
 
       {ended ? (
         <p className="card text-center text-muted">This event has ended.</p>
+      ) : cancelled ? (
+        <CancelledNotice note={event.cancel_note} />
       ) : (
         <>
           <MoveEventButton
@@ -140,6 +151,21 @@ export default async function ManageEventPage({ params }: { params: Promise<{ id
         )}
         <p className="text-helper text-muted">You get a notification when someone who was going leaves.</p>
       </section>
+
+      {!ended && (
+        <section className="space-y-3">
+          <h2 className="text-heading-03">{cancelled ? "Delete" : "Cancel or delete"}</h2>
+          <div className="flex flex-col gap-3">
+            {!cancelled && <CancelEventButton eventId={event.id} storeId={event.store.id} />}
+            <DeleteEventButton eventId={event.id} storeId={event.store.id} weekly={!!event.schedule_id} />
+          </div>
+          <p className="text-helper text-muted">
+            {cancelled
+              ? "Deleting removes the event for everyone, without a notification."
+              : "Cancelling keeps the event visible, marked cancelled, and notifies players. Deleting removes it without a notification."}
+          </p>
+        </section>
+      )}
     </main>
   );
 }
