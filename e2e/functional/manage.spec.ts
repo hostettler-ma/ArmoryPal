@@ -122,3 +122,35 @@ test("a store owner links, moves and polls their event; players see it", async (
     })
     .toBe(1);
 });
+
+test("an owner cancels an event with a message, then deletes it", async ({ newPlayer }) => {
+  const owner = await newPlayer({ name: `Owner ${uid()}` });
+  const player = await newPlayer({ name: `Fan ${uid()}` });
+  await admin().from("store_owners").insert({ store_id: storeId, user_id: owner.id });
+  await admin().from("user_stores").insert({ store_id: storeId, user_id: player.id });
+
+  // Cancel this week's event with a message.
+  await owner.page.goto(`/manage/stores/${storeId}`);
+  await owner.page.getByRole("link", { name: /Owner Armory/ }).first().click();
+  await expect(owner.page).toHaveURL(/\/manage\/events\//);
+  const eventId = owner.page.url().split("/").pop()!;
+  await owner.page.getByRole("button", { name: "Cancel this event" }).click();
+  const cancel = sheet(owner.page, "Cancel this event");
+  await cancel.getByLabel(/Message for players/).fill("Closed for Thanksgiving");
+  await cancel.getByRole("button", { name: "Cancel event" }).click();
+  await expect(owner.page.getByText("This event is cancelled")).toBeVisible();
+
+  // The follower still sees it, marked cancelled and read-only, and was told.
+  await player.page.goto(`/events/${eventId}`);
+  await expect(player.page.getByText("This event is cancelled")).toBeVisible();
+  await expect(player.page.getByText("Closed for Thanksgiving")).toBeVisible();
+  await expect(player.page.getByRole("button", { name: "I'm going" })).toHaveCount(0);
+  await player.page.goto("/notifications");
+  await expect(player.page.getByText(/is cancelled\. Closed for Thanksgiving/)).toBeVisible();
+
+  // Delete the cancelled event: it disappears for players.
+  await owner.page.getByRole("button", { name: "Delete this event" }).click();
+  await sheet(owner.page, "Delete this event?").getByRole("button", { name: "Delete event" }).click();
+  await expect(owner.page).toHaveURL(new RegExp(`/manage/stores/${storeId}$`));
+  expect((await player.page.goto(`/events/${eventId}`))?.status()).toBe(404);
+});

@@ -103,6 +103,8 @@ export type NextArmory = {
     ends_at: string;
     label: string;
     format: string | null;
+    cancelled_at: string | null;
+    cancel_note: string | null;
     store: { id: string; name: string; timezone: string };
   };
   attendeeCount: number;
@@ -121,7 +123,7 @@ export async function getNextAttendingEvent(
   const { data: rows, error } = await supabase
     .from("attendances")
     .select(
-      "event:events!inner(id, starts_at, ends_at, label, format, store:stores(id, name, timezone), attendances(user_id))",
+      "event:events!inner(id, starts_at, ends_at, label, format, cancelled_at, cancel_note, store:stores(id, name, timezone), attendances(user_id))",
     )
     .eq("user_id", userId)
     .gt("event.ends_at", new Date().toISOString());
@@ -151,6 +153,8 @@ export async function getNextAttendingEvent(
       ends_at: next.ends_at,
       label: next.label,
       format: next.format,
+      cancelled_at: next.cancelled_at,
+      cancel_note: next.cancel_note,
       store: next.store,
     },
     attendeeCount: next.attendances.length,

@@ -5,6 +5,8 @@ import { TZDate } from "@date-fns/tz";
 
 export const MAX_URL_LENGTH = 300;
 export const MAX_EVENT_LABEL = 40;
+/** Cancelling an event: the optional message for players ("Closed for Thanksgiving"). */
+export const MAX_CANCEL_NOTE = 140;
 /** One-off events (and moves of them) can be at most this many days ahead. */
 export const MAX_DAYS_AHEAD = 90;
 
@@ -48,6 +50,13 @@ export function parseEventLinks(input: { gem?: unknown; ticket?: unknown }): Lin
   }
 
   return errors.gem || errors.ticket ? { ok: false, errors } : { ok: true, value };
+}
+
+/** The optional cancel message: trimmed, blank means none. Mirrors owner_cancel_event(). */
+export function parseCancelNote(input: unknown): { ok: true; value: string | null } | { ok: false } {
+  const note = typeof input === "string" ? input.trim() : "";
+  if (note.length > MAX_CANCEL_NOTE) return { ok: false };
+  return { ok: true, value: note || null };
 }
 
 /** The GEM field's value for the form: the link if there is one, otherwise the code. */

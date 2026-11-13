@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { addOwnerSchedule, setOwnerScheduleActive } from "@/app/actions/manage";
 import { ScheduleForm } from "@/components/admin/schedule-form";
+import { CancelledBadge } from "@/components/event/cancelled-notice";
 import { CreateEventButton, EditSlotButton, StoreInfoForm } from "@/components/manage/manage-forms";
 import { WeeklyPollToggle } from "@/components/manage/poll-controls";
 import { formatLabel } from "@/lib/formats";
@@ -122,14 +123,20 @@ async function UpcomingTab({ supabase, store }: { supabase: Supabase; store: Sto
                       {!e.schedule_id && (
                         <span className="ml-2 rounded-full border border-border px-2 text-helper">One-off</span>
                       )}
-                      {e.moved_from && (
-                        <span className="ml-2 rounded-full border border-border px-2 text-helper">Moved</span>
+                      {e.cancelled_at ? (
+                        <span className="ml-2">
+                          <CancelledBadge />
+                        </span>
+                      ) : (
+                        e.moved_from && (
+                          <span className="ml-2 rounded-full border border-border px-2 text-helper">Moved</span>
+                        )
                       )}
                     </span>
                     <span className="block text-body-compact text-muted">
                       {formatEventWhen(e.starts_at, store.timezone)}
                       {e.format && ` · ${formatLabel(e.format)}`}
-                      {!linked && " · no GEM link yet"}
+                      {!linked && !e.cancelled_at && " · no GEM link yet"}
                     </span>
                   </span>
                   <span className="shrink-0 text-body-compact text-muted">{going.get(e.id) ?? 0} going</span>

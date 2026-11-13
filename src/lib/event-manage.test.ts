@@ -3,6 +3,8 @@ import {
   daysBetween,
   eventTimes,
   isGemUrl,
+  MAX_CANCEL_NOTE,
+  parseCancelNote,
   parseEventLinks,
   ticketLink,
   toLocalInputs,
@@ -97,5 +99,15 @@ describe("helpers", () => {
   it("counts days and formats inputs in the store's zone", () => {
     expect(daysBetween("2026-12-30", "2027-01-02")).toBe(3);
     expect(toLocalInputs("2026-11-01T23:30:00Z", NY)).toEqual({ date: "2026-11-01", time: "18:30" });
+  });
+});
+
+describe("parseCancelNote", () => {
+  it("trims, treats blank as no message and caps the length", () => {
+    expect(parseCancelNote("  Closed for Thanksgiving ")).toEqual({ ok: true, value: "Closed for Thanksgiving" });
+    expect(parseCancelNote("   ")).toEqual({ ok: true, value: null });
+    expect(parseCancelNote(null)).toEqual({ ok: true, value: null });
+    expect(parseCancelNote("x".repeat(MAX_CANCEL_NOTE)).ok).toBe(true);
+    expect(parseCancelNote("x".repeat(MAX_CANCEL_NOTE + 1)).ok).toBe(false);
   });
 });

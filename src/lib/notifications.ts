@@ -6,7 +6,7 @@ export type NotificationPayload = {
   quantity?: number;
   actor?: string;
   reason?: "unpledged" | "left_event" | "cancelled" | "removed";
-  /** removed_from_event: the admin's optional reason. */
+  /** removed_from_event: the admin's optional reason. event_cancelled: the store's message. */
   note?: string;
   /** new_requests, card_needed_again: distinct cards and total copies in one add or release. */
   items?: number;
@@ -21,7 +21,7 @@ export type NotificationPayload = {
   label?: string;
   from?: string;
   to?: string;
-  /** attendee_left: when the event starts, formatted in the store's zone. */
+  /** attendee_left, event_cancelled: when the event starts, formatted in the store's zone. */
   when?: string;
   /** format_confirmed: the format code (see src/lib/formats.ts). */
   format?: string;
@@ -46,6 +46,11 @@ export const NOTIFICATION_KINDS: readonly { kind: string; label: string; descrip
     kind: "event_moved",
     label: "Event moved",
     description: "An event you're going to, or at a store you saved, changes day or time.",
+  },
+  {
+    kind: "event_cancelled",
+    label: "Event cancelled",
+    description: "An event you're going to, or at a store you saved, is cancelled.",
   },
   {
     kind: "new_requests",
@@ -142,6 +147,10 @@ export function formatNotification(kind: string, payload: NotificationPayload): 
       ? `${what} moved${payload.from ? ` from ${payload.from}` : ""} to ${payload.to}.`
       : `${what} moved to a new time.`;
   }
+  if (kind === "event_cancelled") {
+    const what = `${payload.label || "The Armory"}${payload.store ? ` at ${payload.store}` : ""}`;
+    return `${what}${payload.when ? ` (${payload.when})` : ""} is cancelled.${payload.note ? ` ${payload.note}` : ""}`;
+  }
   if (kind === "ownership_decided") {
     const store = payload.store || "the store";
     return payload.approved
@@ -164,7 +173,7 @@ export function notificationHref(kind: string, eventId: string | null | undefine
     return payload.approved ? `/manage/stores/${payload.store_id}` : `/stores/${payload.store_id}`;
   }
   if (!eventId) return "/";
-  if (kind === "event_moved" || kind === "format_poll_opened" || kind === "format_confirmed") return `/events/${eventId}`;
+  if (kind === "event_moved" || kind === "event_cancelled" || kind === "format_poll_opened" || kind === "format_confirmed") return `/events/${eventId}`;
   if (kind === "attendee_left") return `/manage/events/${eventId}`;
   const tab = kind === "new_requests" || kind === "card_needed_again" ? "requests" : "checklist";
   return `/events/${eventId}?tab=${tab}`;

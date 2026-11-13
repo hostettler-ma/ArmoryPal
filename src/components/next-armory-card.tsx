@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CancelledBadge } from "@/components/event/cancelled-notice";
 import { PitchDot } from "@/components/pitch-dot";
 import { StoreLink } from "@/components/store-link";
 import { cardLabel } from "@/lib/cards";
@@ -13,7 +14,8 @@ import { summarizeBringing } from "@/lib/request-view";
  */
 export function NextArmoryCard({ next }: { next: NextArmory }) {
   const { event, attendeeCount, bringing } = next;
-  const live = eventPhase(event) === "live";
+  const cancelled = !!event.cancelled_at;
+  const live = !cancelled && eventPhase(event) === "live";
   const { cards, players } = summarizeBringing(bringing);
   const eventHref = `/events/${event.id}`;
 
@@ -27,7 +29,14 @@ export function NextArmoryCard({ next }: { next: NextArmory }) {
             {formatEventWhen(event.starts_at, event.store.timezone)}
             {live && <span className="ml-2 text-live">● Happening now</span>}
           </p>
-          {event.format && <p className="text-body-compact">{formatLabel(event.format)}</p>}
+          {cancelled ? (
+            <p className="text-body-compact">
+              <CancelledBadge />
+              {event.cancel_note && <span className="ml-2">{event.cancel_note}</span>}
+            </p>
+          ) : (
+            event.format && <p className="text-body-compact">{formatLabel(event.format)}</p>
+          )}
         </div>
         <div className="shrink-0 rounded-control bg-highlight px-3 py-2 text-center text-highlight-foreground">
           <p className="text-heading-04">{attendeeCount}</p>
