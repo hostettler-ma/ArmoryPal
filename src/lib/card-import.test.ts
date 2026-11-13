@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  applyFullNameMatches,
   buildImportPreview,
   chooseVariant,
   importCopies,
@@ -123,5 +124,52 @@ describe("buildImportPreview", () => {
       ["20× Boulder Drop (Red)", true],
       ["1× Boulder Drop (Blue)", false],
     ]);
+  });
+});
+
+describe("bare color words", () => {
+  const screamer = [card("d1", "Dread Screamer", 1), card("d2", "Dread Screamer", 2), card("d3", "Dread Screamer", 3)];
+  const exact = (name: string): Resolution => ({ name, match: "exact" });
+
+  it("reads a trailing color word as the color", () => {
+    const { lines } = parseCardList("2x Dread Screamer red\n2x Dread Screamer Yellow\n2 Dread Screamer blue");
+    expect(lines.map((l) => [l.quantity, l.name, l.color, l.fullName])).toEqual([
+      [2, "Dread Screamer", "Red", "Dread Screamer red"],
+      [2, "Dread Screamer", "Yellow", "Dread Screamer Yellow"],
+      [2, "Dread Screamer", "Blue", "Dread Screamer blue"],
+    ]);
+  });
+
+  it("ignores single letters and digits without brackets", () => {
+    const { lines } = parseCardList("Snatch r\nPummel 3\nRed in the Ledger");
+    expect(lines.map((l) => [l.name, l.color, l.fullName])).toEqual([
+      ["Snatch r", null, undefined],
+      ["Pummel 3", null, undefined],
+      ["Red in the Ledger", null, undefined],
+    ]);
+  });
+
+  it("makes one request per color", () => {
+    const { lines } = parseCardList("2x Dread Screamer red\n2x Dread Screamer yellow\n2x Dread Screamer blue");
+    const { items } = buildImportPreview(lines, lines.map(() => exact("Dread Screamer")), new Map([["Dread Screamer", screamer]]));
+    expect(items.map(importItemLabel)).toEqual([
+      "2× Dread Screamer (Red)",
+      "2× Dread Screamer (Yellow)",
+      "2× Dread Screamer (Blue)",
+    ]);
+  });
+
+  it("prefers a card whose real name ends in the color word", () => {
+    const { lines } = parseCardList("1 Into the Blue\n2 Snatch blue");
+    const out = applyFullNameMatches(
+      lines,
+      [{ name: "Into the Blue", match: "typo" }, exact("Snatch")],
+      [exact("Into the Blue"), { name: "Snatch", match: "typo" }],
+    );
+    expect(out.lines.map((l) => [l.name, l.color])).toEqual([
+      ["Into the Blue", null],
+      ["Snatch", "Blue"],
+    ]);
+    expect(out.resolutions).toEqual([exact("Into the Blue"), exact("Snatch")]);
   });
 });

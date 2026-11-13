@@ -80,6 +80,13 @@ export function CardAutocomplete({
     onSelect(group.variants.filter((v) => next.includes(v.id))); // keep pitch order
   }
 
+  function toggleAll() {
+    if (!group) return;
+    const next = chosenIds.length === group.variants.length ? [] : group.variants.map((v) => v.id);
+    setChosenIds(next);
+    onSelect(group.variants.filter((v) => next.includes(v.id)));
+  }
+
   function onKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (!open || results.length === 0) return;
     if (e.key === "ArrowDown") {
@@ -175,9 +182,18 @@ export function CardAutocomplete({
       {group && group.variants.length > 1 && (
         <fieldset>
           <legend className="label">
-            Which colors? <span className="font-normal text-muted">(pick one or more)</span>
+            Which colors? <span className="font-normal text-muted">Tap each one you need</span>
           </legend>
           <div className="grid grid-cols-3 gap-2">
+            <button
+              type="button"
+              aria-pressed={chosenIds.length === group.variants.length}
+              onClick={toggleAll}
+              className={`btn col-span-3 border ${chosenIds.length === group.variants.length ? "border-accent-text bg-highlight text-highlight-foreground" : "border-accent-soft bg-surface"}`}
+            >
+              All colors
+              {chosenIds.length === group.variants.length && <span aria-hidden>✓</span>}
+            </button>
             {group.variants.map((v) => {
               const selected = chosenIds.includes(v.id);
               return (
@@ -195,6 +211,7 @@ export function CardAutocomplete({
               );
             })}
           </div>
+          <p className="mt-2 text-helper text-muted">Each color becomes its own request.</p>
         </fieldset>
       )}
     </div>
