@@ -118,11 +118,11 @@ isOneToOne: true
                   }
                   Relationships: [
                     {
-      foreignKeyName: "events_schedule_id_fkey"
-      columns: ["schedule_id"]
+      foreignKeyName: "events_schedule_store_fkey"
+      columns: ["schedule_id","store_id"]
 isOneToOne: false
       referencedRelation: "store_schedules"
-      referencedColumns: ["id"]
+      referencedColumns: ["id","store_id"]
     },{
       foreignKeyName: "events_store_id_fkey"
       columns: ["store_id"]
@@ -254,11 +254,11 @@ isOneToOne: false
       referencedRelation: "profiles"
       referencedColumns: ["id"]
     },{
-      foreignKeyName: "pledges_request_id_fkey"
-      columns: ["request_id"]
+      foreignKeyName: "pledges_request_event_fkey"
+      columns: ["request_id","event_id"]
 isOneToOne: false
       referencedRelation: "requests"
-      referencedColumns: ["id"]
+      referencedColumns: ["id","event_id"]
     }
                   ]
                 },"profiles": {
@@ -757,6 +757,9 @@ isOneToOne: false
       } },
 "pledges_to_release":
 { Args: { "p_event_id": string,"p_pledger_id": string }; Returns: Json
+                           },
+"prune_notifications":
+{ Args: Record<PropertyKey, never>; Returns: number
                            },
 "release_my_pledges":
 { Args: { "p_event_id": string,"p_reason": string }; Returns: undefined
