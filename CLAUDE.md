@@ -95,7 +95,8 @@ Mobile-first companion PWA for the Flesh and Blood TCG. Players coordinate card 
     - `requests_filled`: sent when a pledge covers the requester's *last* unfilled request on the event. It fires on that transition only. `pledge()` locks all of the requester's requests on the event in id order so concurrent pledges can't miss or duplicate it, and `leave_event` uses the same lock order.
     - `event_cancelled`: a store cancelled an event, sent to its audience. Payload is `{store, label, when, note?}`.
     - `removed_from_event`: an admin took you off an event (`admin_remove_attendee`). Payload is `{note?}` (the admin's reason).
-  - **Adding a kind:** update the SQL check constraints (on `notifications` and `notification_preferences`) and `NOTIFICATION_KINDS` in `src/lib/notifications.ts` together.
+  - **Adding a kind:** in a new migration, drop and re-add the check on the `public.notification_kind` domain (`*_schema_cleanup.sql`; both tables use it), and add it to `NOTIFICATION_KINDS` in `src/lib/notifications.ts`. Admin log actions work the same way via the `public.admin_action` domain.
+  - **Pruning:** the `prune-notifications` pg_cron job runs `prune_notifications()` daily at 04:00 UTC. It deletes read notifications after 90 days and any notification after a year.
   - **Preferences** live in `notification_preferences` (user, kind, enabled). A missing row means on. `notify()` skips disabled kinds, so they're never stored. The settings page is `/settings/notifications`, linked from the inbox and `/me`.
   - **Reading:** users read only their own. `/notifications` marks them read (`mark_notifications_read()`), and the bell (`NotificationBell`) shows the unread count live.
 - **Leaving an event:** `leave_event(event, cancel_requests)` always releases your pledges and notifies the requesters. Cancelling your requests is optional (the UI checkbox is on by default) and notifies their pledgers. Kept requests show a "Not going" badge.
@@ -130,7 +131,8 @@ Mobile-first companion PWA for the Flesh and Blood TCG. Players coordinate card 
 - **Security baseline:** every public table has RLS. `next.config.ts` sets X-Frame-Options, nosniff, Referrer-Policy and Permissions-Policy on every response (no CSP yet). No security-definer function is executable by `anon`; check this after adding functions. Internal helpers revoke `execute` from `authenticated` too.
 
 ## Data model (summary)
-`profiles`, `stores`, `store_schedules`, `user_stores`, `store_owners`, `store_owner_requests`, `events`, `cards`, `attendances`, `requests`, `pledges`, `format_polls`, `format_votes`, `notifications`, and view `request_status` (pledged / remaining / open|partial|covered). Migrations live in `supabase/migrations/`, seed data in `supabase/seed.sql`.
+`profiles`, `stores`, `store_schedules`, `user_stores`, `store_owners`, `store_owner_requests`, `events`, `cards`, `attendances`, `requests`, `pledges`, `format_polls`, `format_votes`, `notifications`, `notification_preferences`, `bans`, `admin_actions`. Coverage (pledged / remaining / open|partial|covered) is computed in TypeScript, not stored. Migrations live in `supabase/migrations/`, seed data in `supabase/seed.sql`.
+- **Composite FKs keep denormalized columns honest:** `pledges (request_id, event_id)` → `requests (id, event_id)`, and `events (schedule_id, store_id)` → `store_schedules (id, store_id)` (one-offs have a null `schedule_id`, so they aren't checked).
 
 ## Out of scope (for now)
 Trading/pricing, deck building, payments, chat, push notifications.
