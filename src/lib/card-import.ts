@@ -6,7 +6,15 @@ import { MAX_QUANTITY } from "./rules";
 
 export const MAX_IMPORT_LINES = 200;
 
-export type ParsedLine = { lineNo: number; raw: string; quantity: number; name: string; color: CardColor | null };
+export type ParsedLine = {
+  lineNo: number;
+  raw: string;
+  quantity: number;
+  name: string;
+  color: CardColor | null;
+  /** Set when the color came from a bare trailing word ("Snatch blue"): the text including it. */
+  fullName?: string;
+};
 export type SkippedLine = { lineNo: number; raw: string; reason: string };
 
 const COLOR_WORDS: Record<string, CardColor> = {
@@ -38,18 +46,26 @@ export function parseCardList(text: string): { lines: ParsedLine[]; skipped: Ski
     else if (trailing) [rest, quantity] = [trailing[1], Number(trailing[2])];
 
     let color: CardColor | null = null;
+    let fullName: string | undefined;
     const colored = rest.match(/^(.*?)\s*(?:[([]\s*([a-z0-9]+)\s*[)\]]|\s[-–]\s*([a-z]+))\s*$/i);
     const colorWord = colored && (colored[2] ?? colored[3])?.toLowerCase();
+    // "Snatch blue": only whole color words, so "Pummel 3" or "Snatch r" stay names.
+    const bare = rest.match(/^(.*\S)\s+(red|yellow|blue|purple)$/i);
     if (colored && colorWord && COLOR_WORDS[colorWord]) {
       color = COLOR_WORDS[colorWord];
       rest = colored[1];
+    } else if (bare) {
+      color = COLOR_WORDS[bare[2].toLowerCase()];
+      // The word might be part of the card's real name; the lookup checks that.
+      fullName = rest.trim();
+      rest = bare[1];
     }
 
     const name = rest.trim();
     // A bare number ("3") is a quantity with no card, not a card named "3".
     if (!name || /^\d+$/.test(name)) skipped.push({ lineNo, raw, reason: "No card name" });
     else if (quantity < 1) skipped.push({ lineNo, raw, reason: "Quantity must be at least 1" });
-    else lines.push({ lineNo, raw, quantity, name, color });
+    else lines.push({ lineNo, raw, quantity, name, color, ...(fullName && { fullName }) });
   });
 
   return { lines, skipped };
@@ -88,6 +104,29 @@ export type ImportItem = {
 };
 
 export type Resolution = { name: string | null; match: "exact" | "typo" | null };
+
+/**
+ * For lines whose color came from a bare trailing word, `fullResolutions[i]`
+ * is the lookup of `line.fullName` (null for other lines). When the full text
+ * is exactly a card name (a card whose name ends in a color word), or the
+ * text without the color word matched nothing, the full text wins and the
+ * color is dropped.
+ */
+export function applyFullNameMatches(
+  lines: ParsedLine[],
+  resolutions: Resolution[],
+  fullResolutions: (Resolution | null)[],
+): { lines: ParsedLine[]; resolutions: Resolution[] } {
+  const out = lines.map((line, i) => {
+    const full = fullResolutions[i];
+    // Use the full text when it's an exact name, or when it's the only one that matched.
+    if (line.fullName && full?.name && (full.match === "exact" || !resolutions[i]?.name)) {
+      return { line: { ...line, name: line.fullName, color: null }, res: full };
+    }
+    return { line, res: resolutions[i] };
+  });
+  return { lines: out.map((o) => o.line), resolutions: out.map((o) => o.res) };
+}
 
 /**
  * Combines parsed lines, their resolved catalog names (same order), and every

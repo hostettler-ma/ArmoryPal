@@ -229,3 +229,57 @@ test("quantity limits: 1–20 per card", async ({ newPlayer }) => {
   await expect(requestRow(me.page, CARDS.sledge)).toHaveCount(1);
   await expect(requestRow(me.page, CARDS.sledge)).toContainText("Need 20");
 });
+
+test("one request per colour (paste and All colors) and editing or cancelling from the Requests tab", async ({ newPlayer }) => {
+  const me = await newPlayer();
+  const eventId = await currentEventId(me.db, E2E_STORE_ID);
+  await openEvent(me.page, eventId);
+  await attend(me.page);
+  await clickTab(me.page, /Requests/);
+
+  // A bare colour word after the name picks that colour.
+  await me.page.getByRole("button", { name: "+ Request cards" }).click();
+  const add = sheet(me.page, "Request cards");
+  await add.getByRole("tab", { name: "Paste list" }).click();
+  await add.getByLabel("Card list").fill(
+    [`2x ${CARDS.snatch} red`, `2x ${CARDS.snatch} yellow`, `2x ${CARDS.snatch} blue`].join("\n"),
+  );
+  await add.getByRole("button", { name: "Check list" }).click();
+  await expect(add.getByText("Found 6 cards. Check before requesting:")).toBeVisible();
+  for (const label of [RED, YELLOW, BLUE]) await expect(add.getByText(`2× ${label}`)).toBeVisible();
+  await add.getByRole("button", { name: "Request 6 cards" }).click();
+  await expect(add).toBeHidden();
+  for (const label of [RED, YELLOW, BLUE]) await expect(requestRow(me.page, label)).toContainText("Need 2");
+
+  // "All colors" in search selects every version; each adds to its own request.
+  await me.page.getByRole("button", { name: "+ Request cards" }).click();
+  await pickCard(add, CARDS.snatch);
+  await add.getByRole("button", { name: "All colors" }).click();
+  for (const color of ["Red", "Yellow", "Blue"]) {
+    await expect(add.getByRole("button", { name: new RegExp(`^${color}`) })).toHaveAttribute("aria-pressed", "true");
+  }
+  await add.getByRole("button", { name: "Request 3 cards" }).click();
+  await expect(add).toBeHidden();
+  for (const label of [RED, YELLOW, BLUE]) await expect(requestRow(me.page, label)).toContainText("Need 3");
+
+  // Your own request can be edited right on the Requests tab.
+  await requestRow(me.page, YELLOW).getByRole("button", { name: "Edit" }).click();
+  const edit = sheet(me.page, "Edit request");
+  await setQuantity(edit, "How many do you need", 5);
+  await edit.getByRole("button", { name: "Save" }).click();
+  await expect(edit).toBeHidden();
+  await expect(requestRow(me.page, YELLOW)).toContainText("Need 5");
+
+  // …and cancelled there in two taps, with a chance to back out.
+  await requestRow(me.page, BLUE).getByRole("button", { name: `Cancel request for ${BLUE}` }).click();
+  const cancel = sheet(me.page, "Cancel request?");
+  await expect(cancel).toContainText(`3× ${BLUE}`);
+  await cancel.getByRole("button", { name: "Keep it" }).click();
+  await expect(cancel).toBeHidden();
+  await expect(requestRow(me.page, BLUE)).toContainText("Need 3");
+  await requestRow(me.page, BLUE).getByRole("button", { name: `Cancel request for ${BLUE}` }).click();
+  await cancel.getByRole("button", { name: "Cancel request" }).click();
+  await expect(cancel).toBeHidden();
+  await expect(requestRow(me.page, BLUE)).toHaveCount(0);
+  await expect(requestRow(me.page, RED)).toContainText("Need 3");
+});

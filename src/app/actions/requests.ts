@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { isUuid } from "@/lib/auth";
 import {
+  applyFullNameMatches,
   buildImportPreview,
   MAX_IMPORT_LINES,
   parseCardList,
@@ -66,29 +67,44 @@ export type ImportPreview = { items: ImportItem[]; skipped: SkippedLine[]; error
  */
 export async function previewCardImport(text: string): Promise<ImportPreview> {
   const parsed = parseCardList(text.slice(0, 20_000));
-  const lines = parsed.lines.slice(0, MAX_IMPORT_LINES);
+  const parsedLines = parsed.lines.slice(0, MAX_IMPORT_LINES);
   const tooMany = parsed.lines.slice(MAX_IMPORT_LINES).map((l) => ({
     lineNo: l.lineNo,
     raw: l.raw,
     reason: `Only the first ${MAX_IMPORT_LINES} cards are imported`,
   }));
-  if (lines.length === 0) return { items: [], skipped: [...parsed.skipped, ...tooMany] };
+  if (parsedLines.length === 0) return { items: [], skipped: [...parsed.skipped, ...tooMany] };
 
   const supabase = await createClient();
-  const { data: resolved, error } = await supabase.rpc("resolve_card_names", { p_names: lines.map((l) => l.name) });
-  if (error) return { items: [], skipped: [], error: ruleMessage(error.message) };
+  const resolve = async (list: string[]) => {
+    const { data, error } = await supabase.rpc("resolve_card_names", { p_names: list });
+    const res = list.map((_, i): Resolution => {
+      const r = data?.find((x) => x.idx === i + 1);
+      return { name: r?.name ?? null, match: (r?.match as Resolution["match"]) ?? null };
+    });
+    return { res, error };
+  };
 
-  const names = [...new Set((resolved ?? []).map((r) => r.name).filter((n): n is string => !!n))];
+  const primary = await resolve(parsedLines.map((l) => l.name));
+  if (primary.error) return { items: [], skipped: [], error: ruleMessage(primary.error.message) };
+
+  // "Snatch blue": also check whether the full text is a card name on its own.
+  const withFull = parsedLines.flatMap((l, i) => (l.fullName ? [{ i, name: l.fullName }] : []));
+  const fullResolutions: (Resolution | null)[] = parsedLines.map(() => null);
+  if (withFull.length) {
+    const full = await resolve(withFull.map((w) => w.name));
+    if (full.error) return { items: [], skipped: [], error: ruleMessage(full.error.message) };
+    withFull.forEach((w, j) => (fullResolutions[w.i] = full.res[j]));
+  }
+  const { lines, resolutions } = applyFullNameMatches(parsedLines, primary.res, fullResolutions);
+
+  const names = [...new Set(resolutions.map((r) => r.name).filter((n): n is string => !!n))];
   const { data: cards } = names.length
     ? await supabase.from("cards").select("id, name, pitch, color, types, image_url, set_ids").in("name", names)
     : { data: [] };
   const variantsByName = new Map<string, CardRow[]>();
   for (const c of (cards ?? []) as CardRow[]) variantsByName.set(c.name, [...(variantsByName.get(c.name) ?? []), c]);
 
-  const resolutions: Resolution[] = lines.map((_, i) => {
-    const r = resolved?.find((x) => x.idx === i + 1);
-    return { name: r?.name ?? null, match: (r?.match as Resolution["match"]) ?? null };
-  });
   const preview = buildImportPreview(lines, resolutions, variantsByName);
   return {
     items: preview.items,

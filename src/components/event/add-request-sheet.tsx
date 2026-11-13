@@ -200,8 +200,9 @@ function PasteForm({ eventId, onDone }: { eventId: string; onDone: () => void })
           autoCorrect="off"
         />
         <p className="text-body-compact text-muted">
-          One card per line, like <code>2 Boulder Drop</code>. Add a color with <code>(Blue)</code>; otherwise
-          multi-color cards default to Red.
+          One card per line, like <code>2 Boulder Drop</code>. Add a color with <code>blue</code> or{" "}
+          <code>(Blue)</code>; otherwise multi-color cards default to Red. One line per color, like{" "}
+          <code>2 Snatch red</code> and <code>2 Snatch blue</code>, makes a request for each.
         </p>
         {error && <p className="field-error">{error}</p>}
         <button className="btn btn-primary" onClick={check} disabled={pending || !text.trim()}>

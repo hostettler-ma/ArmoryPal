@@ -24,6 +24,62 @@ export function EditRequestButton({ eventId, request }: { eventId: string; reque
   );
 }
 
+/** "Cancel" button + confirmation sheet, so a request can be dropped without opening Edit. */
+export function CancelRequestButton({ eventId, request }: { eventId: string; request: RequestView }) {
+  const [open, setOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
+
+  const confirm = () =>
+    startTransition(async () => {
+      setError(null);
+      const result = await cancelRequest(eventId, request.id);
+      if (result.error) setError(result.error);
+      else setOpen(false);
+    });
+
+  return (
+    <>
+      <button
+        className="btn btn-danger btn-compact"
+        aria-label={`Cancel request for ${cardLabel(request.card)}`}
+        onClick={() => {
+          setError(null);
+          setOpen(true);
+        }}
+      >
+        Cancel
+      </button>
+      <Sheet open={open} onClose={() => setOpen(false)} title="Cancel request?">
+        <div className="space-y-4">
+          <div className="flex items-center gap-3">
+            <PitchDot color={request.card.color} />
+            <p className="text-heading-02">
+              {request.quantity}× {cardLabel(request.card)}
+            </p>
+          </div>
+          <p className="text-body-compact">{cancelMessage(request)}</p>
+          {error && <p className="field-error">{error}</p>}
+          <div className="grid grid-cols-2 gap-2">
+            <button className="btn btn-secondary" onClick={() => setOpen(false)} disabled={pending}>
+              Keep it
+            </button>
+            <button className="btn btn-danger" onClick={confirm} disabled={pending}>
+              {pending ? "Cancelling…" : "Cancel request"}
+            </button>
+          </div>
+        </div>
+      </Sheet>
+    </>
+  );
+}
+
+function cancelMessage(request: RequestView): string {
+  return request.pledgers.length > 0
+    ? `${request.pledgers.map((p) => p.name).join(", ")} won't need to bring it anymore.`
+    : "You can request it again later if you need it.";
+}
+
 function EditRequestForm({ eventId, request, onDone }: { eventId: string; request: RequestView; onDone: () => void }) {
   const [quantity, setQuantity] = useState(request.quantity);
   const [note, setNote] = useState(request.note ?? "");
@@ -87,9 +143,7 @@ function EditRequestForm({ eventId, request, onDone }: { eventId: string; reques
       {confirmCancel ? (
         <div className="card space-y-3 border-danger">
           <p className="text-body-compact">
-            Cancel this request?
-            {request.pledgers.length > 0 &&
-              ` ${request.pledgers.map((p) => p.name).join(", ")} won't need to bring it anymore.`}
+            Cancel this request? {cancelMessage(request)}
           </p>
           <div className="grid grid-cols-2 gap-2">
             <button className="btn btn-secondary" onClick={() => setConfirmCancel(false)} disabled={pending}>

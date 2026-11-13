@@ -2,7 +2,7 @@ import { PitchDot } from "@/components/pitch-dot";
 import { cardLabel, formatSetIds } from "@/lib/cards";
 import type { RequestView } from "@/lib/request-view";
 import type { Coverage } from "@/lib/rules";
-import { EditRequestButton } from "./edit-request-sheet";
+import { CancelRequestButton, EditRequestButton } from "./edit-request-sheet";
 import { PledgeButton } from "./pledge-sheet";
 
 const CHIP: Record<Coverage, string> = {
@@ -36,7 +36,9 @@ export function RequestRow({
   mode: "bring" | "mine";
   editable: boolean;
 }) {
-  const showPledge = mode === "bring" && (request.canPledge.ok || (request.myPledge > 0 && editable));
+  const showPledge = mode === "bring" && !request.isMine && (request.canPledge.ok || (request.myPledge > 0 && editable));
+  // Your own requests are editable from both the Requests tab and My checklist.
+  const canEdit = editable && (mode === "mine" || request.isMine);
   return (
     <li className="card space-y-2">
       <div className="flex items-start gap-3">
@@ -72,10 +74,11 @@ export function RequestRow({
         </p>
       )}
 
-      {(showPledge || (mode === "mine" && editable)) && (
-        <div className="flex justify-end">
+      {(showPledge || canEdit) && (
+        <div className="flex justify-end gap-2">
           {showPledge && <PledgeButton eventId={eventId} request={request} />}
-          {mode === "mine" && editable && <EditRequestButton eventId={eventId} request={request} />}
+          {canEdit && <CancelRequestButton eventId={eventId} request={request} />}
+          {canEdit && <EditRequestButton eventId={eventId} request={request} />}
         </div>
       )}
     </li>
