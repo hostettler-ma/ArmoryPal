@@ -1,24 +1,13 @@
 // Formats an Armory can run, and poll results. Codes mirror public.is_format()
 // in supabase/migrations/*_format_polls.sql: change both together.
 
-export const FORMATS = [
-  { code: "draft", label: "Draft" },
-  { code: "cc", label: "Classic Constructed" },
-  { code: "silver_age", label: "Silver Age" },
-  { code: "csp", label: "Crack, Shuffle, Play" },
-] as const;
+import { FORMATS, isFormat, formatLabel, type FormatCode } from "../../supabase/functions/_shared/formats.ts";
 
-export type FormatCode = (typeof FORMATS)[number]["code"];
+// FORMATS, isFormat and formatLabel live in supabase/functions/_shared/formats.ts
+// so ArmoryBot renders the same names.
+export { FORMATS, isFormat, formatLabel, type FormatCode };
 
 export const ALL_FORMATS: FormatCode[] = FORMATS.map((f) => f.code);
-
-export function isFormat(code: unknown): code is FormatCode {
-  return FORMATS.some((f) => f.code === code);
-}
-
-export function formatLabel(code: string | null | undefined): string {
-  return FORMATS.find((f) => f.code === code)?.label ?? "Unknown format";
-}
 
 /** 2 to 4 distinct known formats, in FORMATS order. Mirrors public.valid_format_options(). */
 export function parsePollOptions(input: unknown[]): { ok: true; value: FormatCode[] } | { ok: false; error: string } {

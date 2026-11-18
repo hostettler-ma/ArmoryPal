@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { formatNotification, formatRelative, notificationHref, NOTIFICATION_KINDS } from "./notifications";
+import {
+  DISCORD_DM_KINDS,
+  formatNotification,
+  formatRelative,
+  isNotificationEnabled,
+  notificationHref,
+  NOTIFICATION_KINDS,
+} from "./notifications";
 
 const base = { card: "Snatch (Red)", quantity: 2, actor: "Tomas" };
 
@@ -145,5 +152,32 @@ describe("notificationHref", () => {
   it("links ownership answers to the store", () => {
     expect(notificationHref("ownership_decided", null, { approved: true, store_id: "s1" })).toBe("/manage/stores/s1");
     expect(notificationHref("ownership_decided", null, { approved: false, store_id: "s1" })).toBe("/stores/s1");
+  });
+});
+
+describe("isNotificationEnabled", () => {
+  it("defaults in-app to on and Discord DMs to off", () => {
+    expect(isNotificationEnabled("new_requests", "app", [])).toBe(true);
+    expect(isNotificationEnabled("new_requests", "discord", [])).toBe(false);
+  });
+
+  it("follows the saved row for that kind and channel only", () => {
+    const prefs = [
+      { kind: "new_requests", channel: "app", enabled: false },
+      { kind: "new_requests", channel: "discord", enabled: true },
+    ];
+    expect(isNotificationEnabled("new_requests", "app", prefs)).toBe(false);
+    expect(isNotificationEnabled("new_requests", "discord", prefs)).toBe(true);
+    expect(isNotificationEnabled("card_needed_again", "discord", prefs)).toBe(false);
+  });
+
+  it("never sends kinds ArmoryBot doesn't DM", () => {
+    expect(isNotificationEnabled("event_moved", "discord", [{ kind: "event_moved", channel: "discord", enabled: true }])).toBe(
+      false,
+    );
+  });
+
+  it("only offers DMs for real notification kinds", () => {
+    for (const kind of DISCORD_DM_KINDS) expect(NOTIFICATION_KINDS.some((k) => k.kind === kind)).toBe(true);
   });
 });

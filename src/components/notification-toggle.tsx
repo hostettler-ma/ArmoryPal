@@ -2,15 +2,18 @@
 
 import { useState, useTransition } from "react";
 import { setNotificationPreference } from "@/app/actions/notification-preferences";
+import type { NotificationChannel } from "@/lib/notifications";
 
-/** On/off switch for one notification kind. Saves immediately, reverting if the save fails. */
+/** On/off switch for one notification kind on one channel. Saves immediately, reverting if the save fails. */
 export function NotificationToggle({
   kind,
   label,
   description,
   enabled: initial,
+  channel = "app",
 }: {
   kind: string;
+  channel?: NotificationChannel;
   label: string;
   description: string;
   enabled: boolean;
@@ -18,14 +21,14 @@ export function NotificationToggle({
   const [enabled, setEnabled] = useState(initial);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
-  const id = `pref-${kind}`;
+  const id = `pref-${channel}-${kind}`;
 
   function toggle() {
     const next = !enabled;
     setEnabled(next);
     setError(null);
     startTransition(async () => {
-      const result = await setNotificationPreference(kind, next);
+      const result = await setNotificationPreference(kind, next, channel);
       if (result.error) {
         setEnabled(!next);
         setError(result.error);

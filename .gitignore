@@ -62,3 +62,6 @@ explore-report.md
 unit-tests.txt
 db-tests.txt
 /.explore-diag/
+
+# Supabase Studio saves SQL Editor snippets here; they can contain secrets (e.g. Vault values).
+/supabase/snippets/
