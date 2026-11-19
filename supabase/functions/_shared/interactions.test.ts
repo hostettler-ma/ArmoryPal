@@ -175,6 +175,7 @@ describe("/armory settings, unlink, status", () => {
     expect(data(broken.res).content).toContain("⚠️ ArmoryBot can't post there (Missing Access)");
     const empty = await run(command("status"), { bot_status: [] });
     expect(data(empty.res).content).toMatch(/^No stores are linked/);
+    expect(data(empty.res).content).toContain(`<${APP}/discord-bot>`); // the setup guide, without a preview
   });
 
   it("refuses outside a server", async () => {

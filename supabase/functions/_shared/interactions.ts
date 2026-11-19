@@ -216,7 +216,11 @@ async function handleCommand(i: Interaction, deps: Deps): Promise<InteractionRes
     case "status": {
       const status = await guildStatus(deps, guildId);
       if (status.error) return errorReply(status.error, deps);
-      if (!status.data.length) return reply("No stores are linked to this server yet. Anyone with Manage Server can add one with `/armory link-store`.");
+      if (!status.data.length) {
+        return reply(
+          `No stores are linked to this server yet. Anyone with Manage Server can add one with \`/armory link-store\`. How to set it up: <${deps.appUrl}/discord-bot>`,
+        );
+      }
       return reply(truncate(status.data.map((s) => describeLink(s, now)).join("\n\n"), 1900));
     }
   }

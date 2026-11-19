@@ -53,13 +53,26 @@ test("the menu reaches every section and marks where you are", async ({ newPlaye
   await expect(page).toHaveURL(/\/$/);
 });
 
-test("privacy policy and terms are public", async ({ page }) => {
-  for (const path of ["/privacy", "/terms"]) {
+test("privacy policy, terms and the ArmoryBot guide are public", async ({ page }) => {
+  for (const path of ["/privacy", "/terms", "/discord-bot"]) {
     const res = await page.goto(path);
     expect(res?.status(), path).toBe(200);
     await expect(page).toHaveURL(new RegExp(`${path}$`)); // not bounced to /login
     await expect(page.locator("h1").first()).toBeVisible();
   }
+});
+
+test("the ArmoryBot guide walks a server admin through setup, signed out", async ({ page }) => {
+  await page.goto("/discord-bot");
+  await expect(page.getByRole("heading", { level: 1, name: /Set up ArmoryBot/ })).toBeVisible();
+  for (const step of ["Add ArmoryBot to your server", "Link your store", "Check it"]) {
+    await expect(page.getByRole("heading", { name: step })).toBeVisible();
+  }
+  await expect(page.getByText("/armory link-store").first()).toBeVisible();
+  // The invite button needs NEXT_PUBLIC_DISCORD_CLIENT_ID; without it, the page offers the contact address.
+  const invite = page.getByRole("link", { name: "Add ArmoryBot to Discord" });
+  if (await invite.count()) await expect(invite).toHaveAttribute("href", /^https:\/\/discord\.com\/oauth2\/authorize\?/);
+  else await expect(page.getByText("The invite link isn't available here yet.")).toBeVisible();
 });
 
 test("admin removes a player from an event; the player is told and can rejoin", async ({ newPlayer }) => {

@@ -4,7 +4,7 @@ ArmoryBot is a Discord bot that shares ArmoryPal's Supabase database. It keeps a
 
 **Status:** all four phases are built: groundwork + connected accounts, interactions endpoint, posts and sync, and DMs.
 
-**Change (2026-11-18): server managers set it up.** The person running a Discord server is often not the store's owner on ArmoryPal. `link-store` and `settings` now work for anyone with **Manage Server** in that server (from the signed `member.permissions`, like `unlink`), with no ArmoryPal account needed. Without Manage Server (a server can open the command to other roles), the store's owners and admins still can. A suspended ArmoryPal account is refused. The posts only show what any signed-in player sees on the event page.
+**Change (2026-11-18): server managers set it up.** The person running a Discord server is often not the store's owner on ArmoryPal. `link-store` and `settings` now work for anyone with **Manage Server** in that server (from the signed `member.permissions`, like `unlink`), with no ArmoryPal account needed. Without Manage Server (a server can open the command to other roles), the store's owners and admins still can. A suspended ArmoryPal account is refused. The posts only show what any signed-in player sees on the event page. A public setup guide at `/discord-bot` walks server admins and store owners through it.
 
 **Phase 4 notes (2026-11-18):**
 - **Queueing:** DM rows are queued per player by `notify()` (decision B). Each needs the player opted in (decision A), Discord linked, and no "undeliverable" pause in the last 24 h.

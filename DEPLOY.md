@@ -178,7 +178,11 @@ Use the **same Discord application** as Discord login (step 7). Adding a bot doe
    npx tsx scripts/register-discord-commands.mts --env supabase/functions/.env.production
    ```
    It prints `Target: Discord app …`. Global commands can take a few minutes to appear.
-8. **Invite link** for store owners (permissions 84992 = the four above):
+8. **Invite link and setup guide:** the public page `/discord-bot` explains setup to server admins and store owners,
+   with an **Add ArmoryBot to Discord** button. The button needs the (public, non-secret) application ID on Vercel:
+   Project → **Settings → Environment Variables** → `NEXT_PUBLIC_DISCORD_CLIENT_ID` = the App ID (Production), then
+   **Redeploy** (it's baked in at build time). Without it the page asks people to email for the link.
+   The link itself (permissions 84992 = the four above):
    `https://discord.com/oauth2/authorize?client_id=<APP_ID>&scope=bot+applications.commands&permissions=84992`
 9. **Smoke test:**
    - In a test server: `/armory link-store` (you need Manage Server in that Discord server; store owners and admins without it can still link with Discord connected on their Profile).
