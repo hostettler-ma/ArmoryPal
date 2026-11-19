@@ -105,6 +105,120 @@ isOneToOne: true
                   Relationships: [
                     
                   ]
+                },"discord_dm_queue": {
+                  Row: {
+                    "attempts": number,"claimed_until": string | null,"created_at": string,"discord_id": string,"dropped_reason": string | null,"event_id": string,"id": number,"kind": string,"payload": NonNullable<Json>,"send_after": string,"sent_at": string | null,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "attempts"?: number,"claimed_until"?: string | null,"created_at"?: string,"discord_id": string,"dropped_reason"?: string | null,"event_id": string,"id"?: never,"kind": string,"payload": NonNullable<Json>,"send_after": string,"sent_at"?: string | null,"user_id": string
+                  }
+                  Update: {
+                    "attempts"?: number,"claimed_until"?: string | null,"created_at"?: string,"discord_id"?: string,"dropped_reason"?: string | null,"event_id"?: string,"id"?: never,"kind"?: string,"payload"?: NonNullable<Json>,"send_after"?: string,"sent_at"?: string | null,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "discord_dm_queue_event_id_fkey"
+      columns: ["event_id"]
+isOneToOne: false
+      referencedRelation: "events"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "discord_dm_queue_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"discord_dm_status": {
+                  Row: {
+                    "error_code": number,"undeliverable_at": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "error_code": number,"undeliverable_at": string,"user_id": string
+                  }
+                  Update: {
+                    "error_code"?: number,"undeliverable_at"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "discord_dm_status_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: true
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"discord_event_posts": {
+                  Row: {
+                    "channel_id": string,"created_at": string,"event_id": string,"finalized_at": string | null,"gone_at": string | null,"guild_id": string,"last_rendered_at": string | null,"message_id": string | null,"posted_at": string | null,"render_hash": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "channel_id": string,"created_at"?: string,"event_id": string,"finalized_at"?: string | null,"gone_at"?: string | null,"guild_id": string,"last_rendered_at"?: string | null,"message_id"?: string | null,"posted_at"?: string | null,"render_hash"?: string | null
+                  }
+                  Update: {
+                    "channel_id"?: string,"created_at"?: string,"event_id"?: string,"finalized_at"?: string | null,"gone_at"?: string | null,"guild_id"?: string,"last_rendered_at"?: string | null,"message_id"?: string | null,"posted_at"?: string | null,"render_hash"?: string | null
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"discord_guild_stores": {
+                  Row: {
+                    "broken_at": string | null,"broken_reason": string | null,"channel_id": string,"created_at": string,"days_before": number,"guild_id": string,"linked_by": string | null,"post_time": string,"store_id": string,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "broken_at"?: string | null,"broken_reason"?: string | null,"channel_id": string,"created_at"?: string,"days_before"?: number,"guild_id": string,"linked_by"?: string | null,"post_time"?: string,"store_id": string,"updated_at"?: string
+                  }
+                  Update: {
+                    "broken_at"?: string | null,"broken_reason"?: string | null,"channel_id"?: string,"created_at"?: string,"days_before"?: number,"guild_id"?: string,"linked_by"?: string | null,"post_time"?: string,"store_id"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "discord_guild_stores_linked_by_fkey"
+      columns: ["linked_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "discord_guild_stores_store_id_fkey"
+      columns: ["store_id"]
+isOneToOne: false
+      referencedRelation: "stores"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"discord_outbox": {
+                  Row: {
+                    "attempts": number,"claimed_until": string | null,"created_at": string,"event_id": string,"failed_at": string | null,"id": number,"kind": string,"last_error": string | null,"next_attempt_at": string,"payload": NonNullable<Json>,"processed_at": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "attempts"?: number,"claimed_until"?: string | null,"created_at"?: string,"event_id": string,"failed_at"?: string | null,"id"?: never,"kind": string,"last_error"?: string | null,"next_attempt_at"?: string,"payload"?: NonNullable<Json>,"processed_at"?: string | null
+                  }
+                  Update: {
+                    "attempts"?: number,"claimed_until"?: string | null,"created_at"?: string,"event_id"?: string,"failed_at"?: string | null,"id"?: never,"kind"?: string,"last_error"?: string | null,"next_attempt_at"?: string,"payload"?: NonNullable<Json>,"processed_at"?: string | null
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"discord_worker_state": {
+                  Row: {
+                    "id": number,"last_kick_at": string,"paused_until": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "id"?: number,"last_kick_at"?: string,"paused_until"?: string | null
+                  }
+                  Update: {
+                    "id"?: number,"last_kick_at"?: string,"paused_until"?: string | null
+                  }
+                  Relationships: [
+                    
+                  ]
                 },"events": {
                   Row: {
                     "cancel_note": string | null,"cancelled_at": string | null,"created_at": string,"deleted_at": string | null,"ends_at": string,"event_date": string,"format": string | null,"gem_code": string | null,"gem_url": string | null,"id": string,"label": string,"moved_from": string | null,"schedule_id": string | null,"slot_date": string | null,"starts_at": string,"store_id": string,"ticket_url": string | null
@@ -118,11 +232,11 @@ isOneToOne: true
                   }
                   Relationships: [
                     {
-      foreignKeyName: "events_schedule_id_fkey"
-      columns: ["schedule_id"]
+      foreignKeyName: "events_schedule_store_fkey"
+      columns: ["schedule_id","store_id"]
 isOneToOne: false
       referencedRelation: "store_schedules"
-      referencedColumns: ["id"]
+      referencedColumns: ["id","store_id"]
     },{
       foreignKeyName: "events_store_id_fkey"
       columns: ["store_id"]
@@ -185,14 +299,14 @@ isOneToOne: false
                   ]
                 },"notification_preferences": {
                   Row: {
-                    "enabled": boolean,"kind": string,"updated_at": string,"user_id": string
+                    "channel": string,"enabled": boolean,"kind": string,"updated_at": string,"user_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "enabled": boolean,"kind": string,"updated_at"?: string,"user_id"?: string
+                    "channel"?: string,"enabled": boolean,"kind": string,"updated_at"?: string,"user_id"?: string
                   }
                   Update: {
-                    "enabled"?: boolean,"kind"?: string,"updated_at"?: string,"user_id"?: string
+                    "channel"?: string,"enabled"?: boolean,"kind"?: string,"updated_at"?: string,"user_id"?: string
                   }
                   Relationships: [
                     {
@@ -254,11 +368,11 @@ isOneToOne: false
       referencedRelation: "profiles"
       referencedColumns: ["id"]
     },{
-      foreignKeyName: "pledges_request_id_fkey"
-      columns: ["request_id"]
+      foreignKeyName: "pledges_request_event_fkey"
+      columns: ["request_id","event_id"]
 isOneToOne: false
       referencedRelation: "requests"
-      referencedColumns: ["id"]
+      referencedColumns: ["id","event_id"]
     }
                   ]
                 },"profiles": {
@@ -538,6 +652,32 @@ isOneToOne: false
         isOneToOne: true
         isSetofReturn: false
       } },
+"assert_event_open_for":
+{ Args: { "p_event_id": string,"p_user_id": string }; Returns: {
+              "cancel_note": string | null,
+"cancelled_at": string | null,
+"created_at": string,
+"deleted_at": string | null,
+"ends_at": string,
+"event_date": string,
+"format": string | null,
+"gem_code": string | null,
+"gem_url": string | null,
+"id": string,
+"label": string,
+"moved_from": string | null,
+"schedule_id": string | null,
+"slot_date": string | null,
+"starts_at": string,
+"store_id": string,
+"ticket_url": string | null
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "events"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
 "assert_valid_label":
 { Args: { "p_label": string }; Returns: undefined
                            },
@@ -547,8 +687,156 @@ isOneToOne: false
 "attend_event":
 { Args: { "p_event_id": string }; Returns: undefined
                            },
+"attend_event_as":
+{ Args: { "p_event_id": string,"p_user_id": string }; Returns: undefined
+                           },
+"bot_attend":
+{ Args: { "p_discord_id": string,"p_event_id": string }; Returns: undefined
+                           },
+"bot_claim_dm_batches":
+{ Args: { "p_limit"?: number,"p_user_id"?: string }; Returns: Json
+                           },
+"bot_claim_outbox":
+{ Args: { "p_ignore_pause"?: boolean,"p_limit"?: number }; Returns: {
+              "attempts": number,
+"claimed_until": string | null,
+"created_at": string,
+"event_id": string,
+"failed_at": string | null,
+"id": number,
+"kind": string,
+"last_error": string | null,
+"next_attempt_at": string,
+"payload": NonNullable<Json>,
+"processed_at": string | null
+            }[]
+                          SetofOptions: {
+        from: "*"
+        to: "discord_outbox"
+        isOneToOne: false
+        isSetofReturn: true
+      } },
+"bot_complete_dm_batch":
+{ Args: { "p_ids": (number)[] }; Returns: undefined
+                           },
+"bot_complete_outbox":
+{ Args: { "p_ids": (number)[] }; Returns: undefined
+                           },
+"bot_dm_undeliverable":
+{ Args: { "p_code": number,"p_ids": (number)[] }; Returns: undefined
+                           },
+"bot_due_posts":
+{ Args: { "p_guild_id"?: string,"p_limit"?: number }; Returns: {
+              "channel_id": string,
+"created_at": string,
+"event_id": string,
+"finalized_at": string | null,
+"gone_at": string | null,
+"guild_id": string,
+"last_rendered_at": string | null,
+"message_id": string | null,
+"posted_at": string | null,
+"render_hash": string | null
+            }[]
+                          SetofOptions: {
+        from: "*"
+        to: "discord_event_posts"
+        isOneToOne: false
+        isSetofReturn: true
+      } },
+"bot_event_requests":
+{ Args: { "p_discord_id": string,"p_event_id": string }; Returns: Json
+                           },
+"bot_fail_outbox":
+{ Args: { "p_error": string,"p_give_up"?: boolean,"p_id": number,"p_retry_seconds": number }; Returns: undefined
+                           },
+"bot_leave":
+{ Args: { "p_cancel_requests": boolean,"p_discord_id": string,"p_event_id": string }; Returns: undefined
+                           },
+"bot_link_store":
+{ Args: { "p_channel_id": string,"p_discord_id": string,"p_guild_id": string,"p_store_id": string }; Returns: {
+              "broken_at": string | null,
+"broken_reason": string | null,
+"channel_id": string,
+"created_at": string,
+"days_before": number,
+"guild_id": string,
+"linked_by": string | null,
+"post_time": string,
+"store_id": string,
+"updated_at": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "discord_guild_stores"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
+"bot_mark_broken":
+{ Args: { "p_channel_id": string,"p_guild_id": string,"p_reason": string }; Returns: undefined
+                           },
+"bot_next_outbox_in":
+{ Args: Record<PropertyKey, never>; Returns: number
+                           },
+"bot_post_gone":
+{ Args: { "p_event_id": string,"p_guild_id": string }; Returns: undefined
+                           },
+"bot_post_targets":
+{ Args: { "p_event_id": string }; Returns: Json
+                           },
+"bot_record_post":
+{ Args: { "p_event_id": string,"p_guild_id": string,"p_message_id": string,"p_render_hash": string }; Returns: boolean
+                           },
+"bot_record_render":
+{ Args: { "p_event_id": string,"p_finalize": boolean,"p_guild_id": string,"p_render_hash": string }; Returns: undefined
+                           },
+"bot_release_post":
+{ Args: { "p_event_id": string,"p_guild_id": string }; Returns: undefined
+                           },
+"bot_render_event":
+{ Args: { "p_event_id": string }; Returns: Json
+                           },
+"bot_resolve":
+{ Args: { "p_discord_id": string }; Returns: string
+                           },
+"bot_retry_dm_batch":
+{ Args: { "p_drop_reason"?: string,"p_ids": (number)[],"p_retry_seconds": number }; Returns: undefined
+                           },
+"bot_search_stores":
+{ Args: { "p_query": string }; Returns: {
+              "city": string,"id": string,"name": string,"region": string
+            }[]
+                           },
+"bot_status":
+{ Args: { "p_guild_id": string }; Returns: Json
+                           },
+"bot_unlink_store":
+{ Args: { "p_discord_id": string,"p_guild_id": string,"p_has_manage_guild"?: boolean,"p_store_id"?: string }; Returns: string
+                           },
+"bot_update_settings":
+{ Args: { "p_channel_id"?: string,"p_days_before"?: number,"p_discord_id": string,"p_guild_id": string,"p_post_time"?: string,"p_store_id"?: string }; Returns: {
+              "broken_at": string | null,
+"broken_reason": string | null,
+"channel_id": string,
+"created_at": string,
+"days_before": number,
+"guild_id": string,
+"linked_by": string | null,
+"post_time": string,
+"store_id": string,
+"updated_at": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "discord_guild_stores"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
 "can_manage_store":
 { Args: { "p_store_id": string }; Returns: boolean
+                           },
+"can_user_manage_store":
+{ Args: { "p_store_id": string,"p_user_id": string }; Returns: boolean
                            },
 "cancel_ownership_request":
 { Args: { "p_request_id": string }; Returns: undefined
@@ -558,6 +846,8 @@ isOneToOne: false
                            },
 "cancel_request_internal":
 { Args: { "p_reason": string,"p_request_id": string }; Returns: undefined
+                           } |
+{ Args: { "p_actor": string,"p_reason": string,"p_request_id": string }; Returns: undefined
                            },
 "card_label":
 { Args: { "p_card_id": string }; Returns: string
@@ -597,6 +887,43 @@ isOneToOne: false
         isOneToOne: false
         isSetofReturn: true
       } },
+"discord_id_for_user":
+{ Args: { "p_user_id": string }; Returns: string
+                           },
+"discord_link_for":
+{ Args: { "p_guild_id": string,"p_store_id": string }; Returns: {
+              "broken_at": string | null,
+"broken_reason": string | null,
+"channel_id": string,
+"created_at": string,
+"days_before": number,
+"guild_id": string,
+"linked_by": string | null,
+"post_time": string,
+"store_id": string,
+"updated_at": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "discord_guild_stores"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
+"discord_post_at":
+{ Args: { "p_days_before": number,"p_event_date": string,"p_post_time": string,"p_timezone": string }; Returns: string
+                           },
+"discord_worker_paused":
+{ Args: Record<PropertyKey, never>; Returns: boolean
+                           },
+"display_name_of":
+{ Args: { "p_user_id": string }; Returns: string
+                           },
+"dm_max_attempts":
+{ Args: Record<PropertyKey, never>; Returns: number
+                           },
+"ensure_current_events":
+{ Args: { "p_store_ids": (string)[] }; Returns: undefined
+                           },
 "event_audience":
 { Args: { "p_event_id": string,"p_exclude": (string)[] }; Returns: string[]
                            },
@@ -631,11 +958,20 @@ isOneToOne: false
 "is_store_owner":
 { Args: { "p_store_id": string }; Returns: boolean
                            },
+"is_user_banned":
+{ Args: { "p_user_id": string }; Returns: boolean
+                           },
 "is_valid_timezone":
 { Args: { "tz": string }; Returns: boolean
                            },
+"kick_discord_worker":
+{ Args: { "p_throttle"?: boolean }; Returns: undefined
+                           },
 "leave_event":
 { Args: { "p_cancel_requests"?: boolean,"p_event_id": string }; Returns: undefined
+                           },
+"leave_event_as":
+{ Args: { "p_cancel_requests": boolean,"p_event_id": string,"p_notify_owners": boolean,"p_reason": string,"p_user_id": string }; Returns: undefined
                            },
 "lock_own_request":
 { Args: { "p_request_id": string }; Returns: {
@@ -758,8 +1094,26 @@ isOneToOne: false
 "pledges_to_release":
 { Args: { "p_event_id": string,"p_pledger_id": string }; Returns: Json
                            },
+"prune_discord_queues":
+{ Args: Record<PropertyKey, never>; Returns: number
+                           },
+"prune_notifications":
+{ Args: Record<PropertyKey, never>; Returns: number
+                           },
+"queue_discord_delete":
+{ Args: { "p_event_id": string }; Returns: undefined
+                           },
+"queue_discord_reconcile":
+{ Args: Record<PropertyKey, never>; Returns: undefined
+                           },
+"queue_discord_sync":
+{ Args: { "p_delay"?: string,"p_event_ids": (string)[],"p_kind": string }; Returns: undefined
+                           },
 "release_my_pledges":
 { Args: { "p_event_id": string,"p_reason": string }; Returns: undefined
+                           },
+"release_pledges":
+{ Args: { "p_actor": string,"p_event_id": string,"p_reason": string,"p_user_id": string }; Returns: undefined
                            },
 "remove_from_event":
 { Args: { "p_event_id": string,"p_user_id": string }; Returns: undefined
@@ -832,6 +1186,9 @@ isOneToOne: false
         isOneToOne: true
         isSetofReturn: false
       } },
+"user_for_discord":
+{ Args: { "p_discord_id": string }; Returns: string
+                           },
 "valid_format_options":
 { Args: { "p_options": (string)[] }; Returns: boolean
                            },

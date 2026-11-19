@@ -62,7 +62,7 @@ Mobile-first companion PWA for the Flesh and Blood TCG. Players coordinate card 
   - **One-off events** have `schedule_id` and `slot_date` null (check constraint). They're listed by `current_events_for_stores` when they start within 14 days. The copy banner and `copy_open_requests` skip them.
   - **`events.label`** is stored on the event (filled from the schedule by the `events_fill_defaults` trigger). Display `event.label`, not the schedule's.
   - **`moved_from`** is the start time before the first move ("Moved from …"); moving back clears it.
-- **Attendance** goes only through the `attend_event` / `leave_event` RPCs, which reject ended events via the internal `assert_event_open`. The table has no write policies. Attendee lists are visible to all signed-in users.
+- **Attendance** goes only through the `attend_event` / `leave_event` RPCs (and ArmoryBot's `bot_attend` / `bot_leave`), which reject ended events via the internal `assert_event_open`. The table has no write policies. Attendee lists are visible to all signed-in users.
 - **FKs to schedules and stores from events are `on delete restrict`.** Schedules get deactivated, never deleted.
 - **Requests and pledges** (migration `*_requests_pledges.sql`) are written only through RPCs:
   - **RPCs:** `add_requests(event, items jsonb, note)`, `update_request`, `cancel_request`, `pledge(request, qty)` and `unpledge`.
@@ -75,6 +75,76 @@ Mobile-first companion PWA for the Flesh and Blood TCG. Players coordinate card 
   - **Coverage** (open / partial / covered) is computed in TS (`coverage()`, `buildRequestViews()` in `src/lib/request-view.ts`), not stored.
 - **Event page** (`/events/[id]?tab=going|requests|checklist`). Tabs appear in that order, and **Going is the default**. Going lists attendees in join order with their request counts (`buildPeopleList()`), followed by people who left but kept requests ("Not going"). The Requests tab orders others' unfilled requests, then mine unfilled, then others' filled, then mine filled (`listGroup()` in `request-view.ts`). "My checklist" shows cards I'm bringing above cards I need. The page is server-rendered, with client "sheets" in `src/components/event/*`. Server actions in `src/app/actions/requests.ts` are thin RPC wrappers that revalidate the page.
 - **Home** (`/`) opens with `<NextArmoryCard>`: the soonest not-ended event I'm attending at **any** store (`getNextAttendingEvent()` in `src/lib/event-data.ts`), its going count, and the cards I pledged to bring (`summarizeBringing()` in `request-view.ts`). It live-refreshes on that event's topic. "My stores" follows below.
+- **ArmoryBot** is a Discord bot. Design and phase status are in `docs/armorybot.md`; migrations are `*_user_id_variants.sql` and `*_armorybot.sql`.
+  - **No always-on process.** Two Supabase Edge Functions (Phases 2–3):
+    - `discord-interactions` is Discord's interactions endpoint, Ed25519-verified.
+    - `discord-worker` drains the outbox, and posts, edits, deletes and DMs through Discord REST.
+    - Pure shared code goes in `supabase/functions/_shared/`.
+    - Secrets (`DISCORD_APP_ID`, `DISCORD_PUBLIC_KEY`, `DISCORD_BOT_TOKEN`, the worker secret) live in Supabase function secrets / Vault, **never** in Vercel or the Next.js app.
+    - Every message is sent with `allowed_mentions: { parse: [] }`.
+  - **Interactions endpoint** (`supabase/functions/discord-interactions/index.ts`, `verify_jwt = false` in `config.toml`):
+    - **Request flow:**
+      1. Verify the signature (`_shared/verify.ts`, WebCrypto Ed25519, 5-minute replay window), else 401.
+      2. `handleInteraction()` (`_shared/interactions.ts`) runs, pure apart from an injected `rpc`.
+      3. If it isn't done within 2.2 s, the endpoint answers with a deferred response (`deferredResponseFor()`) and finishes via `EdgeRuntime.waitUntil`, PATCHing `@original`.
+    - **Commands:** `/armory link-store | settings | unlink | status` (`_shared/commands.ts`; Manage Server by default, servers only). Register them with `scripts/register-discord-commands.mts`.
+    - **Buttons:** custom_id `ap:<action>:<event uuid>` (`_shared/custom-id.ts`, strictly parsed). Actions are `going`, `leave` (shows the keep/cancel prompt), `leave-cancel`, `leave-keep` and `requests`. The post shows only Going (green) and Not going (red), with Open in ArmoryPal on a second row; `requests` is still handled for older posts.
+    - **Replies:** every reply is ephemeral. `discord_not_linked` becomes the "Connect Discord" reply with a link to `/me#connected-accounts`.
+    - **Player text in messages** goes through `escapeMarkdown()` (`_shared/text.ts`).
+    - **Database access:** the functions call PostgREST through `_shared/db.ts` (plain fetch, secret key from `SUPABASE_SECRET_KEYS`, falling back to `SUPABASE_SERVICE_ROLE_KEY`). `_shared` has **no imports outside itself** and uses `.ts` extensions in relative imports (Deno needs them).
+    - **Tooling:** Vitest runs `supabase/functions/_shared/**/*.test.ts`. The root tsconfig (ES2020, `allowImportingTsExtensions`) and ESLint check `_shared` but exclude the Deno entrypoints `supabase/functions/discord-*`.
+  - **Worker** (`supabase/functions/discord-worker/index.ts`, `verify_jwt = false`; auth is `Authorization: Bearer <DISCORD_WORKER_SECRET>`, compared in constant time and failing closed). `runWorker()` (`_shared/worker.ts`) loops for up to 45 s:
+    1. Posts what `bot_due_posts` claims (post time = `discord_post_at(event_date − days_before, post_time, store tz)`).
+    2. Applies the rows from `bot_claim_outbox`: re-render each target from `bot_post_targets` and PATCH it, skipping it if `render_hash` is unchanged; `delete_posts` DELETEs the messages.
+    3. Waits for debounced rows due within 5 s, or stops.
+    - **Bookkeeping RPCs** (service_role only, `*_discord_worker.sql`): `bot_record_post`, `bot_release_post`, `bot_record_render(…, finalize)`, `bot_post_gone`, `bot_mark_broken`, `bot_next_outbox_in`, `queue_discord_reconcile`.
+    - **Waking it:** `kick_discord_worker(throttle)` posts to the Vault secrets `discord_worker_url` / `discord_worker_secret` via pg_net. pg_cron jobs `discord-worker` (every minute) and `discord-reconcile` (every 10 minutes). The `discord_outbox_kick` trigger kicks it after inserts, throttled via `discord_worker_state`. **No Vault secrets, no calls**, so CI and fresh local stacks never contact Discord.
+    - **The kick is fail-safe:** it strips whitespace from the Vault values and catches every pg_net error (logged as a warning). It runs inside players' writes, so a bad bot setting must never break attending or requesting. Keep it that way.
+    - **Pause:** `update public.discord_worker_state set paused_until = 'infinity'` (null resumes). While paused, `kick_discord_worker`, `bot_claim_outbox` and an unscoped `bot_due_posts` do nothing.
+    - **Tests and the live worker:** DB tests call `pauseDiscordWorker()` / `resumeDiscordWorker()` (`tests/db/helpers.ts`; the pause expires after 5 minutes on its own) and `bot_due_posts(…, p_guild_id)` / `bot_claim_outbox(…, p_ignore_pause)`, so a developer's running local worker never touches test rows and tests never claim real posts. Vault tests set real secrets aside with `vault.update_secret(id, null, new_name)` inside a rolled-back transaction.
+    - **Discord REST:** `_shared/discord-rest.ts` handles buckets from `X-RateLimit-*`, 429 `retry_after` and the global limit, and `classify()` maps errors to ok / gone / broken / rate / retry / fail.
+    - **DMs** (`*_discord_dms.sql`):
+      - **Batching:** `bot_claim_dm_batches` hands out one batch per player once their oldest queued DM is 2 minutes old. The batch includes all of that player's pending DMs, so one DM covers them.
+      - **Checks at send time:** it first drops rows that must not go out: Discord disconnected or changed (`discord_disconnected`), DMs turned off (`turned_off`), banned, `undeliverable` (24 h pause), `event_over` (deleted, cancelled or ended), or `gave_up` after `dm_max_attempts()` = 5.
+      - **Sending:** the worker opens the DM channel (`POST /users/@me/channels`) and sends `batchDms()` (`_shared/dm.ts`): grouped by event, same actor and kind merged into one line, link buttons to each Requests tab plus Notification settings, at most 2000 characters.
+      - **Outcomes:** `bot_complete_dm_batch` (sent; clears `discord_dm_status`), `bot_dm_undeliverable` (50007 / 50278: dropped, never retried, `discord_dm_status` set), `bot_retry_dm_batch` (429, 40003 "opening DMs too fast" and outages retry later; anything else is dropped with `discord_<code>`).
+      - **No kick for DMs:** the per-minute cron run is enough, since they wait 2 minutes anyway.
+    - **The post:** `renderEventPost()` (`_shared/render-event.ts`, snapshot-tested) is pure, `fitLines()` / `fitEmbed()` keep it within Discord's limits, and the buttons are disabled when the event is cancelled, ended or unlinked.
+    - **Format labels** live in `_shared/formats.ts` (re-exported by `src/lib/formats.ts`). `src/lib` may import pure `_shared` modules; `_shared` never imports from `src`.
+    - **Secrets:** local function secrets are in `supabase/functions/.env` (template `.env.example`), production ones in `supabase/functions/.env.production`. Both are git-ignored. Setup is in `DEPLOY.md` §11 and `docs/armorybot.md` §10.
+  - **Identity:** a player's Discord ID is `auth.identities.provider_id` (provider `discord`; `(provider_id, provider)` is unique).
+    - `user_for_discord(id)` / `discord_id_for_user(user)` are the only lookups. There's no linking table.
+    - Every player-facing bot RPC starts with `bot_resolve(discord_id)`, which raises `discord_not_linked`, `banned` or `profile_incomplete`.
+  - **User-ID variants:** bot RPCs run as `service_role`, where `auth.uid()` is null, so the shared logic takes the user explicitly:
+    - `is_user_banned`, `display_name_of`, `can_user_manage_store`, `assert_event_open_for`, `release_pledges`, `cancel_request_internal(request, reason, actor)`, `attend_event_as`, `leave_event_as(event, user, cancel_requests, reason, notify_owners)`, and `ensure_current_events(store_ids)` (lazy creation without the sign-in check).
+    - All of them are internal (service_role only).
+    - The public RPCs (`is_banned`, `assert_event_open`, `attend_event`, `leave_event`, `remove_from_event`, `current_events_for_stores`, …) are thin wrappers, with behaviour unchanged.
+    - **Put new rules in the `_as` / `_for` variant**, so the app and the bot can't drift.
+  - **Tables** (RLS on, service_role only; players can read only their own `discord_dm_status` row):
+    - `discord_guild_stores`: guild, store, channel, `days_before` (0–6), store-local `post_time`, `broken_at`. Many-to-many; a server links each store once.
+    - `discord_event_posts`: guild, event, channel, message, `render_hash`, `finalized_at`, `gone_at`. **No FK to events**, so message IDs outlive a deleted one-off.
+    - `discord_outbox`: kinds `refresh`, `cancelled`, `moved`, `delete_posts` (domain `public.discord_outbox_kind`).
+      - **Filled by:** statement-level triggers on `attendances`, `requests`, `pledges`, `format_polls` and `format_votes`, plus row triggers on `events` and `stores`. They queue rows via `queue_discord_sync()`, **only for events with a live post**.
+      - **Coalescing:** pending rows are coalesced per (kind, event) by a partial unique index.
+      - **Deleting an event** queues `delete_posts`, carrying the message list (`queue_discord_delete()`).
+    - `discord_dm_queue`: per-player DM rows, written by **`notify()`** (its in-app insert is unchanged) when the kind is a DM kind and the player has Discord linked, opted in and isn't paused. `send_after` is +2 minutes, for batching.
+    - `discord_dm_status`: Discord refused a DM (50007 privacy or blocked, 50278 no shared server). DMs pause for 24 h. Shown on `/settings/notifications`.
+    - **Pruning:** the `prune-discord-queues` pg_cron job deletes processed rows older than 7 days, daily.
+  - **`bot_*` RPCs** are security definer, with `execute` for service_role only:
+    - `bot_search_stores`.
+    - `bot_link_store`: store manager via `can_user_manage_store`, else `not_store_owner`.
+    - `bot_update_settings`: raises `invalid_days_before`, `store_required`, `store_not_linked`.
+    - `bot_unlink_store(…, has_manage_guild)`: manager **or** Manage Server (taken from the signed interaction).
+    - `bot_status`, `bot_attend`, `bot_leave`, `bot_event_requests`, `bot_render_event`.
+    - `bot_claim_outbox` (`for update skip locked`, 2-minute claim), `bot_complete_outbox`, `bot_fail_outbox` (retries stay claimed until `next_attempt_at`; gives up after 8 attempts).
+    - **New bot error codes** go in `ruleMessage()` **and** the bot's message map (`_shared/messages.ts`, Phase 2).
+  - **Connected accounts** (`/me`): `<ConnectedAccounts>` lists sign-in methods (`connectedAccounts()` in `src/lib/connected-accounts.ts`), with Connect / Disconnect for Discord via `linkIdentity` / `unlinkIdentity`.
+    - **Manual linking** must be on: `enable_manual_linking` in `config.toml`, dashboard setting in `DEPLOY.md`.
+    - **Connect** sends `prompt=none` and returns through `/auth/callback?next=/me`.
+    - **Disconnect** is offered only when another identity remains.
+    - **Link errors** (`identity_already_exists`, `manual_linking_disabled`, `single_identity_not_deletable`) come back as `?error_code=` on the callback, which forwards known ones (`LINK_ERRORS`) to `next` as `?link_error=`.
+  - **Tests:** `tests/db/discord.test.ts`, `e2e/security/discord-bot.spec.ts` and `e2e/functional/connected-accounts.spec.ts`.
+    - They seed Discord identities straight into `auth.identities` with the `postgres` client (`linkDiscord()` in `tests/db/helpers.ts`, `linkDiscordIdentity()` in `e2e/support/identities.ts`; local DB only).
 - **Rules are enforced in the database**: writes with rules go through `security definer` RPCs that lock the request row (`FOR UPDATE`), and RLS blocks direct writes. The same rules are mirrored as pure functions in `src/lib/rules.ts` for UI feedback, and **both are tested**.
   - Only attendees of a non-past event can add requests or pledges.
   - You can't pledge on your own request.
@@ -86,7 +156,7 @@ Mobile-first companion PWA for the Flesh and Blood TCG. Players coordinate card 
   - **User topic:** a trigger on `notifications` sends `'notification'` to `user:<id>`.
   - **Who can listen:** RLS on `realtime.messages` lets any signed-in user receive `event:*`, but only the owner receives `user:<id>`.
   - **Client:** `<RealtimeRefresh topic event>` (`src/components/realtime-refresh.tsx`) calls `router.refresh()`, debounced. Broadcast is at-most-once, so it also refreshes after a reconnect and on `visibilitychange`.
-- **Notifications** (`notifications` table) are in-app only for now. Push could later deliver the same rows.
+- **Notifications** (`notifications` table) are in-app. `new_requests` / `card_needed_again` can also go out as ArmoryBot Discord DMs (see ArmoryBot below).
   - **Writing:** only SQL functions write them, via the internal `notify()`. Payloads are rendered by `formatNotification()` in `src/lib/notifications.ts`. Kinds:
     - `pledge_released`: someone un-pledged or left.
     - `request_cancelled`: the requester cancelled, or left with "cancel my requests".
@@ -95,8 +165,13 @@ Mobile-first companion PWA for the Flesh and Blood TCG. Players coordinate card 
     - `requests_filled`: sent when a pledge covers the requester's *last* unfilled request on the event. It fires on that transition only. `pledge()` locks all of the requester's requests on the event in id order so concurrent pledges can't miss or duplicate it, and `leave_event` uses the same lock order.
     - `event_cancelled`: a store cancelled an event, sent to its audience. Payload is `{store, label, when, note?}`.
     - `removed_from_event`: an admin took you off an event (`admin_remove_attendee`). Payload is `{note?}` (the admin's reason).
-  - **Adding a kind:** update the SQL check constraints (on `notifications` and `notification_preferences`) and `NOTIFICATION_KINDS` in `src/lib/notifications.ts` together.
-  - **Preferences** live in `notification_preferences` (user, kind, enabled). A missing row means on. `notify()` skips disabled kinds, so they're never stored. The settings page is `/settings/notifications`, linked from the inbox and `/me`.
+  - **Adding a kind:** in a new migration, drop and re-add the check on the `public.notification_kind` domain (`*_schema_cleanup.sql`; both tables use it), and add it to `NOTIFICATION_KINDS` in `src/lib/notifications.ts`. Admin log actions work the same way via the `public.admin_action` domain.
+  - **Pruning:** the `prune-notifications` pg_cron job runs `prune_notifications()` daily at 04:00 UTC. It deletes read notifications after 90 days and any notification after a year.
+  - **Preferences** live in `notification_preferences` (user, kind, **channel**, enabled), with primary key `(user_id, kind, channel)`. The channel domain `public.notification_channel` is `app` | `discord`.
+    - **`app`:** a missing row means on. `notify()` skips disabled kinds, so they're never stored.
+    - **`discord`:** a missing row means **off** (DMs are opt-in). Only `new_requests` / `card_needed_again` allow it (check constraint, `DISCORD_DM_KINDS`).
+    - `isNotificationEnabled(kind, channel, rows)` in `src/lib/notifications.ts` mirrors the defaults. Upserts use `onConflict: 'user_id,kind,channel'`.
+    - The settings page is `/settings/notifications`, linked from the inbox and `/me`.
   - **Reading:** users read only their own. `/notifications` marks them read (`mark_notifications_read()`), and the bell (`NotificationBell`) shows the unread count live.
 - **Leaving an event:** `leave_event(event, cancel_requests)` always releases your pledges and notifies the requesters. Cancelling your requests is optional (the UI checkbox is on by default) and notifies their pledgers. Kept requests show a "Not going" badge.
 - **Store owners** (migrations `*_store_owners.sql`, `*_event_management.sql`, `*_attendee_left.sql`, `*_format_polls.sql`; UI under `/manage`):
@@ -130,10 +205,11 @@ Mobile-first companion PWA for the Flesh and Blood TCG. Players coordinate card 
 - **Security baseline:** every public table has RLS. `next.config.ts` sets X-Frame-Options, nosniff, Referrer-Policy and Permissions-Policy on every response (no CSP yet). No security-definer function is executable by `anon`; check this after adding functions. Internal helpers revoke `execute` from `authenticated` too.
 
 ## Data model (summary)
-`profiles`, `stores`, `store_schedules`, `user_stores`, `store_owners`, `store_owner_requests`, `events`, `cards`, `attendances`, `requests`, `pledges`, `format_polls`, `format_votes`, `notifications`, and view `request_status` (pledged / remaining / open|partial|covered). Migrations live in `supabase/migrations/`, seed data in `supabase/seed.sql`.
+`profiles`, `stores`, `store_schedules`, `user_stores`, `store_owners`, `store_owner_requests`, `events`, `cards`, `attendances`, `requests`, `pledges`, `format_polls`, `format_votes`, `notifications`, `notification_preferences`, `bans`, `admin_actions`, plus ArmoryBot's `discord_guild_stores`, `discord_event_posts`, `discord_outbox`, `discord_dm_queue` and `discord_dm_status`. Coverage (pledged / remaining / open|partial|covered) is computed in TypeScript, not stored. Migrations live in `supabase/migrations/`, seed data in `supabase/seed.sql`.
+- **Composite FKs keep denormalized columns honest:** `pledges (request_id, event_id)` → `requests (id, event_id)`, and `events (schedule_id, store_id)` → `store_schedules (id, store_id)` (one-offs have a null `schedule_id`, so they aren't checked).
 
 ## Out of scope (for now)
-Trading/pricing, deck building, payments, chat, push notifications.
+Trading/pricing, deck building, payments, chat. (ArmoryBot's Discord DMs are the push channel; web push isn't planned.)
 
 ## Build phases
 0. Skeleton: Next.js, Tailwind, Vitest, local Supabase, magic link + Discord login, onboarding
@@ -144,6 +220,11 @@ Trading/pricing, deck building, payments, chat, push notifications.
 5. Realtime, leave flow, notifications inbox
 6. Rollover & history: read-only past events, copy open requests
 7. PWA + deploy (Supabase cloud, Discord OAuth app, Vercel)
+8. ArmoryBot (Discord bot; phases in `docs/armorybot.md`):
+   1. Groundwork + connected accounts ✅
+   2. Interactions endpoint ✅
+   3. Posts and sync ✅
+   4. DMs ✅
 
 ## Commands (PowerShell)
 ```powershell
@@ -162,6 +243,8 @@ npm run audit:check         # dependency audit with the accepted-advisory allowl
 npm run db:seed-dev         # local test players Alice/Bob/Carol + a current event with requests and pledges (after import-cards); Carol owns Uncommons
 npx tsx scripts/make-admin.mts you@example.com [--revoke] [--env .env.production.local]
 npx tsx scripts/import-cards.mts [--env .env.production.local]
+npx tsx scripts/register-discord-commands.mts [--env supabase/functions/.env.production] [--guild <server id>]   # ArmoryBot slash commands
+npx supabase functions serve --env-file supabase/functions/.env   # ArmoryBot locally: both functions (plus a tunnel and local Vault secrets; docs/armorybot.md §10)
 npm run build; npm start    # production build incl. service worker (stop `npm run dev` first: both use .next)
 ```
 

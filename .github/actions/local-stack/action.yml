@@ -18,7 +18,8 @@ runs:
     - name: Start local Supabase
       shell: bash
       run: |
-        npx supabase start -x studio,imgproxy,vector,logflare,edge-runtime,postgres-meta,supavisor,storage-api
+        # edge-runtime stays on: it serves ArmoryBot's functions for the security tests.
+        npx supabase start -x studio,imgproxy,vector,logflare,postgres-meta,supavisor,storage-api
         npx supabase status -o json > "$RUNNER_TEMP/supabase.json"
         jq -r '
           "NEXT_PUBLIC_SUPABASE_URL=\(.API_URL)",

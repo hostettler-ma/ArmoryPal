@@ -65,7 +65,13 @@ export type RuleError =
   | "not_in_audience"
   | "invalid_poll_options"
   | "poll_exists"
-  | "poll_has_votes";
+  | "poll_has_votes"
+  // ArmoryBot (*_armorybot.sql; also mapped in supabase/functions/_shared/messages.ts).
+  | "discord_not_linked"
+  | "profile_incomplete"
+  | "invalid_days_before"
+  | "store_required"
+  | "store_not_linked";
 
 export type Check = { ok: true } | { ok: false; reason: RuleError };
 const ok: Check = { ok: true };
@@ -192,6 +198,11 @@ const MESSAGES: Record<RuleError, string> = {
   invalid_poll_options: "Pick at least two formats to vote on.",
   poll_exists: "This event already has a poll.",
   poll_has_votes: "People already voted, so the poll can't be removed. Confirm a format instead.",
+  discord_not_linked: "Connect your Discord to ArmoryPal first.",
+  profile_incomplete: "Finish setting up your ArmoryPal profile first.",
+  invalid_days_before: "Pick 0 to 6 days before the event.",
+  store_required: "This server shows several stores. Pick one.",
+  store_not_linked: "That store isn't linked to this server.",
 };
 
 /** Friendly text for an error code raised by the SQL functions (or a Check). */

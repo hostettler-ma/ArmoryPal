@@ -178,7 +178,7 @@ enable_signup = true
 # Allow/disallow anonymous sign-ins to your project.
 enable_anonymous_sign_ins = false
 # Allow/disallow testing manual linking of accounts
-enable_manual_linking = false
+enable_manual_linking = true
 # Passwords shorter than this value will be rejected as weak. Minimum 6, recommended 8 or more.
 minimum_password_length = 6
 # Passwords that do not meet the following requirements will be rejected as weak. Supported values
@@ -403,6 +403,15 @@ deno_version = 2
 
 # [edge_runtime.secrets]
 # secret_key = "env(SECRET_VALUE)"
+
+# ArmoryBot (docs/armorybot.md). Discord can't send a Supabase JWT: the
+# interactions endpoint checks Discord's Ed25519 signature instead.
+# Local secrets: supabase/functions/.env (see supabase/functions/.env.example).
+[functions.discord-interactions]
+verify_jwt = false
+# Woken by pg_cron / pg_net with a shared secret (Vault + DISCORD_WORKER_SECRET).
+[functions.discord-worker]
+verify_jwt = false
 
 [analytics]
 enabled = true

@@ -1,0 +1,967 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Discord's size limits > very large snapshot 1`] = `
+{
+  "allowed_mentions": {
+    "parse": [],
+  },
+  "components": [
+    {
+      "components": [
+        {
+          "custom_id": "ap:going:7afd6814-aa2c-490d-a17c-3dac4b852563",
+          "disabled": false,
+          "label": "Going",
+          "style": 3,
+          "type": 2,
+        },
+        {
+          "custom_id": "ap:leave:7afd6814-aa2c-490d-a17c-3dac4b852563",
+          "disabled": false,
+          "label": "Not going",
+          "style": 4,
+          "type": 2,
+        },
+      ],
+      "type": 1,
+    },
+    {
+      "components": [
+        {
+          "label": "Open in ArmoryPal",
+          "style": 5,
+          "type": 2,
+          "url": "https://armorypal.test/events/7afd6814-aa2c-490d-a17c-3dac4b852563",
+        },
+      ],
+      "type": 1,
+    },
+  ],
+  "content": "",
+  "embeds": [
+    {
+      "author": {
+        "name": "Uncommons · New York, NY",
+        "url": "https://armorypal.test/stores/00000000-0000-4000-a000-0000000e2e01",
+      },
+      "color": 10077214,
+      "description": undefined,
+      "fields": [
+        {
+          "inline": true,
+          "name": "📅 Date",
+          "value": "<t:1795129200:D>",
+        },
+        {
+          "inline": true,
+          "name": "⏰ Time",
+          "value": "<t:1795129200:t>",
+        },
+        {
+          "inline": true,
+          "name": "⏳ Starts",
+          "value": "<t:1795129200:R>",
+        },
+        {
+          "inline": true,
+          "name": "👥 Going",
+          "value": "300",
+        },
+        {
+          "inline": true,
+          "name": "🏷️ Format",
+          "value": "Not announced yet",
+        },
+        {
+          "inline": true,
+          "name": "​",
+          "value": "​",
+        },
+        {
+          "inline": true,
+          "name": "Going (300)",
+          "value": "1. Player with a very long name 0 · 20 req
+2. Player with a very long name 1 · 20 req
+3. Player with a very long name 2 · 20 req
+4. Player with a very long name 3 · 20 req
+5. Player with a very long name 4 · 20 req
+6. Player with a very long name 5 · 20 req
+7. Player with a very long name 6 · 20 req
+8. Player with a very long name 7 · 20 req
+9. Player with a very long name 8 · 20 req
+10. Player with a very long name 9 · 20 req
+11. Player with a very long name 10 · 20 req
+12. Player with a very long name 11 · 20 req
+13. Player with a very long name 12 · 20 req
+14. Player with a very long name 13 · 20 req
+15. Player with a very long name 14 · 20 req
+16. Player with a very long name 15 · 20 req
+17. Player with a very long name 16 · 20 req
+18. Player with a very long name 17 · 20 req
+19. Player with a very long name 18 · 20 req
+20. Player with a very long name 19 · 20 req
+21. Player with a very long name 20 · 20 req
++79 more in [ArmoryPal](https://armorypal.test/events/7afd6814-aa2c-490d-a17c-3dac4b852563)",
+        },
+        {
+          "inline": true,
+          "name": "​",
+          "value": "101. Player with a very long name 100 · 20 req
+102. Player with a very long name 101 · 20 req
+103. Player with a very long name 102 · 20 req
+104. Player with a very long name 103 · 20 req
+105. Player with a very long name 104 · 20 req
+106. Player with a very long name 105 · 20 req
+107. Player with a very long name 106 · 20 req
+108. Player with a very long name 107 · 20 req
+109. Player with a very long name 108 · 20 req
+110. Player with a very long name 109 · 20 req
+111. Player with a very long name 110 · 20 req
+112. Player with a very long name 111 · 20 req
+113. Player with a very long name 112 · 20 req
+114. Player with a very long name 113 · 20 req
+115. Player with a very long name 114 · 20 req
+116. Player with a very long name 115 · 20 req
+117. Player with a very long name 116 · 20 req
+118. Player with a very long name 117 · 20 req
+119. Player with a very long name 118 · 20 req
++81 more in [ArmoryPal](https://armorypal.test/events/7afd6814-aa2c-490d-a17c-3dac4b852563)",
+        },
+        {
+          "inline": true,
+          "name": "​",
+          "value": "201. Player with a very long name 200 · 20 req
+202. Player with a very long name 201 · 20 req
+203. Player with a very long name 202 · 20 req
+204. Player with a very long name 203 · 20 req
+205. Player with a very long name 204 · 20 req
+206. Player with a very long name 205 · 20 req
+207. Player with a very long name 206 · 20 req
+208. Player with a very long name 207 · 20 req
+209. Player with a very long name 208 · 20 req
+210. Player with a very long name 209 · 20 req
+211. Player with a very long name 210 · 20 req
+212. Player with a very long name 211 · 20 req
+213. Player with a very long name 212 · 20 req
+214. Player with a very long name 213 · 20 req
+215. Player with a very long name 214 · 20 req
+216. Player with a very long name 215 · 20 req
+217. Player with a very long name 216 · 20 req
+218. Player with a very long name 217 · 20 req
+219. Player with a very long name 218 · 20 req
++81 more in [ArmoryPal](https://armorypal.test/events/7afd6814-aa2c-490d-a17c-3dac4b852563)",
+        },
+        {
+          "name": "Not going, kept requests",
+          "value": "1. Someone who left 0 · 3 req
+2. Someone who left 1 · 3 req
+3. Someone who left 2 · 3 req
+4. Someone who left 3 · 3 req
+5. Someone who left 4 · 3 req
+6. Someone who left 5 · 3 req
+7. Someone who left 6 · 3 req
+8. Someone who left 7 · 3 req
+9. Someone who left 8 · 3 req
+10. Someone who left 9 · 3 req
+11. Someone who left 10 · 3 req
+12. Someone who left 11 · 3 req
+13. Someone who left 12 · 3 req
+14. Someone who left 13 · 3 req
+15. Someone who left 14 · 3 req
+16. Someone who left 15 · 3 req
+17. Someone who left 16 · 3 req
+18. Someone who left 17 · 3 req
+19. Someone who left 18 · 3 req
+20. Someone who left 19 · 3 req
+21. Someone who left 20 · 3 req
+22. Someone who left 21 · 3 req
+23. Someone who left 22 · 3 req
+24. Someone who left 23 · 3 req
+25. Someone who left 24 · 3 req
+26. Someone who left 25 · 3 req
+27. Someone who left 26 · 3 req
+28. Someone who left 27 · 3 req
+29. Someone who left 28 · 3 req
++121 more in [ArmoryPal](https://armorypal.test/events/7afd6814-aa2c-490d-a17c-3dac4b852563)",
+        },
+        {
+          "name": "Open requests (500)",
+          "value": "🟡 · 20× A card with a really quite long name 0 · XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+🟡 · 20× A card with a really quite long name 1 · XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+🟡 · 20× A card with a really quite long name 2 · XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
++497 more in [ArmoryPal](https://armorypal.test/events/7afd6814-aa2c-490d-a17c-3dac4b852563?tab=requests)",
+        },
+      ],
+      "footer": {
+        "text": "ArmoryPal · updates live",
+      },
+      "title": "Thursday Armory",
+      "url": "https://armorypal.test/events/7afd6814-aa2c-490d-a17c-3dac4b852563",
+    },
+  ],
+}
+`;
+
+exports[`renderEventPost snapshots > cancelled 1`] = `
+{
+  "allowed_mentions": {
+    "parse": [],
+  },
+  "components": [
+    {
+      "components": [
+        {
+          "custom_id": "ap:going:7afd6814-aa2c-490d-a17c-3dac4b852563",
+          "disabled": true,
+          "label": "Going",
+          "style": 3,
+          "type": 2,
+        },
+        {
+          "custom_id": "ap:leave:7afd6814-aa2c-490d-a17c-3dac4b852563",
+          "disabled": true,
+          "label": "Not going",
+          "style": 4,
+          "type": 2,
+        },
+      ],
+      "type": 1,
+    },
+    {
+      "components": [
+        {
+          "label": "Open in ArmoryPal",
+          "style": 5,
+          "type": 2,
+          "url": "https://armorypal.test/events/7afd6814-aa2c-490d-a17c-3dac4b852563",
+        },
+      ],
+      "type": 1,
+    },
+  ],
+  "content": "",
+  "embeds": [
+    {
+      "author": {
+        "name": "Uncommons · New York, NY",
+        "url": "https://armorypal.test/stores/00000000-0000-4000-a000-0000000e2e01",
+      },
+      "color": 9079434,
+      "description": "**Cancelled**: Closed for Thanksgiving",
+      "fields": [
+        {
+          "inline": true,
+          "name": "📅 Date",
+          "value": "<t:1795129200:D>",
+        },
+        {
+          "inline": true,
+          "name": "⏰ Time",
+          "value": "<t:1795129200:t>",
+        },
+        {
+          "inline": true,
+          "name": "⏳ Starts",
+          "value": "<t:1795129200:R>",
+        },
+        {
+          "inline": true,
+          "name": "👥 Going",
+          "value": "4",
+        },
+        {
+          "inline": true,
+          "name": "🏷️ Format",
+          "value": "Not announced yet",
+        },
+        {
+          "inline": true,
+          "name": "​",
+          "value": "​",
+        },
+        {
+          "inline": true,
+          "name": "Going (4)",
+          "value": "1. Alice · 2 req
+2. Bob",
+        },
+        {
+          "inline": true,
+          "name": "​",
+          "value": "3. Carol · 1 req
+4. Dan",
+        },
+        {
+          "name": "Not going, kept requests",
+          "value": "1. Eve · 1 req",
+        },
+        {
+          "name": "Open requests (4)",
+          "value": "🔴 · 3× Snatch · Alice
+🔵 · 2× Sink Below · Carol
+🟡 · 1× Enlightened Strike · Alice
++1 more in [ArmoryPal](https://armorypal.test/events/7afd6814-aa2c-490d-a17c-3dac4b852563?tab=requests)",
+        },
+      ],
+      "footer": {
+        "text": "ArmoryPal · updates live",
+      },
+      "title": "Cancelled · Thursday Armory",
+      "url": "https://armorypal.test/events/7afd6814-aa2c-490d-a17c-3dac4b852563",
+    },
+  ],
+}
+`;
+
+exports[`renderEventPost snapshots > empty 1`] = `
+{
+  "allowed_mentions": {
+    "parse": [],
+  },
+  "components": [
+    {
+      "components": [
+        {
+          "custom_id": "ap:going:7afd6814-aa2c-490d-a17c-3dac4b852563",
+          "disabled": false,
+          "label": "Going",
+          "style": 3,
+          "type": 2,
+        },
+        {
+          "custom_id": "ap:leave:7afd6814-aa2c-490d-a17c-3dac4b852563",
+          "disabled": false,
+          "label": "Not going",
+          "style": 4,
+          "type": 2,
+        },
+      ],
+      "type": 1,
+    },
+    {
+      "components": [
+        {
+          "label": "Open in ArmoryPal",
+          "style": 5,
+          "type": 2,
+          "url": "https://armorypal.test/events/7afd6814-aa2c-490d-a17c-3dac4b852563",
+        },
+      ],
+      "type": 1,
+    },
+  ],
+  "content": "",
+  "embeds": [
+    {
+      "author": {
+        "name": "Uncommons · New York, NY",
+        "url": "https://armorypal.test/stores/00000000-0000-4000-a000-0000000e2e01",
+      },
+      "color": 10077214,
+      "description": undefined,
+      "fields": [
+        {
+          "inline": true,
+          "name": "📅 Date",
+          "value": "<t:1795129200:D>",
+        },
+        {
+          "inline": true,
+          "name": "⏰ Time",
+          "value": "<t:1795129200:t>",
+        },
+        {
+          "inline": true,
+          "name": "⏳ Starts",
+          "value": "<t:1795129200:R>",
+        },
+        {
+          "inline": true,
+          "name": "👥 Going",
+          "value": "0",
+        },
+        {
+          "inline": true,
+          "name": "🏷️ Format",
+          "value": "Not announced yet",
+        },
+        {
+          "inline": true,
+          "name": "​",
+          "value": "​",
+        },
+        {
+          "inline": false,
+          "name": "Going (0)",
+          "value": "Nobody yet. Be the first!",
+        },
+        {
+          "name": "Open requests (0)",
+          "value": "Nothing needed right now.",
+        },
+      ],
+      "footer": {
+        "text": "ArmoryPal · updates live",
+      },
+      "title": "Thursday Armory",
+      "url": "https://armorypal.test/events/7afd6814-aa2c-490d-a17c-3dac4b852563",
+    },
+  ],
+}
+`;
+
+exports[`renderEventPost snapshots > ended 1`] = `
+{
+  "allowed_mentions": {
+    "parse": [],
+  },
+  "components": [
+    {
+      "components": [
+        {
+          "custom_id": "ap:going:7afd6814-aa2c-490d-a17c-3dac4b852563",
+          "disabled": true,
+          "label": "Going",
+          "style": 3,
+          "type": 2,
+        },
+        {
+          "custom_id": "ap:leave:7afd6814-aa2c-490d-a17c-3dac4b852563",
+          "disabled": true,
+          "label": "Not going",
+          "style": 4,
+          "type": 2,
+        },
+      ],
+      "type": 1,
+    },
+    {
+      "components": [
+        {
+          "label": "Open in ArmoryPal",
+          "style": 5,
+          "type": 2,
+          "url": "https://armorypal.test/events/7afd6814-aa2c-490d-a17c-3dac4b852563",
+        },
+      ],
+      "type": 1,
+    },
+  ],
+  "content": "",
+  "embeds": [
+    {
+      "author": {
+        "name": "Uncommons · New York, NY",
+        "url": "https://armorypal.test/stores/00000000-0000-4000-a000-0000000e2e01",
+      },
+      "color": 9079434,
+      "description": "This event has ended.",
+      "fields": [
+        {
+          "inline": true,
+          "name": "📅 Date",
+          "value": "<t:1795129200:D>",
+        },
+        {
+          "inline": true,
+          "name": "⏰ Time",
+          "value": "<t:1795129200:t>",
+        },
+        {
+          "inline": true,
+          "name": "⏳ Starts",
+          "value": "Over",
+        },
+        {
+          "inline": true,
+          "name": "👥 Going",
+          "value": "4",
+        },
+        {
+          "inline": true,
+          "name": "🏷️ Format",
+          "value": "Not announced yet",
+        },
+        {
+          "inline": true,
+          "name": "​",
+          "value": "​",
+        },
+        {
+          "inline": true,
+          "name": "Going (4)",
+          "value": "1. Alice · 2 req
+2. Bob",
+        },
+        {
+          "inline": true,
+          "name": "​",
+          "value": "3. Carol · 1 req
+4. Dan",
+        },
+        {
+          "name": "Not going, kept requests",
+          "value": "1. Eve · 1 req",
+        },
+        {
+          "name": "Open requests (4)",
+          "value": "🔴 · 3× Snatch · Alice
+🔵 · 2× Sink Below · Carol
+🟡 · 1× Enlightened Strike · Alice
++1 more in [ArmoryPal](https://armorypal.test/events/7afd6814-aa2c-490d-a17c-3dac4b852563?tab=requests)",
+        },
+      ],
+      "footer": {
+        "text": "ArmoryPal",
+      },
+      "title": "Thursday Armory",
+      "url": "https://armorypal.test/events/7afd6814-aa2c-490d-a17c-3dac4b852563",
+    },
+  ],
+}
+`;
+
+exports[`renderEventPost snapshots > format confirmed 1`] = `
+{
+  "allowed_mentions": {
+    "parse": [],
+  },
+  "components": [
+    {
+      "components": [
+        {
+          "custom_id": "ap:going:7afd6814-aa2c-490d-a17c-3dac4b852563",
+          "disabled": false,
+          "label": "Going",
+          "style": 3,
+          "type": 2,
+        },
+        {
+          "custom_id": "ap:leave:7afd6814-aa2c-490d-a17c-3dac4b852563",
+          "disabled": false,
+          "label": "Not going",
+          "style": 4,
+          "type": 2,
+        },
+      ],
+      "type": 1,
+    },
+    {
+      "components": [
+        {
+          "label": "Open in ArmoryPal",
+          "style": 5,
+          "type": 2,
+          "url": "https://armorypal.test/events/7afd6814-aa2c-490d-a17c-3dac4b852563",
+        },
+      ],
+      "type": 1,
+    },
+  ],
+  "content": "",
+  "embeds": [
+    {
+      "author": {
+        "name": "Uncommons · New York, NY",
+        "url": "https://armorypal.test/stores/00000000-0000-4000-a000-0000000e2e01",
+      },
+      "color": 10077214,
+      "description": undefined,
+      "fields": [
+        {
+          "inline": true,
+          "name": "📅 Date",
+          "value": "<t:1795129200:D>",
+        },
+        {
+          "inline": true,
+          "name": "⏰ Time",
+          "value": "<t:1795129200:t>",
+        },
+        {
+          "inline": true,
+          "name": "⏳ Starts",
+          "value": "<t:1795129200:R>",
+        },
+        {
+          "inline": true,
+          "name": "👥 Going",
+          "value": "4",
+        },
+        {
+          "inline": true,
+          "name": "🏷️ Format",
+          "value": "Classic Constructed",
+        },
+        {
+          "inline": true,
+          "name": "​",
+          "value": "​",
+        },
+        {
+          "inline": true,
+          "name": "Going (4)",
+          "value": "1. Alice · 2 req
+2. Bob",
+        },
+        {
+          "inline": true,
+          "name": "​",
+          "value": "3. Carol · 1 req
+4. Dan",
+        },
+        {
+          "name": "Not going, kept requests",
+          "value": "1. Eve · 1 req",
+        },
+        {
+          "name": "Open requests (4)",
+          "value": "🔴 · 3× Snatch · Alice
+🔵 · 2× Sink Below · Carol
+🟡 · 1× Enlightened Strike · Alice
++1 more in [ArmoryPal](https://armorypal.test/events/7afd6814-aa2c-490d-a17c-3dac4b852563?tab=requests)",
+        },
+      ],
+      "footer": {
+        "text": "ArmoryPal · updates live",
+      },
+      "title": "Thursday Armory",
+      "url": "https://armorypal.test/events/7afd6814-aa2c-490d-a17c-3dac4b852563",
+    },
+  ],
+}
+`;
+
+exports[`renderEventPost snapshots > format poll open 1`] = `
+{
+  "allowed_mentions": {
+    "parse": [],
+  },
+  "components": [
+    {
+      "components": [
+        {
+          "custom_id": "ap:going:7afd6814-aa2c-490d-a17c-3dac4b852563",
+          "disabled": false,
+          "label": "Going",
+          "style": 3,
+          "type": 2,
+        },
+        {
+          "custom_id": "ap:leave:7afd6814-aa2c-490d-a17c-3dac4b852563",
+          "disabled": false,
+          "label": "Not going",
+          "style": 4,
+          "type": 2,
+        },
+      ],
+      "type": 1,
+    },
+    {
+      "components": [
+        {
+          "label": "Open in ArmoryPal",
+          "style": 5,
+          "type": 2,
+          "url": "https://armorypal.test/events/7afd6814-aa2c-490d-a17c-3dac4b852563",
+        },
+      ],
+      "type": 1,
+    },
+  ],
+  "content": "",
+  "embeds": [
+    {
+      "author": {
+        "name": "Uncommons · New York, NY",
+        "url": "https://armorypal.test/stores/00000000-0000-4000-a000-0000000e2e01",
+      },
+      "color": 10077214,
+      "description": undefined,
+      "fields": [
+        {
+          "inline": true,
+          "name": "📅 Date",
+          "value": "<t:1795129200:D>",
+        },
+        {
+          "inline": true,
+          "name": "⏰ Time",
+          "value": "<t:1795129200:t>",
+        },
+        {
+          "inline": true,
+          "name": "⏳ Starts",
+          "value": "<t:1795129200:R>",
+        },
+        {
+          "inline": true,
+          "name": "👥 Going",
+          "value": "4",
+        },
+        {
+          "inline": true,
+          "name": "🏷️ Format",
+          "value": "Vote in ArmoryPal: Draft 3 · Classic Constructed 1 · Silver Age 0",
+        },
+        {
+          "inline": true,
+          "name": "​",
+          "value": "​",
+        },
+        {
+          "inline": true,
+          "name": "Going (4)",
+          "value": "1. Alice · 2 req
+2. Bob",
+        },
+        {
+          "inline": true,
+          "name": "​",
+          "value": "3. Carol · 1 req
+4. Dan",
+        },
+        {
+          "name": "Not going, kept requests",
+          "value": "1. Eve · 1 req",
+        },
+        {
+          "name": "Open requests (4)",
+          "value": "🔴 · 3× Snatch · Alice
+🔵 · 2× Sink Below · Carol
+🟡 · 1× Enlightened Strike · Alice
++1 more in [ArmoryPal](https://armorypal.test/events/7afd6814-aa2c-490d-a17c-3dac4b852563?tab=requests)",
+        },
+      ],
+      "footer": {
+        "text": "ArmoryPal · updates live",
+      },
+      "title": "Thursday Armory",
+      "url": "https://armorypal.test/events/7afd6814-aa2c-490d-a17c-3dac4b852563",
+    },
+  ],
+}
+`;
+
+exports[`renderEventPost snapshots > normal 1`] = `
+{
+  "allowed_mentions": {
+    "parse": [],
+  },
+  "components": [
+    {
+      "components": [
+        {
+          "custom_id": "ap:going:7afd6814-aa2c-490d-a17c-3dac4b852563",
+          "disabled": false,
+          "label": "Going",
+          "style": 3,
+          "type": 2,
+        },
+        {
+          "custom_id": "ap:leave:7afd6814-aa2c-490d-a17c-3dac4b852563",
+          "disabled": false,
+          "label": "Not going",
+          "style": 4,
+          "type": 2,
+        },
+      ],
+      "type": 1,
+    },
+    {
+      "components": [
+        {
+          "label": "Open in ArmoryPal",
+          "style": 5,
+          "type": 2,
+          "url": "https://armorypal.test/events/7afd6814-aa2c-490d-a17c-3dac4b852563",
+        },
+      ],
+      "type": 1,
+    },
+  ],
+  "content": "",
+  "embeds": [
+    {
+      "author": {
+        "name": "Uncommons · New York, NY",
+        "url": "https://armorypal.test/stores/00000000-0000-4000-a000-0000000e2e01",
+      },
+      "color": 10077214,
+      "description": undefined,
+      "fields": [
+        {
+          "inline": true,
+          "name": "📅 Date",
+          "value": "<t:1795129200:D>",
+        },
+        {
+          "inline": true,
+          "name": "⏰ Time",
+          "value": "<t:1795129200:t>",
+        },
+        {
+          "inline": true,
+          "name": "⏳ Starts",
+          "value": "<t:1795129200:R>",
+        },
+        {
+          "inline": true,
+          "name": "👥 Going",
+          "value": "4",
+        },
+        {
+          "inline": true,
+          "name": "🏷️ Format",
+          "value": "Not announced yet",
+        },
+        {
+          "inline": true,
+          "name": "​",
+          "value": "​",
+        },
+        {
+          "inline": true,
+          "name": "Going (4)",
+          "value": "1. Alice · 2 req
+2. Bob",
+        },
+        {
+          "inline": true,
+          "name": "​",
+          "value": "3. Carol · 1 req
+4. Dan",
+        },
+        {
+          "name": "Not going, kept requests",
+          "value": "1. Eve · 1 req",
+        },
+        {
+          "name": "Open requests (4)",
+          "value": "🔴 · 3× Snatch · Alice
+🔵 · 2× Sink Below · Carol
+🟡 · 1× Enlightened Strike · Alice
++1 more in [ArmoryPal](https://armorypal.test/events/7afd6814-aa2c-490d-a17c-3dac4b852563?tab=requests)",
+        },
+      ],
+      "footer": {
+        "text": "ArmoryPal · updates live",
+      },
+      "title": "Thursday Armory",
+      "url": "https://armorypal.test/events/7afd6814-aa2c-490d-a17c-3dac4b852563",
+    },
+  ],
+}
+`;
+
+exports[`renderEventPost snapshots > one-off, moved 1`] = `
+{
+  "allowed_mentions": {
+    "parse": [],
+  },
+  "components": [
+    {
+      "components": [
+        {
+          "custom_id": "ap:going:7afd6814-aa2c-490d-a17c-3dac4b852563",
+          "disabled": false,
+          "label": "Going",
+          "style": 3,
+          "type": 2,
+        },
+        {
+          "custom_id": "ap:leave:7afd6814-aa2c-490d-a17c-3dac4b852563",
+          "disabled": false,
+          "label": "Not going",
+          "style": 4,
+          "type": 2,
+        },
+      ],
+      "type": 1,
+    },
+    {
+      "components": [
+        {
+          "label": "Open in ArmoryPal",
+          "style": 5,
+          "type": 2,
+          "url": "https://armorypal.test/events/7afd6814-aa2c-490d-a17c-3dac4b852563",
+        },
+      ],
+      "type": 1,
+    },
+  ],
+  "content": "",
+  "embeds": [
+    {
+      "author": {
+        "name": "Uncommons · New York, NY",
+        "url": "https://armorypal.test/stores/00000000-0000-4000-a000-0000000e2e01",
+      },
+      "color": 10077214,
+      "description": "Moved from <t:1795042800:f>.
+One-off event.",
+      "fields": [
+        {
+          "inline": true,
+          "name": "📅 Date",
+          "value": "<t:1795129200:D>",
+        },
+        {
+          "inline": true,
+          "name": "⏰ Time",
+          "value": "<t:1795129200:t>",
+        },
+        {
+          "inline": true,
+          "name": "⏳ Starts",
+          "value": "<t:1795129200:R>",
+        },
+        {
+          "inline": true,
+          "name": "👥 Going",
+          "value": "4",
+        },
+        {
+          "inline": true,
+          "name": "🏷️ Format",
+          "value": "Not announced yet",
+        },
+        {
+          "inline": true,
+          "name": "​",
+          "value": "​",
+        },
+        {
+          "inline": true,
+          "name": "Going (4)",
+          "value": "1. Alice · 2 req
+2. Bob",
+        },
+        {
+          "inline": true,
+          "name": "​",
+          "value": "3. Carol · 1 req
+4. Dan",
+        },
+        {
+          "name": "Not going, kept requests",
+          "value": "1. Eve · 1 req",
+        },
+        {
+          "name": "Open requests (4)",
+          "value": "🔴 · 3× Snatch · Alice
+🔵 · 2× Sink Below · Carol
+🟡 · 1× Enlightened Strike · Alice
++1 more in [ArmoryPal](https://armorypal.test/events/7afd6814-aa2c-490d-a17c-3dac4b852563?tab=requests)",
+        },
+      ],
+      "footer": {
+        "text": "ArmoryPal · updates live",
+      },
+      "title": "Thursday Armory",
+      "url": "https://armorypal.test/events/7afd6814-aa2c-490d-a17c-3dac4b852563",
+    },
+  ],
+}
+`;

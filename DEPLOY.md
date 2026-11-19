@@ -94,6 +94,21 @@ Locally: put the two values in `supabase/.env` as `SUPABASE_AUTH_EXTERNAL_GOOGLE
 `SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET`, set `enabled = true` under `[auth.external.google]` in `supabase/config.toml`,
 add `NEXT_PUBLIC_ENABLE_GOOGLE_LOGIN=true` to `.env.local`, then `npx supabase stop; npx supabase start`.
 
+### Connecting Discord to an existing account (manual linking)
+
+Profile → **Connected accounts** lets a player who signed in another way connect (and later disconnect) Discord,
+which ArmoryBot needs. It uses Supabase's `linkIdentity()`, which only works with **manual linking** on:
+
+1. Supabase dashboard → **Authentication → Sign In / Providers** → turn on **Allow manual linking**
+   (Supabase still labels it beta). Without it, Connect shows "Connecting accounts isn't turned on yet."
+2. Nothing else: it reuses the Discord provider and the `/auth/callback` redirect URL from above.
+
+Locally it's `enable_manual_linking = true` under `[auth]` in `supabase/config.toml` (already set). Config changes
+need `npx supabase stop; npx supabase start`.
+
+A Discord account that already has its own ArmoryPal account can't be connected to a second one (Supabase returns
+`identity_already_exists`; the page explains it). Merging two accounts isn't supported yet.
+
 ## 8. Email (magic links): off at launch
 
 ArmoryPal launched **Discord-only**: the email form is hidden unless `NEXT_PUBLIC_ENABLE_EMAIL_LOGIN=true`.
@@ -121,6 +136,56 @@ npx tsx scripts/make-admin.mts you@example.com --env .env.production.local
 - [ ] Install: iPhone Safari → Share → **Add to Home Screen**; Android Chrome → **Install**. Opens full-screen
       with the green card icon.
 - [ ] Turn on airplane mode and reload: the "You're offline" page appears.
+
+## 11. ArmoryBot (Discord bot)
+
+ArmoryBot runs as Supabase Edge Functions; nothing goes to Vercel. Its secrets live only in Supabase. Design: `docs/armorybot.md`.
+
+Use the **same Discord application** as Discord login (step 7). Adding a bot doesn't change the OAuth login.
+
+1. **Developer portal → Bot:** **Reset Token** and copy it (you can't see it again). No privileged intents are needed.
+2. **Developer portal → Installation:**
+   - Installation contexts: **Guild Install** only (untick User Install).
+   - Default install settings: scopes `bot` and `applications.commands`.
+   - Permissions: **View Channels**, **Send Messages**, **Embed Links**, **Read Message History**.
+3. **Secrets file:** create `supabase/functions/.env.production` (git-ignored) from `supabase/functions/.env.example`, with:
+   - the **production** App ID and Public Key (General Information),
+   - the bot token,
+   - `ARMORYPAL_URL=https://armorypal.vercel.app`,
+   - a new random `DISCORD_WORKER_SECRET` (the file shows how to generate one).
+   Then `npx supabase db push` to apply the ArmoryBot migrations (they enable `pg_net` and schedule the worker).
+4. **Push the secrets and deploy:**
+   ```powershell
+   npx supabase secrets set --env-file supabase/functions/.env.production --project-ref hlfjqfwiotpvbjrslrnn
+   npx supabase functions deploy discord-interactions --project-ref hlfjqfwiotpvbjrslrnn
+   npx supabase functions deploy discord-worker --project-ref hlfjqfwiotpvbjrslrnn
+   ```
+   `verify_jwt = false` comes from `supabase/config.toml`: Discord's signature, and the worker's shared secret, are the auth.
+5. **Wake the worker:** in the Supabase dashboard → SQL Editor, store where pg_cron/pg_net call the worker, and with which secret
+   (the same `DISCORD_WORKER_SECRET` value):
+   ```sql
+   select vault.create_secret('https://hlfjqfwiotpvbjrslrnn.supabase.co/functions/v1/discord-worker', 'discord_worker_url');
+   select vault.create_secret('<DISCORD_WORKER_SECRET>', 'discord_worker_secret');
+   ```
+   Until both exist, nothing calls the worker: no posts, no edits. To rotate the secret, run `supabase secrets set` and
+   `select vault.update_secret((select id from vault.secrets where name = 'discord_worker_secret'), '<new>');`.
+   **Check it runs:** Edge Functions → discord-worker → Logs shows a `discord-worker {...}` line every minute.
+6. **Developer portal → General Information → Interactions Endpoint URL:**
+   `https://hlfjqfwiotpvbjrslrnn.supabase.co/functions/v1/discord-interactions` → **Save Changes**.
+   Discord checks the endpoint first (a signed PING, plus a badly signed one that must get 401). If saving fails, check that the Public Key secret matches this app.
+7. **Register the slash commands:**
+   ```powershell
+   npx tsx scripts/register-discord-commands.mts --env supabase/functions/.env.production
+   ```
+   It prints `Target: Discord app …`. Global commands can take a few minutes to appear.
+8. **Invite link** for store owners (permissions 84992 = the four above):
+   `https://discord.com/oauth2/authorize?client_id=<APP_ID>&scope=bot+applications.commands&permissions=84992`
+9. **Smoke test:**
+   - In a test server: `/armory link-store` (you must be an admin or a store owner, with Discord connected on your Profile).
+   - Then `/armory status`.
+   - With `days_before` covering the next event, the post appears within a minute. Tap Going, and the post updates a few seconds later.
+
+Re-run steps 4 and 7 after changing the functions or the commands.
 
 ---
 

@@ -95,6 +95,31 @@ export const NOTIFICATION_KINDS: readonly { kind: string; label: string; descrip
   },
 ];
 
+/**
+ * Where a notification can be delivered. Keep in sync with the
+ * public.notification_channel domain (*_armorybot.sql).
+ */
+export const NOTIFICATION_CHANNELS = ["app", "discord"] as const;
+export type NotificationChannel = (typeof NOTIFICATION_CHANNELS)[number];
+
+/** Kinds ArmoryBot can also send as a Discord DM (the notification_preferences check constraint). */
+export const DISCORD_DM_KINDS: readonly string[] = ["new_requests", "card_needed_again"];
+
+/**
+ * Whether a player gets `kind` on `channel`, given their saved preference rows.
+ * In-app is on unless turned off; Discord DMs are off unless turned on.
+ * Mirrors notify() in SQL.
+ */
+export function isNotificationEnabled(
+  kind: string,
+  channel: NotificationChannel,
+  prefs: readonly { kind: string; channel: string; enabled: boolean }[],
+): boolean {
+  if (channel === "discord" && !DISCORD_DM_KINDS.includes(kind)) return false;
+  const row = prefs.find((p) => p.kind === kind && p.channel === channel);
+  return row ? row.enabled : channel === "app";
+}
+
 /** One-line message for a notification. */
 export function formatNotification(kind: string, payload: NotificationPayload): string {
   const actor = payload.actor || "Someone";
