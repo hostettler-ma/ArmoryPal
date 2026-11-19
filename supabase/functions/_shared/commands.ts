@@ -33,7 +33,7 @@ export const COMMANDS = [
       {
         type: OptionType.SUB_COMMAND,
         name: "link-store",
-        description: "Post a store's Armory events in a channel (store owners)",
+        description: "Post a store's Armory events in a channel",
         options: [storeOption(true, "The store"), channelOption("Where to post (default: this channel)")],
       },
       {

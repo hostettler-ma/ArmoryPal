@@ -7,6 +7,7 @@ import { CreateEventButton, EditSlotButton, StoreInfoForm } from "@/components/m
 import { WeeklyPollToggle } from "@/components/manage/poll-controls";
 import { formatLabel } from "@/lib/formats";
 import { PageHeader } from "@/components/page-header";
+import { ARMORYBOT_GUIDE_PATH } from "@/lib/armorybot";
 import { requireStoreManager } from "@/lib/auth";
 import { localToday } from "@/lib/event-manage";
 import { formatEventWhen } from "@/lib/events";
@@ -72,6 +73,16 @@ export default async function ManageStorePage({
       {tab === "info" && (
         <section className="space-y-3">
           <StoreInfoForm storeId={store.id} notes={store.notes ?? ""} ticket={store.ticket_url ?? ""} />
+          <div className="card space-y-1">
+            <h2 className="text-heading-02">Post your events in Discord</h2>
+            <p className="text-body-compact text-muted">
+              ArmoryBot posts each event in your Discord server and keeps it up to date. Whoever runs the server can set
+              it up, even without an ArmoryPal account.
+            </p>
+            <Link href={ARMORYBOT_GUIDE_PATH} className="inline-block text-label link">
+              How to set up ArmoryBot ›
+            </Link>
+          </div>
         </section>
       )}
     </main>

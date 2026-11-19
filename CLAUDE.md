@@ -132,8 +132,8 @@ Mobile-first companion PWA for the Flesh and Blood TCG. Players coordinate card 
     - **Pruning:** the `prune-discord-queues` pg_cron job deletes processed rows older than 7 days, daily.
   - **`bot_*` RPCs** are security definer, with `execute` for service_role only:
     - `bot_search_stores`.
-    - `bot_link_store`: store manager via `can_user_manage_store`, else `not_store_owner`.
-    - `bot_update_settings`: raises `invalid_days_before`, `store_required`, `store_not_linked`.
+    - `bot_link_store(…, has_manage_guild)`: anyone with Manage Server (no ArmoryPal account needed), else a store manager with Discord linked, else `not_store_owner` (`bot_assert_can_configure`, `*_bot_server_managers.sql`; a suspended account is always refused). Server managers often aren't the store's owner on ArmoryPal.
+    - `bot_update_settings(…, has_manage_guild)`: same check; raises `invalid_days_before`, `store_required`, `store_not_linked`.
     - `bot_unlink_store(…, has_manage_guild)`: manager **or** Manage Server (taken from the signed interaction).
     - `bot_status`, `bot_attend`, `bot_leave`, `bot_event_requests`, `bot_render_event`.
     - `bot_claim_outbox` (`for update skip locked`, 2-minute claim), `bot_complete_outbox`, `bot_fail_outbox` (retries stay claimed until `next_attempt_at`; gives up after 8 attempts).
@@ -143,6 +143,7 @@ Mobile-first companion PWA for the Flesh and Blood TCG. Players coordinate card 
     - **Connect** sends `prompt=none` and returns through `/auth/callback?next=/me`.
     - **Disconnect** is offered only when another identity remains.
     - **Link errors** (`identity_already_exists`, `manual_linking_disabled`, `single_identity_not_deletable`) come back as `?error_code=` on the callback, which forwards known ones (`LINK_ERRORS`) to `next` as `?link_error=`.
+  - **Setup guide** (`src/app/discord-bot/page.tsx`, public via `PUBLIC_PATHS`): step-by-step setup for server admins and store owners, linked from the menu ("ArmoryBot for Discord"), the Manage my store → Store info tab and the bot's empty `/armory status` reply. The invite button comes from `armoryBotInviteUrl(NEXT_PUBLIC_DISCORD_CLIENT_ID)` (`src/lib/armorybot.ts`, with the permissions and the link defaults); without the env var the page offers the contact email. Update the page when commands or defaults change.
   - **Tests:** `tests/db/discord.test.ts`, `e2e/security/discord-bot.spec.ts` and `e2e/functional/connected-accounts.spec.ts`.
     - They seed Discord identities straight into `auth.identities` with the `postgres` client (`linkDiscord()` in `tests/db/helpers.ts`, `linkDiscordIdentity()` in `e2e/support/identities.ts`; local DB only).
 - **Rules are enforced in the database**: writes with rules go through `security definer` RPCs that lock the request row (`FOR UPDATE`), and RLS blocks direct writes. The same rules are mirrored as pure functions in `src/lib/rules.ts` for UI feedback, and **both are tested**.
@@ -200,7 +201,7 @@ Mobile-first companion PWA for the Flesh and Blood TCG. Players coordinate card 
   - **Manifest and icons:** `src/app/manifest.ts`. Icons are generated with `next/og` from `src/lib/app-icon.tsx` (`/icons/*.png`, `/icon`, `/apple-icon`). They and `/~offline` are public (middleware matcher and `PUBLIC_PATHS`).
   - **Install hint:** `<InstallHint>` on Home, using `beforeinstallprompt` on Android and Share instructions on iOS.
 - **Getting-started guide:** the steps live in `GUIDE_STEPS` (`src/lib/guide.ts`), the single source for both the pop-up carousel (`<GettingStartedGuide>`) and the `/guide` page ("Getting started" in the menu). Home shows `<FirstRunGuide>` while `profiles.guide_seen_at` is null. Skipping or finishing calls `markGuideSeen()`. The column was backfilled for existing accounts, so only accounts created after that see the pop-up.
-- **Deploying:** see `DEPLOY.md`. The scripts accept `--env .env.production.local` and print their `Target:` URL. Vercel only needs `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`; the secret key never goes to Vercel.
+- **Deploying:** see `DEPLOY.md`. The scripts accept `--env .env.production.local` and print their `Target:` URL. Vercel needs `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, plus the optional public `NEXT_PUBLIC_DISCORD_CLIENT_ID` (ArmoryBot's invite button); the secret key never goes to Vercel.
 - **Grants are explicit** (`*_explicit_api_grants.sql`). Production doesn't auto-grant API roles access to new tables or functions, so **every new table or RPC needs its own `grant` in its migration**: `select` (plus the exact writes) for `authenticated`, `execute` for RPCs, and `all` for `service_role`. `anon` gets nothing. To reproduce production locally, revoke all from `anon`/`authenticated`/`service_role`/`public` on `public` tables and functions, re-run that migration, then run `npm run test:db`.
 - **Security baseline:** every public table has RLS. `next.config.ts` sets X-Frame-Options, nosniff, Referrer-Policy and Permissions-Policy on every response (no CSP yet). No security-definer function is executable by `anon`; check this after adding functions. Internal helpers revoke `execute` from `authenticated` too.
 

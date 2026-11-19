@@ -138,6 +138,8 @@ async function handleCommand(i: Interaction, deps: Deps): Promise<InteractionRes
   const userId = invokerId(i);
   if (!guildId || !userId || i.data?.name !== "armory" || !sub) return reply("Use this command in a server.");
   const now = deps.now?.() ?? new Date();
+  // From the signed interaction: server managers can set ArmoryBot up without owning the store on ArmoryPal.
+  const manageGuild = hasPermission(i.member?.permissions, Permission.MANAGE_GUILD);
   const str = (name: string) => {
     const v = sub.options[name]?.value;
     return typeof v === "string" ? v : undefined;
@@ -154,6 +156,7 @@ async function handleCommand(i: Interaction, deps: Deps): Promise<InteractionRes
         p_guild_id: guildId,
         p_channel_id: channelId,
         p_store_id: storeId,
+        p_has_manage_guild: manageGuild,
       });
       if (linked.error) return errorReply(linked.error, deps);
 
@@ -179,7 +182,7 @@ async function handleCommand(i: Interaction, deps: Deps): Promise<InteractionRes
       const daysBefore = sub.options.days_before?.value;
       const channelId = str("channel");
 
-      const args: Record<string, unknown> = { p_discord_id: userId, p_guild_id: guildId };
+      const args: Record<string, unknown> = { p_discord_id: userId, p_guild_id: guildId, p_has_manage_guild: manageGuild };
       if (storeId) args.p_store_id = storeId;
       if (typeof daysBefore === "number") args.p_days_before = daysBefore;
       if (postTime) args.p_post_time = postTime;
@@ -189,7 +192,7 @@ async function handleCommand(i: Interaction, deps: Deps): Promise<InteractionRes
 
       const status = await guildStatus(deps, guildId);
       const mine = status.data?.find((s) => s.store_id === updated.data.store_id);
-      const changed = Object.keys(args).length > 2;
+      const changed = Object.keys(args).length > 3;
       return reply(`${changed ? "Saved." : "Current settings:"}\n${mine ? describeLink(mine, now) : ""}`.trim());
     }
 
@@ -201,7 +204,7 @@ async function handleCommand(i: Interaction, deps: Deps): Promise<InteractionRes
         p_discord_id: userId,
         p_guild_id: guildId,
         p_store_id: storeId ?? null,
-        p_has_manage_guild: hasPermission(i.member?.permissions, Permission.MANAGE_GUILD),
+        p_has_manage_guild: manageGuild,
       });
       if (unlinked.error) return errorReply(unlinked.error, deps);
       const name = before.data?.find((s) => s.store_id === unlinked.data)?.store;
@@ -213,7 +216,11 @@ async function handleCommand(i: Interaction, deps: Deps): Promise<InteractionRes
     case "status": {
       const status = await guildStatus(deps, guildId);
       if (status.error) return errorReply(status.error, deps);
-      if (!status.data.length) return reply("No stores are linked to this server yet. A store owner can add one with `/armory link-store`.");
+      if (!status.data.length) {
+        return reply(
+          `No stores are linked to this server yet. Anyone with Manage Server can add one with \`/armory link-store\`. How to set it up: <${deps.appUrl}/discord-bot>`,
+        );
+      }
       return reply(truncate(status.data.map((s) => describeLink(s, now)).join("\n\n"), 1900));
     }
   }

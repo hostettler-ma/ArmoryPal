@@ -12,6 +12,7 @@ const SECTIONS = [
   { href: "/me", label: "Profile" },
   { href: "/settings/notifications", label: "Notification settings" },
   { href: "/guide", label: "Getting started" },
+  { href: "/discord-bot", label: "ArmoryBot for Discord" },
 ];
 
 /** The section a path belongs to: exact match for Home, longest prefix otherwise. */
