@@ -283,7 +283,7 @@ describe("attend and leave from Discord", () => {
 });
 
 describe("linking a server", () => {
-  it("only store managers with Discord linked can link a store", async () => {
+  it("without Manage Server, only store managers with Discord linked can link a store", async () => {
     const link = (discordId: string, store = storeId) =>
       admin.rpc("bot_link_store", { p_discord_id: discordId, p_guild_id: guild, p_channel_id: channel, p_store_id: store });
 
@@ -296,6 +296,57 @@ describe("linking a server", () => {
     // Admins can link any store; the owner can't link a store they don't run.
     expect(await errorOf(link(ownerDiscord, otherStoreId))).toBe("not_store_owner");
     must(await link(adminDiscord, otherStoreId), "admin links");
+  });
+
+  it("anyone with Manage Server can link and configure a store, even without an ArmoryPal account", async () => {
+    const otherGuild = snowflake();
+    const manager = snowflake(); // runs the Discord server, not on ArmoryPal
+    const linked = must(
+      await admin.rpc("bot_link_store", {
+        p_discord_id: manager,
+        p_guild_id: otherGuild,
+        p_channel_id: channel,
+        p_store_id: storeId,
+        p_has_manage_guild: true,
+      }),
+      "manager links",
+    );
+    expect(linked).toMatchObject({ guild_id: otherGuild, store_id: storeId, linked_by: null });
+    const updated = must(
+      await admin.rpc("bot_update_settings", { p_discord_id: manager, p_guild_id: otherGuild, p_days_before: 4, p_has_manage_guild: true }),
+      "manager settings",
+    );
+    expect(updated.days_before).toBe(4);
+    expect(
+      await errorOf(admin.rpc("bot_update_settings", { p_discord_id: manager, p_guild_id: otherGuild, p_days_before: 5 })),
+    ).toBe("discord_not_linked");
+    // Still refused: archived or unknown stores, and suspended accounts.
+    expect(
+      await errorOf(
+        admin.rpc("bot_link_store", {
+          p_discord_id: manager,
+          p_guild_id: otherGuild,
+          p_channel_id: channel,
+          p_store_id: "00000000-0000-4000-a000-000000000000",
+          p_has_manage_guild: true,
+        }),
+      ),
+    ).toBe("store_not_found");
+    const banned = await createTestUser({ name: "Bot Banned Manager" });
+    const bannedDiscord = await linkDiscord(banned.id);
+    await db()`insert into public.bans (user_id, reason) values (${banned.id}, 'test')`;
+    expect(
+      await errorOf(
+        admin.rpc("bot_link_store", {
+          p_discord_id: bannedDiscord,
+          p_guild_id: otherGuild,
+          p_channel_id: channel,
+          p_store_id: storeId,
+          p_has_manage_guild: true,
+        }),
+      ),
+    ).toBe("banned");
+    await db()`delete from public.discord_guild_stores where guild_id = ${otherGuild}`;
   });
 
   it("archived stores can't be linked", async () => {

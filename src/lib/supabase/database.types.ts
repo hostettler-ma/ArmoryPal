@@ -690,6 +690,9 @@ isOneToOne: false
 "attend_event_as":
 { Args: { "p_event_id": string,"p_user_id": string }; Returns: undefined
                            },
+"bot_assert_can_configure":
+{ Args: { "p_discord_id": string,"p_has_manage_guild": boolean,"p_store_id": string }; Returns: string
+                           },
 "bot_attend":
 { Args: { "p_discord_id": string,"p_event_id": string }; Returns: undefined
                            },
@@ -754,7 +757,7 @@ isOneToOne: false
 { Args: { "p_cancel_requests": boolean,"p_discord_id": string,"p_event_id": string }; Returns: undefined
                            },
 "bot_link_store":
-{ Args: { "p_channel_id": string,"p_discord_id": string,"p_guild_id": string,"p_store_id": string }; Returns: {
+{ Args: { "p_channel_id": string,"p_discord_id": string,"p_guild_id": string,"p_has_manage_guild"?: boolean,"p_store_id": string }; Returns: {
               "broken_at": string | null,
 "broken_reason": string | null,
 "channel_id": string,
@@ -814,7 +817,7 @@ isOneToOne: false
 { Args: { "p_discord_id": string,"p_guild_id": string,"p_has_manage_guild"?: boolean,"p_store_id"?: string }; Returns: string
                            },
 "bot_update_settings":
-{ Args: { "p_channel_id"?: string,"p_days_before"?: number,"p_discord_id": string,"p_guild_id": string,"p_post_time"?: string,"p_store_id"?: string }; Returns: {
+{ Args: { "p_channel_id"?: string,"p_days_before"?: number,"p_discord_id": string,"p_guild_id": string,"p_has_manage_guild"?: boolean,"p_post_time"?: string,"p_store_id"?: string }; Returns: {
               "broken_at": string | null,
 "broken_reason": string | null,
 "channel_id": string,

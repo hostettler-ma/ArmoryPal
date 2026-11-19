@@ -12,7 +12,7 @@ export const BOT_MESSAGES: Record<string, string> = {
   event_ended: "This event has already ended.",
   event_cancelled: "This event was cancelled.",
   // Linking a server
-  not_store_owner: "Only this store's owners (or ArmoryPal admins) can do that.",
+  not_store_owner: "You need Manage Server in this server, or to own this store on ArmoryPal.",
   store_not_found: "That store doesn't exist. Pick one from the list.",
   store_not_linked: "That store isn't linked to this server.",
   store_required: "This server shows several stores. Pick one with the store option.",

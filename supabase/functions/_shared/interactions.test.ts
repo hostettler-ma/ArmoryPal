@@ -81,11 +81,19 @@ describe("/armory link-store", () => {
     });
     expect(calls[0]).toEqual({
       name: "bot_link_store",
-      args: { p_discord_id: "999", p_guild_id: "111", p_channel_id: "222", p_store_id: STORE },
+      args: { p_discord_id: "999", p_guild_id: "111", p_channel_id: "222", p_store_id: STORE, p_has_manage_guild: false },
     });
     expect(data(res).content).toContain("Linked! **Uncommons** → <#222> · posted 2 days before, at 10:00 store time");
     expect(data(res).content).toContain("posted within a minute"); // post_at is already past
     expect(data(res).content).not.toContain("Make sure ArmoryBot can view");
+  });
+
+  it("passes Manage Server, so server managers can link without owning the store", async () => {
+    const manage = command("link-store", [{ name: "store", type: 3, value: STORE }], {
+      member: { user: { id: "999" }, permissions: String(1n << 5n) },
+    });
+    const { calls } = await run(manage, { bot_link_store: { store_id: STORE }, bot_status: [statusRow] });
+    expect(calls[0].args.p_has_manage_guild).toBe(true);
   });
 
   it("warns when the bot may not be able to post in the chosen channel", async () => {
@@ -110,7 +118,7 @@ describe("/armory link-store", () => {
     const { res } = await run(command("link-store", [{ name: "store", type: 3, value: STORE }]), {
       bot_link_store: new Error("not_store_owner"),
     });
-    expect(data(res).content).toBe("Only this store's owners (or ArmoryPal admins) can do that.");
+    expect(data(res).content).toBe("You need Manage Server in this server, or to own this store on ArmoryPal.");
   });
 
   it("offers to connect Discord when the invoker isn't linked", async () => {
@@ -137,7 +145,13 @@ describe("/armory settings, unlink, status", () => {
       ]),
       { bot_update_settings: { store_id: STORE }, bot_status: [{ ...statusRow, days_before: 0, post_time: "09:30" }] },
     );
-    expect(calls[0].args).toEqual({ p_discord_id: "999", p_guild_id: "111", p_days_before: 0, p_post_time: "09:30" });
+    expect(calls[0].args).toEqual({
+      p_discord_id: "999",
+      p_guild_id: "111",
+      p_has_manage_guild: false,
+      p_days_before: 0,
+      p_post_time: "09:30",
+    });
     expect(data(res).content).toMatch(/^Saved\.\n\*\*Uncommons\*\* → <#222> · posted on the day, at 09:30/);
   });
 

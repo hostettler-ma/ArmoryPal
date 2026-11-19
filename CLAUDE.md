@@ -132,8 +132,8 @@ Mobile-first companion PWA for the Flesh and Blood TCG. Players coordinate card 
     - **Pruning:** the `prune-discord-queues` pg_cron job deletes processed rows older than 7 days, daily.
   - **`bot_*` RPCs** are security definer, with `execute` for service_role only:
     - `bot_search_stores`.
-    - `bot_link_store`: store manager via `can_user_manage_store`, else `not_store_owner`.
-    - `bot_update_settings`: raises `invalid_days_before`, `store_required`, `store_not_linked`.
+    - `bot_link_store(…, has_manage_guild)`: anyone with Manage Server (no ArmoryPal account needed), else a store manager with Discord linked, else `not_store_owner` (`bot_assert_can_configure`, `*_bot_server_managers.sql`; a suspended account is always refused). Server managers often aren't the store's owner on ArmoryPal.
+    - `bot_update_settings(…, has_manage_guild)`: same check; raises `invalid_days_before`, `store_required`, `store_not_linked`.
     - `bot_unlink_store(…, has_manage_guild)`: manager **or** Manage Server (taken from the signed interaction).
     - `bot_status`, `bot_attend`, `bot_leave`, `bot_event_requests`, `bot_render_event`.
     - `bot_claim_outbox` (`for update skip locked`, 2-minute claim), `bot_complete_outbox`, `bot_fail_outbox` (retries stay claimed until `next_attempt_at`; gives up after 8 attempts).

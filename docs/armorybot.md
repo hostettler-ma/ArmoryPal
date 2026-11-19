@@ -4,6 +4,8 @@ ArmoryBot is a Discord bot that shares ArmoryPal's Supabase database. It keeps a
 
 **Status:** all four phases are built: groundwork + connected accounts, interactions endpoint, posts and sync, and DMs.
 
+**Change (2026-11-18): server managers set it up.** The person running a Discord server is often not the store's owner on ArmoryPal. `link-store` and `settings` now work for anyone with **Manage Server** in that server (from the signed `member.permissions`, like `unlink`), with no ArmoryPal account needed. Without Manage Server (a server can open the command to other roles), the store's owners and admins still can. A suspended ArmoryPal account is refused. The posts only show what any signed-in player sees on the event page.
+
 **Phase 4 notes (2026-11-18):**
 - **Queueing:** DM rows are queued per player by `notify()` (decision B). Each needs the player opted in (decision A), Discord linked, and no "undeliverable" pause in the last 24 h.
 - **Batching:** the worker claims a player's rows once the oldest is 2 minutes old, together with any newer ones, so a burst becomes one DM. Two workers claiming the same player at once could split a batch in two (`skip locked`). That's harmless and rare.
@@ -300,8 +302,8 @@ All of them are `security definer` with `set search_path = ''`, `execute` grante
 | RPC | Does |
 |---|---|
 | `bot_search_stores(q)` | Wraps `search_stores` ranking (minus archived), max 25, returns `id, name, city, region`. No user needed, since autocomplete runs for unlinked admins too. |
-| `bot_link_store(discord_id, guild_id, channel_id, store_id)` | `can_manage_store` for the resolved user, else `not_store_owner`. Upserts the link and clears `broken_at`. Returns the link plus its next post time. |
-| `bot_update_settings(discord_id, guild_id, store_id?, days_before?, post_time?, channel_id?)` | Same check. Validates `days_before` 0–6 (`invalid_days_before`). When the server links several stores, `store_id` is required (`store_required`). |
+| `bot_link_store(discord_id, guild_id, channel_id, store_id, has_manage_guild bool)` | Allowed with `has_manage_guild` (no ArmoryPal account needed; `linked_by` is null then), or for a store manager with Discord linked, else `not_store_owner` (`bot_assert_can_configure`, migration `*_bot_server_managers.sql`). A suspended account is refused either way (`banned`). Upserts the link and clears `broken_at`. Returns the link plus its next post time. |
+| `bot_update_settings(discord_id, guild_id, store_id?, days_before?, post_time?, channel_id?, has_manage_guild?)` | Same check. Validates `days_before` 0–6 (`invalid_days_before`). When the server links several stores, `store_id` is required (`store_required`). |
 | `bot_unlink_store(discord_id, guild_id, store_id?, has_manage_guild bool)` | Allowed if `has_manage_guild` **or** the user can manage the store, else `not_store_owner`. The boolean comes from the signed interaction's `member.permissions` (MANAGE_GUILD = `1 << 5`), which the function verified. The DB can't check Discord permissions itself, and the RPC is reachable only with the secret key. Unlinking doesn't delete existing posts; they're finalized (buttons disabled). |
 | `bot_status(guild_id)` | Links, settings, `broken_at` and next post per store. Read-only; the command is already gated by Manage Server. |
 | `bot_attend(discord_id, event_id)` | `attend_event_as` |
@@ -319,7 +321,7 @@ All of them are `security definer` with `set search_path = ''`, `execute` grante
 - **Migration grants:** explicit grants for every table and function.
 - **`tests/db/discord-*.test.ts`:**
   - Each `bot_*` RPC enforces the same rules as the app: ended, cancelled, deleted, banned, unlinked.
-  - Link permission: owner and admin succeed; a non-owner gets `not_store_owner`; Manage Server only allows unlink.
+  - Link permission: Manage Server succeeds even without an ArmoryPal account; without it, owner and admin succeed and a non-owner gets `not_store_owner`.
   - The triggers queue the right outbox rows, and coalesce them.
   - `notify()` queues DMs only for linked users with the channel on.
   - The `auth.identities` uniqueness constraint exists.
