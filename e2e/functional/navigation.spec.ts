@@ -62,6 +62,36 @@ test("privacy policy, terms, the welcome page and the ArmoryBot guide are public
   }
 });
 
+test("the public pages keep the app bar: a signed-out menu, or the full one when signed in", async ({ page, newPlayer }) => {
+  for (const path of ["/about", "/discord-bot"]) {
+    await page.goto(path);
+    // One wordmark, in the bar, in the regular text colour (not a green link).
+    const wordmark = page.getByRole("link", { name: "ArmoryPal", exact: true });
+    await expect(wordmark).toHaveCount(1);
+    const colors = await wordmark.evaluate((el) => [getComputedStyle(el).color, getComputedStyle(document.body).color]);
+    expect(colors[0], path).toBe(colors[1]);
+    await page.getByRole("button", { name: "Menu", exact: true }).click();
+    const menu = page.getByRole("dialog", { name: "Menu" });
+    await expect(menu.getByRole("link", { name: "Sign in" })).toBeVisible();
+    await expect(menu.getByRole("button", { name: "Sign out" })).toHaveCount(0);
+    await menu.getByRole("button", { name: "Close menu" }).click();
+  }
+  await page.getByRole("button", { name: "Menu", exact: true }).click();
+  await page.getByRole("dialog", { name: "Menu" }).getByRole("link", { name: "About ArmoryPal" }).click();
+  await expect(page).toHaveURL(/\/about$/);
+
+  const player = await newPlayer({ name: `Reader ${uid()}` });
+  for (const path of ["/about", "/discord-bot"]) {
+    await player.page.goto(path);
+    await expect(player.page.getByRole("link", { name: player.name })).toBeVisible(); // the profile chip
+    await player.page.getByRole("button", { name: "Menu", exact: true }).click();
+    const menu = player.page.getByRole("dialog", { name: "Menu" });
+    await expect(menu.getByRole("link", { name: "Find a store", exact: true })).toBeVisible();
+    await expect(menu.getByRole("button", { name: "Sign out" })).toBeVisible();
+    await menu.getByRole("button", { name: "Close menu" }).click();
+  }
+});
+
 test("the welcome page shows what ArmoryPal does, with pictures, signed out", async ({ page }) => {
   await page.goto("/about");
   await expect(page.getByRole("heading", { level: 1, name: "Welcome to ArmoryPal" })).toBeVisible();

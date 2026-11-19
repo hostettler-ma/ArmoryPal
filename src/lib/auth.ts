@@ -28,6 +28,33 @@ export const requireProfile = cache(async () => {
   return { supabase, user, profile: { ...profile, display_name: profile.display_name } };
 });
 
+/**
+ * For public pages that show the app bar when someone is signed in: the same checks as
+ * requireProfile, but null instead of redirecting (signed out, not onboarded, or banned).
+ */
+export const getOptionalProfile = cache(async () => {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("id, display_name, is_admin")
+    .eq("id", user.id)
+    .single();
+  if (!profile?.display_name) return null;
+  const { data: ban } = await supabase.from("bans").select("user_id").eq("user_id", user.id).maybeSingle();
+  if (ban) return null;
+  const { data: owned } = await supabase.from("store_owners").select("store_id").eq("user_id", user.id).limit(1);
+  return {
+    supabase,
+    user,
+    profile: { ...profile, display_name: profile.display_name },
+    managesStores: (owned ?? []).length > 0,
+  };
+});
+
 /** Like requireProfile, but 404s for non-admins so the admin area stays hidden. */
 export async function requireAdmin() {
   const ctx = await requireProfile();

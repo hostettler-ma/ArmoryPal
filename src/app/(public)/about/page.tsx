@@ -2,12 +2,12 @@ import type { Metadata } from "next";
 import Image, { type StaticImageData } from "next/image";
 import Link from "next/link";
 import { FanNotice } from "@/components/fan-notice";
-import checklistShot from "../../../public/tour/checklist.png";
-import eventShot from "../../../public/tour/event.png";
-import homeShot from "../../../public/tour/home.png";
-import manageShot from "../../../public/tour/manage.png";
-import notificationsShot from "../../../public/tour/notifications.png";
-import requestsShot from "../../../public/tour/requests.png";
+import checklistShot from "../../../../public/tour/checklist.png";
+import eventShot from "../../../../public/tour/event.png";
+import homeShot from "../../../../public/tour/home.png";
+import manageShot from "../../../../public/tour/manage.png";
+import notificationsShot from "../../../../public/tour/notifications.png";
+import requestsShot from "../../../../public/tour/requests.png";
 
 export const metadata: Metadata = {
   title: "Welcome to ArmoryPal",
@@ -60,9 +60,6 @@ export default function AboutPage() {
     <>
       <main className="space-y-10 pb-6">
         <header className="space-y-3">
-          <Link href="/" className="wordmark">
-            ArmoryPal
-          </Link>
           <h1 className="text-heading-04">Welcome to ArmoryPal</h1>
           <p className="text-body text-muted">
             Many stores run a casual weekly Flesh and Blood event called an <strong>Armory</strong>. ArmoryPal helps
