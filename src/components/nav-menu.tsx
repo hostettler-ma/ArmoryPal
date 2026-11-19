@@ -24,16 +24,36 @@ function currentSection(pathname: string, hrefs: string[]): string | undefined {
     .sort((a, b) => b.length - a.length)[0];
 }
 
-/** Burger button that opens a left-side drawer for jumping between sections. */
-export function NavMenu({ isAdmin, managesStores }: { isAdmin: boolean; managesStores: boolean }) {
+/** For signed-out visitors on the public pages (/about, /discord-bot). */
+const SIGNED_OUT_SECTIONS = [
+  { href: "/about", label: "About ArmoryPal" },
+  { href: "/discord-bot", label: "ArmoryBot for Discord" },
+  { href: "/login", label: "Sign in" },
+];
+
+/**
+ * Burger button that opens a left-side drawer for jumping between sections.
+ * `signedOut` shows only the public pages and Sign in (no Sign out).
+ */
+export function NavMenu({
+  isAdmin = false,
+  managesStores = false,
+  signedOut = false,
+}: {
+  isAdmin?: boolean;
+  managesStores?: boolean;
+  signedOut?: boolean;
+}) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDialogElement>(null);
   const pathname = usePathname();
-  const sections = [
-    ...SECTIONS,
-    ...(managesStores ? [{ href: "/manage", label: "Manage my store" }] : []),
-    ...(isAdmin ? [{ href: "/admin", label: "Admin" }] : []),
-  ];
+  const sections = signedOut
+    ? SIGNED_OUT_SECTIONS
+    : [
+        ...SECTIONS,
+        ...(managesStores ? [{ href: "/manage", label: "Manage my store" }] : []),
+        ...(isAdmin ? [{ href: "/admin", label: "Admin" }] : []),
+      ];
   const active = currentSection(pathname, sections.map((s) => s.href));
 
   useEffect(() => {
@@ -91,11 +111,13 @@ export function NavMenu({ isAdmin, managesStores }: { isAdmin: boolean; managesS
               {s.label}
             </Link>
           ))}
-          <form action={signOut} className="mt-auto">
-            <button className="interactive flex min-h-control-lg w-full items-center rounded-control px-3 text-heading-02 text-danger">
-              Sign out
-            </button>
-          </form>
+          {!signedOut && (
+            <form action={signOut} className="mt-auto">
+              <button className="interactive flex min-h-control-lg w-full items-center rounded-control px-3 text-heading-02 text-danger">
+                Sign out
+              </button>
+            </form>
+          )}
         </nav>
       </dialog>
     </>
