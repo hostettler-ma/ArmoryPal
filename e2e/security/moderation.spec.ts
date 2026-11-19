@@ -25,6 +25,7 @@ test("regular players can't use any admin RPC", async () => {
     ["admin_ban", () => mallory.db.rpc("admin_ban", { p_user_id: victim.id, p_reason: "pwned" })],
     ["admin_unban", () => mallory.db.rpc("admin_unban", { p_user_id: victim.id })],
     ["admin_remove_attendee", () => mallory.db.rpc("admin_remove_attendee", { p_event_id: eventId, p_user_id: victim.id })],
+    ["admin_remove_discord_attendee", () => mallory.db.rpc("admin_remove_discord_attendee", { p_attendee_id: eventId })],
     ["admin_delete_store", () => mallory.db.rpc("admin_delete_store", { p_store_id: E2E_STORE_ID })],
     ["admin_restore_store", () => mallory.db.rpc("admin_restore_store", { p_store_id: E2E_STORE_ID })],
     ["admin_list_players", () => mallory.db.rpc("admin_list_players", { p_query: "" })],

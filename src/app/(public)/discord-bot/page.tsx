@@ -127,8 +127,8 @@ export default function DiscordBotGuidePage() {
             record.
           </li>
           <li>
-            <strong>Anyone in the channel can read the posts.</strong> Tapping Going needs a free ArmoryPal account
-            with Discord connected (<a href="#players">more below</a>).
+            <strong>Anyone in the channel can tap Going,</strong> even without an ArmoryPal account. Asking for
+            cards or offering to bring some needs a free account (<a href="#players">more below</a>).
           </li>
           <li>
             <strong>Optional DMs:</strong> players can ask ArmoryBot to message them when someone needs a card.
@@ -243,10 +243,14 @@ export default function DiscordBotGuidePage() {
       <Section id="players" title="What players need">
         <ul className="text-body-compact">
           <li>
-            <strong>To tap Going or Not going,</strong> a player needs an ArmoryPal account with their Discord
-            connected. Players who sign in to ArmoryPal with Discord are already set. Others connect it under{" "}
-            <Link href="/me#connected-accounts">Profile → Connected accounts</Link>. Otherwise ArmoryBot replies with a
-            Connect Discord button.
+            <strong>Going and Not going work for everyone.</strong> Players without an ArmoryPal account are listed
+            by their Discord name and marked &ldquo;via Discord&rdquo; in the app.
+          </li>
+          <li>
+            <strong>To ask for cards or bring some,</strong> a player needs an ArmoryPal account with their Discord
+            connected. Signing in to ArmoryPal with Discord does both, and any events they already tapped Going on
+            come along. Players with an account connect Discord under{" "}
+            <Link href="/me#connected-accounts">Profile → Connected accounts</Link>.
           </li>
           <li>
             <strong>Not going</strong> asks whether to keep or cancel their card requests, just like leaving in the

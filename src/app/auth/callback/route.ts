@@ -22,7 +22,15 @@ export async function GET(request: NextRequest) {
   if (code) {
     const supabase = await createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
-    if (!error) return NextResponse.redirect(`${origin}${next}`);
+    if (!error) {
+      // Spots taken with ArmoryBot's Going button before this Discord account had
+      // ArmoryPal become real attendances. Never blocks signing in.
+      await supabase.rpc("claim_my_discord_spots").then(
+        ({ error: claimError }) => claimError && console.error("claim_my_discord_spots failed", claimError),
+        (e: unknown) => console.error("claim_my_discord_spots failed", e),
+      );
+      return NextResponse.redirect(`${origin}${next}`);
+    }
     // Sign-in started in another browser: the Discord app returns to the phone's
     // default browser, which doesn't hold the code verifier. Starting again here works.
     if (isAuthPKCECodeVerifierMissingError(error)) {

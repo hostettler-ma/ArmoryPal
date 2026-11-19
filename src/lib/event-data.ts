@@ -28,8 +28,9 @@ export async function getCurrentEvents(
   if (!events?.length) return byStore;
 
   const eventIds = events.map((e) => e.id);
-  const [{ data: attendances }, { data: polls }] = await Promise.all([
+  const [{ data: attendances }, { data: guests }, { data: polls }] = await Promise.all([
     supabase.from("attendances").select("event_id, user_id").in("event_id", eventIds),
+    supabase.from("discord_attendees").select("event_id").in("event_id", eventIds),
     supabase.from("format_polls").select("event_id, closed_at, format_votes(user_id)").in("event_id", eventIds),
   ]);
   const waiting = new Set(
@@ -43,7 +44,7 @@ export async function getCurrentEvents(
     const summary: EventSummary = {
       ...e,
       label: e.label,
-      attendeeCount: forEvent.length,
+      attendeeCount: forEvent.length + (guests ?? []).filter((g) => g.event_id === e.id).length,
       attending: forEvent.some((a) => a.user_id === userId),
       pollWaiting: waiting.has(e.id) && !e.format && new Date(e.starts_at).getTime() > Date.now(),
     };
@@ -123,7 +124,7 @@ export async function getNextAttendingEvent(
   const { data: rows, error } = await supabase
     .from("attendances")
     .select(
-      "event:events!inner(id, starts_at, ends_at, label, format, cancelled_at, cancel_note, store:stores(id, name, timezone), attendances(user_id))",
+      "event:events!inner(id, starts_at, ends_at, label, format, cancelled_at, cancel_note, store:stores(id, name, timezone), attendances(user_id), discord_attendees(id))",
     )
     .eq("user_id", userId)
     .gt("event.ends_at", new Date().toISOString());
@@ -157,7 +158,7 @@ export async function getNextAttendingEvent(
       cancel_note: next.cancel_note,
       store: next.store,
     },
-    attendeeCount: next.attendances.length,
+    attendeeCount: next.attendances.length + next.discord_attendees.length,
     bringing: (pledges ?? [])
       .filter((p) => p.request?.card)
       .map((p) => ({

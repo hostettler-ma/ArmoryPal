@@ -82,6 +82,16 @@ function invokerId(i: Interaction): string | undefined {
   return i.member?.user.id ?? i.user?.id;
 }
 
+/** How the clicker appears on the Going list as a guest: server nickname, Discord display name, or username. */
+export function invokerName(i: Interaction): string | null {
+  const user = i.member?.user ?? i.user;
+  const name = [i.member?.nick, user?.global_name, user?.username].find((n) => n && n.trim());
+  return name ? name.trim().slice(0, 40) : null;
+}
+
+const signInUrl = (deps: Deps, eventId: string) =>
+  `${deps.appUrl}/login?next=${encodeURIComponent(`/events/${eventId}?tab=requests`)}`;
+
 function hasPermission(bits: string | undefined, flag: bigint): boolean {
   if (!bits || !/^\d+$/.test(bits)) return false;
   const value = BigInt(bits);
@@ -302,8 +312,18 @@ async function handleButton(i: Interaction, deps: Deps): Promise<InteractionResp
 
   switch (action) {
     case "going": {
-      const res = await deps.rpc("bot_attend", { p_discord_id: userId, p_event_id: eventId });
+      const res = await deps.rpc<"member" | "guest">("bot_attend", {
+        p_discord_id: userId,
+        p_event_id: eventId,
+        p_display_name: invokerName(i),
+      });
       if (res.error) return errorReply(res.error, deps);
+      if (res.data === "guest") {
+        return reply(
+          "You're on the Going list! ✅ To ask for cards or offer to bring some, sign in to ArmoryPal with this Discord account. Your spot comes with you.",
+          { components: [row(linkButton("Sign in with Discord", signInUrl(deps, eventId)))] },
+        );
+      }
       return reply("You're going! ✅ Add the cards you need, or offer to bring some, in ArmoryPal.", {
         components: [row(linkButton("Open in ArmoryPal", eventUrl(deps, eventId, "requests")))],
       });
@@ -314,6 +334,12 @@ async function handleButton(i: Interaction, deps: Deps): Promise<InteractionResp
         p_discord_id: userId,
         p_event_id: eventId,
       });
+      if (res.error?.message === "discord_not_linked") {
+        // A Discord guest: no requests or pledges to ask about, so just take them off the list.
+        const left = await deps.rpc<boolean>("bot_guest_leave", { p_discord_id: userId, p_event_id: eventId });
+        if (left.error) return errorReply(left.error, deps);
+        return reply(left.data ? "You're off the Going list." : "You're not on the Going list.");
+      }
       if (res.error) return errorReply(res.error, deps);
       const mine = res.data.requests.filter((r) => r.is_mine).length;
       const bringing = res.data.requests.filter((r) => r.my_pledge > 0).length;

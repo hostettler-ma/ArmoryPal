@@ -32,7 +32,7 @@ export default async function ManageEventPage({ params }: { params: Promise<{ id
     supabase
       .from("events")
       .select(
-        "*, store:stores(id, name, timezone, ticket_url), attendances(user_id, created_at, profile:profiles(display_name, gem_id))",
+        "*, store:stores(id, name, timezone, ticket_url), attendances(user_id, created_at, profile:profiles(display_name, gem_id)), discord_attendees(id, display_name, created_at)",
       )
       .eq("id", id)
       .maybeSingle(),
@@ -43,7 +43,23 @@ export default async function ManageEventPage({ params }: { params: Promise<{ id
   const ended = eventPhase(event) === "ended";
   const cancelled = !!event.cancelled_at;
   const tz = event.store.timezone;
-  const attendees = [...event.attendances].sort((a, b) => a.created_at.localeCompare(b.created_at));
+  // Players and Discord guests (ArmoryBot's Going without an account), in join order.
+  const attendees = [
+    ...event.attendances.map((a) => ({
+      key: a.user_id,
+      userId: a.user_id as string | null,
+      name: a.profile?.display_name ?? "Unknown player",
+      gemId: a.profile?.gem_id ?? null,
+      created_at: a.created_at,
+    })),
+    ...event.discord_attendees.map((g) => ({
+      key: g.id,
+      userId: null,
+      name: g.display_name,
+      gemId: null,
+      created_at: g.created_at,
+    })),
+  ].sort((a, b) => a.created_at.localeCompare(b.created_at));
   const requestCount = new Map<string, number>();
   for (const r of requests ?? []) requestCount.set(r.requester_id, (requestCount.get(r.requester_id) ?? 0) + 1);
   const current = toLocalInputs(event.starts_at, tz);
@@ -121,17 +137,19 @@ export default async function ManageEventPage({ params }: { params: Promise<{ id
         ) : (
           <ol className="card-list">
             {attendees.map((a, i) => {
-              const n = requestCount.get(a.user_id) ?? 0;
-              const name = a.profile?.display_name ?? "Unknown player";
+              const n = a.userId ? (requestCount.get(a.userId) ?? 0) : 0;
+              const name = a.name;
               return (
-                <li key={a.user_id} className="flex min-h-control-lg items-center gap-3 py-2">
+                <li key={a.key} className="flex min-h-control-lg items-center gap-3 py-2">
                   <span className="w-6 shrink-0 text-right text-body-compact text-muted">{i + 1}.</span>
                   <span className="min-w-0 flex-1">
                     <span className="block truncate">{name}</span>
                     <span className="block text-helper text-muted">
-                      {a.profile?.gem_id ? (
+                      {!a.userId ? (
+                        "Via Discord, no ArmoryPal account"
+                      ) : a.gemId ? (
                         <>
-                          GEM ID <span className="font-mono select-all">{a.profile.gem_id}</span>
+                          GEM ID <span className="font-mono select-all">{a.gemId}</span>
                         </>
                       ) : (
                         "No GEM ID"
@@ -143,7 +161,7 @@ export default async function ManageEventPage({ params }: { params: Promise<{ id
                       {n} {n === 1 ? "request" : "requests"}
                     </span>
                   )}
-                  {a.profile?.gem_id && <CopyGemIdButton gemId={a.profile.gem_id} name={name} />}
+                  {a.gemId && <CopyGemIdButton gemId={a.gemId} name={name} />}
                 </li>
               );
             })}

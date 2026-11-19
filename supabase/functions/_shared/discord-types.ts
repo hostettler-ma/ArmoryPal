@@ -49,6 +49,8 @@ export type CommandOption = {
   options?: CommandOption[];
 };
 
+export type DiscordUser = { id: string; username?: string; global_name?: string | null };
+
 export type Interaction = {
   id: string;
   application_id: string;
@@ -57,9 +59,9 @@ export type Interaction = {
   guild_id?: string;
   channel_id?: string;
   /** In a server: the member who invoked it (with their permissions in this channel). */
-  member?: { user: { id: string }; permissions?: string };
+  member?: { user: DiscordUser; nick?: string | null; permissions?: string };
   /** In a DM. */
-  user?: { id: string };
+  user?: DiscordUser;
   /** The bot's own permissions in this channel. */
   app_permissions?: string;
   data?: {

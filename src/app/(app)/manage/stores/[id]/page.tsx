@@ -99,17 +99,16 @@ async function UpcomingTab({ supabase, store }: { supabase: Supabase; store: Sto
   });
   if (error) throw error;
   const events = upcoming ?? [];
-  const { data: attendances } = events.length
-    ? await supabase
-        .from("attendances")
-        .select("event_id")
-        .in(
-          "event_id",
-          events.map((e) => e.id),
-        )
-    : { data: [] };
+  const eventIds = events.map((e) => e.id);
+  const [{ data: attendances }, { data: guests }] = events.length
+    ? await Promise.all([
+        supabase.from("attendances").select("event_id").in("event_id", eventIds),
+        supabase.from("discord_attendees").select("event_id").in("event_id", eventIds),
+      ])
+    : [{ data: [] }, { data: [] }];
+  // Players plus Discord guests (ArmoryBot's Going without an account).
   const going = new Map<string, number>();
-  for (const a of attendances ?? []) going.set(a.event_id, (going.get(a.event_id) ?? 0) + 1);
+  for (const a of [...(attendances ?? []), ...(guests ?? [])]) going.set(a.event_id, (going.get(a.event_id) ?? 0) + 1);
 
   return (
     <section className="space-y-3">

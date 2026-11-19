@@ -105,6 +105,26 @@ isOneToOne: true
                   Relationships: [
                     
                   ]
+                },"discord_attendees": {
+                  Row: {
+                    "created_at": string,"discord_id": string,"display_name": string,"event_id": string,"id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"discord_id": string,"display_name": string,"event_id": string,"id"?: string
+                  }
+                  Update: {
+                    "created_at"?: string,"discord_id"?: string,"display_name"?: string,"event_id"?: string,"id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "discord_attendees_event_id_fkey"
+      columns: ["event_id"]
+isOneToOne: false
+      referencedRelation: "events"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"discord_dm_queue": {
                   Row: {
                     "attempts": number,"claimed_until": string | null,"created_at": string,"discord_id": string,"dropped_reason": string | null,"event_id": string,"id": number,"kind": string,"payload": NonNullable<Json>,"send_after": string,"sent_at": string | null,"user_id": string
@@ -599,6 +619,9 @@ isOneToOne: false
 "admin_remove_attendee":
 { Args: { "p_event_id": string,"p_reason"?: string,"p_user_id": string }; Returns: undefined
                            },
+"admin_remove_discord_attendee":
+{ Args: { "p_attendee_id": string,"p_reason"?: string }; Returns: undefined
+                           },
 "admin_remove_store_owner":
 { Args: { "p_store_id": string,"p_user_id": string }; Returns: undefined
                            },
@@ -694,7 +717,7 @@ isOneToOne: false
 { Args: { "p_discord_id": string,"p_has_manage_guild": boolean,"p_store_id": string }; Returns: string
                            },
 "bot_attend":
-{ Args: { "p_discord_id": string,"p_event_id": string }; Returns: undefined
+{ Args: { "p_discord_id": string,"p_display_name"?: string,"p_event_id": string }; Returns: string
                            },
 "bot_claim_dm_batches":
 { Args: { "p_limit"?: number,"p_user_id"?: string }; Returns: Json
@@ -752,6 +775,9 @@ isOneToOne: false
                            },
 "bot_fail_outbox":
 { Args: { "p_error": string,"p_give_up"?: boolean,"p_id": number,"p_retry_seconds": number }; Returns: undefined
+                           },
+"bot_guest_leave":
+{ Args: { "p_discord_id": string,"p_event_id": string }; Returns: boolean
                            },
 "bot_leave":
 { Args: { "p_cancel_requests": boolean,"p_discord_id": string,"p_event_id": string }; Returns: undefined
@@ -857,6 +883,12 @@ isOneToOne: false
                            },
 "card_name_key":
 { Args: { "p_name": string }; Returns: string
+                           },
+"claim_discord_spots":
+{ Args: { "p_user_id": string }; Returns: number
+                           },
+"claim_my_discord_spots":
+{ Args: Record<PropertyKey, never>; Returns: number
                            },
 "clear_format_vote":
 { Args: { "p_event_id": string }; Returns: undefined

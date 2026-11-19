@@ -155,6 +155,9 @@ describe("access", () => {
         p_notify_owners: false,
       }),
       player.client.rpc("ensure_current_events", { p_store_ids: [storeId] }),
+      player.client.rpc("bot_guest_leave", { p_discord_id: snowflake(), p_event_id: eventId }),
+      player.client.rpc("claim_discord_spots", { p_user_id: helper.id }),
+      player.client.rpc("admin_remove_discord_attendee", { p_attendee_id: eventId }),
     ];
     for (const res of await Promise.all(calls)) expect(res.error?.code).toBe("42501");
     expect((await admin.from("attendances").select("user_id").eq("event_id", eventId)).data).toEqual([]);
@@ -182,10 +185,8 @@ describe("access", () => {
 });
 
 describe("attend and leave from Discord", () => {
-  it("needs a linked, set-up, unbanned account", async () => {
+  it("a linked account must be set up and unbanned (unlinked clickers become guests, below)", async () => {
     const eventId = await oneOff();
-    expect(await errorOf(admin.rpc("bot_attend", { p_discord_id: snowflake(), p_event_id: eventId }))).toBe("discord_not_linked");
-
     const blank = await createTestUser({ name: "Bot Blank" });
     await admin.from("profiles").update({ display_name: null }).eq("id", blank.id);
     const blankDiscord = await linkDiscord(blank.id);
@@ -227,8 +228,9 @@ describe("attend and leave from Discord", () => {
 
   it("attends, then leaves keeping requests: pledges released, requests stay, owners told", async () => {
     const eventId = await oneOff();
-    ok(await admin.rpc("bot_attend", { p_discord_id: playerDiscord, p_event_id: eventId }), "attend");
+    expect(must(await admin.rpc("bot_attend", { p_discord_id: playerDiscord, p_event_id: eventId }), "attend")).toBe("member");
     ok(await admin.rpc("bot_attend", { p_discord_id: playerDiscord, p_event_id: eventId }), "attend twice");
+    expect((await admin.from("discord_attendees").select("id").eq("event_id", eventId)).data).toEqual([]);
     await helper.client.rpc("attend_event", { p_event_id: eventId });
     // Player requests a card; helper requests one that player pledges on.
     must(
@@ -279,6 +281,183 @@ describe("attend and leave from Discord", () => {
       .eq("event_id", eventId)
       .eq("kind", "request_cancelled");
     expect(told).toEqual([{ payload: expect.objectContaining({ actor: "Bot Player", reason: "left_event" }) }]);
+  });
+});
+
+describe("Discord guests (Going without an ArmoryPal account)", () => {
+  const guests = async (eventId: string) =>
+    must(await admin.from("discord_attendees").select("discord_id, display_name").eq("event_id", eventId), "guests");
+
+  it("go on the list once, under their latest Discord name; a blank name gets a stand-in", async () => {
+    const eventId = await oneOff();
+    const zoe = snowflake();
+    expect(must(await admin.rpc("bot_attend", { p_discord_id: zoe, p_event_id: eventId, p_display_name: " Zoe " }), "attend")).toBe("guest");
+    ok(await admin.rpc("bot_attend", { p_discord_id: zoe, p_event_id: eventId, p_display_name: "Zoe (Uncommons)" }), "again");
+    const anon = snowflake();
+    ok(await admin.rpc("bot_attend", { p_discord_id: anon, p_event_id: eventId, p_display_name: "   " }), "blank");
+    expect(await guests(eventId)).toEqual(
+      expect.arrayContaining([
+        { discord_id: zoe, display_name: "Zoe (Uncommons)" },
+        { discord_id: anon, display_name: "Discord player" },
+      ]),
+    );
+    expect(await guests(eventId)).toHaveLength(2);
+    // Guests have no account: they never appear in attendances.
+    expect((await admin.from("attendances").select("user_id").eq("event_id", eventId)).data).toEqual([]);
+  });
+
+  it("follow the event rules: not ended, cancelled or deleted", async () => {
+    const cancelled = await oneOff("Guest Cancelled");
+    ok(await owner.client.rpc("owner_cancel_event", { p_event_id: cancelled }), "cancel");
+    expect(await errorOf(admin.rpc("bot_attend", { p_discord_id: snowflake(), p_event_id: cancelled, p_display_name: "Zoe" }))).toBe(
+      "event_cancelled",
+    );
+    const deleted = await oneOff("Guest Deleted");
+    ok(await owner.client.rpc("owner_delete_event", { p_event_id: deleted }), "delete");
+    expect(await errorOf(admin.rpc("bot_attend", { p_discord_id: snowflake(), p_event_id: deleted, p_display_name: "Zoe" }))).toBe(
+      "event_not_found",
+    );
+    expect(await errorOf(admin.rpc("bot_guest_leave", { p_discord_id: snowflake(), p_event_id: deleted }))).toBe("event_not_found");
+  });
+
+  it("leave with Not going", async () => {
+    const eventId = await oneOff();
+    const zoe = snowflake();
+    await admin.rpc("bot_attend", { p_discord_id: zoe, p_event_id: eventId, p_display_name: "Zoe" });
+    expect(must(await admin.rpc("bot_guest_leave", { p_discord_id: zoe, p_event_id: eventId }), "leave")).toBe(true);
+    expect((await admin.rpc("bot_guest_leave", { p_discord_id: zoe, p_event_id: eventId })).data).toBe(false);
+    expect(await guests(eventId)).toEqual([]);
+  });
+
+  it("players see guests' names but never their Discord IDs; nobody writes the table directly", async () => {
+    const eventId = await oneOff();
+    await admin.rpc("bot_attend", { p_discord_id: snowflake(), p_event_id: eventId, p_display_name: "Zoe" });
+    expect(must(await player.client.from("discord_attendees").select("display_name").eq("event_id", eventId), "read")).toEqual([
+      { display_name: "Zoe" },
+    ]);
+    expect((await player.client.from("discord_attendees").select("discord_id")).error?.code).toBe("42501");
+    const insert = await player.client
+      .from("discord_attendees")
+      .insert({ event_id: eventId, discord_id: snowflake(), display_name: "Fake" });
+    expect(insert.error?.code).toBe("42501");
+    expect((await player.client.from("discord_attendees").delete().eq("event_id", eventId)).error?.code).toBe("42501");
+    expect(await guests(eventId)).toHaveLength(1);
+  });
+
+  it("show in the bot post's Going list in join order, without requests", async () => {
+    const eventId = await oneOff("Guest Render");
+    await helper.client.rpc("attend_event", { p_event_id: eventId });
+    await admin.rpc("bot_attend", { p_discord_id: snowflake(), p_event_id: eventId, p_display_name: "Zoe" });
+    await follower.client.rpc("attend_event", { p_event_id: eventId });
+    const data = must(await admin.rpc("bot_render_event", { p_event_id: eventId }), "render") as { going: { name: string; requests: number }[] };
+    expect(data.going).toEqual([
+      { name: "Bot Helper", requests: 0 },
+      { name: "Zoe", requests: 0 },
+      { name: "Bot Follower", requests: 0 },
+    ]);
+  });
+
+  it("queue a post refresh when they join or leave", async () => {
+    const eventId = await oneOff();
+    await post(eventId);
+    const zoe = snowflake();
+    await admin.rpc("bot_attend", { p_discord_id: zoe, p_event_id: eventId, p_display_name: "Zoe" });
+    expect((await pending(eventId)).map((r) => r.kind)).toEqual(["refresh"]);
+    await admin.from("discord_outbox").delete().eq("event_id", eventId);
+    await admin.rpc("bot_guest_leave", { p_discord_id: zoe, p_event_id: eventId });
+    expect((await pending(eventId)).map((r) => r.kind)).toEqual(["refresh"]);
+  });
+
+  it("are cleared when a weekly event is deleted (it stays as a hidden marker)", async () => {
+    const eventId = await oneOff();
+    await admin.rpc("bot_attend", { p_discord_id: snowflake(), p_event_id: eventId, p_display_name: "Zoe" });
+    await admin.from("events").update({ deleted_at: new Date().toISOString() }).eq("id", eventId);
+    expect(await guests(eventId)).toEqual([]);
+  });
+
+  it("become attendances, in their join place, when the Discord account signs in to ArmoryPal", async () => {
+    const eventId = await oneOff();
+    const ended = (
+      await admin
+        .from("events")
+        .insert({
+          store_id: storeId,
+          event_date: plusDays(today(), -3),
+          starts_at: `${plusDays(today(), -3)}T18:00:00Z`,
+          ends_at: `${plusDays(today(), -2)}T00:00:00Z`,
+          label: "Guest History",
+        })
+        .select("id")
+        .single()
+    ).data!.id;
+    const zoe = snowflake();
+    await admin.from("discord_attendees").insert({ event_id: ended, discord_id: zoe, display_name: "Zoe" });
+    await helper.client.rpc("attend_event", { p_event_id: eventId });
+    await admin.rpc("bot_attend", { p_discord_id: zoe, p_event_id: eventId, p_display_name: "Zoe" });
+    await follower.client.rpc("attend_event", { p_event_id: eventId });
+    const { data: guestRow } = await admin.from("discord_attendees").select("created_at").eq("event_id", eventId).single();
+
+    const newcomer = await createTestUser({ name: "Zoe" });
+    // Nothing to claim before Discord is connected.
+    expect(must(await newcomer.client.rpc("claim_my_discord_spots"), "claim")).toBe(0);
+    await linkDiscord(newcomer.id, zoe);
+    expect(must(await newcomer.client.rpc("claim_my_discord_spots"), "claim")).toBe(2);
+
+    const { data: going } = await admin
+      .from("attendances")
+      .select("user_id, created_at")
+      .eq("event_id", eventId)
+      .order("created_at");
+    expect(going!.map((a) => a.user_id)).toEqual([helper.id, newcomer.id, follower.id]);
+    expect(new Date(going![1].created_at).getTime()).toBe(new Date(guestRow!.created_at).getTime());
+    // Past events count them too, for the store's history.
+    expect((await admin.from("attendances").select("user_id").eq("event_id", ended)).data).toEqual([{ user_id: newcomer.id }]);
+    expect((await admin.from("discord_attendees").select("id").eq("discord_id", zoe)).data).toEqual([]);
+
+    // From now on the Going button attends as the account.
+    expect(must(await admin.rpc("bot_attend", { p_discord_id: zoe, p_event_id: eventId, p_display_name: "Zoe" }), "attend")).toBe("member");
+  });
+
+  it("are claimed once a new account picks its display name", async () => {
+    const eventId = await oneOff();
+    const zoe = snowflake();
+    await admin.rpc("bot_attend", { p_discord_id: zoe, p_event_id: eventId, p_display_name: "Zoe" });
+    const newcomer = await createTestUser({ name: "Zoe Later" });
+    await admin.from("profiles").update({ display_name: null }).eq("id", newcomer.id);
+    await linkDiscord(newcomer.id, zoe);
+    expect(must(await newcomer.client.rpc("claim_my_discord_spots"), "claim")).toBe(0);
+    expect(await guests(eventId)).toHaveLength(1);
+
+    ok(await newcomer.client.from("profiles").update({ display_name: "Zoe" }).eq("id", newcomer.id), "name");
+    expect((await admin.from("attendances").select("user_id").eq("event_id", eventId)).data).toEqual([{ user_id: newcomer.id }]);
+    expect(await guests(eventId)).toEqual([]);
+  });
+
+  it("of a banned player are dropped, not claimed", async () => {
+    const eventId = await oneOff();
+    const zoe = snowflake();
+    await admin.rpc("bot_attend", { p_discord_id: zoe, p_event_id: eventId, p_display_name: "Zoe" });
+    const newcomer = await createTestUser({ name: "Zoe Banned" });
+    ok(await adminUser.client.rpc("admin_ban", { p_user_id: newcomer.id, p_reason: "test" }), "ban");
+    await linkDiscord(newcomer.id, zoe);
+    must(await admin.rpc("claim_discord_spots", { p_user_id: newcomer.id }), "claim");
+    expect((await admin.from("attendances").select("user_id").eq("event_id", eventId)).data).toEqual([]);
+    expect(await guests(eventId)).toEqual([]);
+  });
+
+  it("admins can take a guest off an open event, logged", async () => {
+    const eventId = await oneOff();
+    await admin.rpc("bot_attend", { p_discord_id: snowflake(), p_event_id: eventId, p_display_name: "Spammer" });
+    const { data: row } = await adminUser.client.from("discord_attendees").select("id").eq("event_id", eventId).single();
+    expect(await errorOf(owner.client.rpc("admin_remove_discord_attendee", { p_attendee_id: row!.id }))).toBe("not_admin");
+    ok(await adminUser.client.rpc("admin_remove_discord_attendee", { p_attendee_id: row!.id, p_reason: "spam" }), "remove");
+    expect(await guests(eventId)).toEqual([]);
+    expect(await errorOf(adminUser.client.rpc("admin_remove_discord_attendee", { p_attendee_id: row!.id }))).toBe("not_attending");
+    const { data: log } = await admin
+      .from("admin_actions")
+      .select("action, target_label, detail")
+      .eq("target_event", eventId);
+    expect(log).toEqual([{ action: "remove_attendee", target_label: "Spammer (via Discord)", detail: "spam" }]);
   });
 });
 
