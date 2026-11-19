@@ -12,6 +12,7 @@ const SECTIONS = [
   { href: "/me", label: "Profile" },
   { href: "/settings/notifications", label: "Notification settings" },
   { href: "/guide", label: "Getting started" },
+  { href: "/about", label: "About ArmoryPal" },
   { href: "/discord-bot", label: "ArmoryBot for Discord" },
 ];
 

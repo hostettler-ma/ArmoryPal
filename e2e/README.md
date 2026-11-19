@@ -43,6 +43,17 @@ Live-site smoke checks:
 $env:E2E_TARGET="prod"; $env:PROD_BASE_URL="https://armorypal.vercel.app"; npx playwright test; Remove-Item Env:E2E_TARGET
 ```
 
+## Screenshots for the welcome page
+
+`e2e/tour/screenshots.spec.ts` isn't a test: it sets up a made-up store ("Dragonfire Games") with players and
+requests, and saves phone screenshots to `public/tour/` for `/about`. It runs only through its own config, never in CI:
+
+```powershell
+npm run tour:screenshots
+```
+
+It needs local Supabase with the real card catalog (`npx tsx scripts/import-cards.mts`). Review the images, then commit them.
+
 ## Writing tests
 
 - `test` and `expect` come from `support/fixtures.ts`.
