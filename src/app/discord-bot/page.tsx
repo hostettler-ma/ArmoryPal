@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { DiscordPostPreview } from "@/components/discord-post-preview";
 import { armoryBotInviteUrl, DEFAULT_DAYS_BEFORE, DEFAULT_POST_TIME } from "@/lib/armorybot";
+import { EXAMPLE_NOW, EXAMPLE_POST, EXAMPLE_TIME_ZONE } from "@/lib/discord-preview";
 import { CONTACT_EMAIL } from "@/lib/site";
 
 export const metadata: Metadata = {
@@ -56,28 +58,88 @@ export default function DiscordBotGuidePage() {
         </Link>
         <h1 className="text-heading-04">Set up ArmoryBot for your store&apos;s Discord</h1>
         <p className="text-body text-muted">
-          ArmoryBot posts your store&apos;s Armory events in a channel of your Discord server and keeps each post up to
-          date. Players can mark themselves going right from Discord.
+          A free Discord bot that shows your store&apos;s weekly Armory in your server, so players can see who&apos;s
+          coming and which cards are needed, and sign up with one tap.
         </p>
       </header>
 
-      <Section id="what" title="What it does">
+      <Section id="armorypal" title="New to ArmoryPal?">
         <ul className="text-body-compact">
           <li>
-            <strong>Posts each event ahead of time:</strong> {DEFAULT_DAYS_BEFORE} days before, at {DEFAULT_POST_TIME}{" "}
-            store time, unless you change it. Weekly Armories and one-off events both get a post.
+            <strong>An Armory</strong> is the casual weekly Flesh and Blood event many stores run. Players often need to
+            borrow a few cards to finish a deck.
           </li>
           <li>
-            <strong>Keeps the post live:</strong> who&apos;s going, the cards still needed, the format poll, and any
-            move or cancellation. Changes show up within seconds.
+            <strong>ArmoryPal</strong> is a free web app for that. Players mark that they&apos;re going, list the cards
+            they need, and others offer to bring them. Everyone sees the list update live.
           </li>
           <li>
-            <strong>Buttons:</strong> <em>Going</em> and <em>Not going</em> sign players up or off, and <em>Open in
-            ArmoryPal</em> leads to the event. Once the event is over or cancelled, the buttons switch off.
+            <strong>ArmoryBot</strong> brings each event into your Discord server, so players don&apos;t have to open the
+            app to see what&apos;s happening.
+          </li>
+        </ul>
+        <Link href="/about" className="inline-block text-label">
+          Take a quick tour of ArmoryPal ›
+        </Link>
+      </Section>
+
+      <Section id="what" title="What it posts">
+        <p className="text-body-compact text-muted">
+          A few days before each event, ArmoryBot posts something like this in the channel you pick:
+        </p>
+        <DiscordPostPreview
+          message={EXAMPLE_POST}
+          timeZone={EXAMPLE_TIME_ZONE}
+          now={EXAMPLE_NOW}
+          caption="An example post for a made-up store. Dates and times show in each member's own time zone."
+        />
+        <ul className="text-body-compact">
+          <li>
+            <strong>The top:</strong> your store, the event&apos;s name, its date and time, and how long until it
+            starts.
           </li>
           <li>
-            <strong>Optional DMs:</strong> players can ask ArmoryBot to message them when someone needs a card. It&apos;s
-            off until each player turns it on.
+            <strong>Going:</strong> who&apos;s coming, in sign-up order, with how many cards each one asked for.
+          </li>
+          <li>
+            <strong>Format:</strong> the format if the store announced one, or the current votes if players are voting
+            on it.
+          </li>
+          <li>
+            <strong>Open requests:</strong> the cards people still need, so others can check their binders.
+          </li>
+          <li>
+            <strong>Buttons:</strong> <em>Going</em> and <em>Not going</em> sign a player up or off, and{" "}
+            <em>Open in ArmoryPal</em> shows the full event. Only the player who taps sees the bot&apos;s answer.
+          </li>
+        </ul>
+      </Section>
+
+      <Section id="how" title="How it behaves">
+        <ul className="text-body-compact">
+          <li>
+            <strong>One post per event,</strong> {DEFAULT_DAYS_BEFORE} days before at {DEFAULT_POST_TIME} store time
+            unless you change it. Weekly Armories and one-off events both get one.
+          </li>
+          <li>
+            <strong>The post updates itself</strong> within seconds when someone signs up, asks for a card, or votes,
+            and when the store moves or cancels the event. Nobody needs to post updates by hand.
+          </li>
+          <li>
+            <strong>After the event</strong> (or if it&apos;s cancelled), the buttons switch off and the post stays as a
+            record.
+          </li>
+          <li>
+            <strong>Anyone in the channel can read the posts.</strong> Tapping Going needs a free ArmoryPal account
+            with Discord connected (<a href="#players">more below</a>).
+          </li>
+          <li>
+            <strong>Optional DMs:</strong> players can ask ArmoryBot to message them when someone needs a card.
+            It&apos;s off until each player turns it on.
+          </li>
+          <li>
+            <strong>It doesn&apos;t read your server.</strong> ArmoryBot only posts and edits its own messages and
+            answers its commands.
           </li>
         </ul>
       </Section>

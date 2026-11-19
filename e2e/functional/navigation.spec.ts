@@ -53,13 +53,27 @@ test("the menu reaches every section and marks where you are", async ({ newPlaye
   await expect(page).toHaveURL(/\/$/);
 });
 
-test("privacy policy, terms and the ArmoryBot guide are public", async ({ page }) => {
-  for (const path of ["/privacy", "/terms", "/discord-bot"]) {
+test("privacy policy, terms, the welcome page and the ArmoryBot guide are public", async ({ page }) => {
+  for (const path of ["/privacy", "/terms", "/about", "/discord-bot"]) {
     const res = await page.goto(path);
     expect(res?.status(), path).toBe(200);
     await expect(page).toHaveURL(new RegExp(`${path}$`)); // not bounced to /login
     await expect(page.locator("h1").first()).toBeVisible();
   }
+});
+
+test("the welcome page shows what ArmoryPal does, with pictures, signed out", async ({ page }) => {
+  await page.goto("/about");
+  await expect(page.getByRole("heading", { level: 1, name: "Welcome to ArmoryPal" })).toBeVisible();
+  const shots = page.getByRole("main").getByRole("img");
+  await expect(shots).toHaveCount(6);
+  for (const img of await shots.all()) {
+    await img.scrollIntoViewIfNeeded();
+    await expect.poll(() => img.evaluate((el: HTMLImageElement) => el.complete && el.naturalWidth > 0)).toBe(true);
+  }
+  await page.getByRole("link", { name: "Set up ArmoryBot ›" }).click();
+  await expect(page).toHaveURL(/\/discord-bot$/);
+  await expect(page.getByRole("figure")).toContainText("Going (6)"); // the example post
 });
 
 test("the ArmoryBot guide walks a server admin through setup, signed out", async ({ page }) => {

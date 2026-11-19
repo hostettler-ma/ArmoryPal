@@ -4,9 +4,9 @@ import type { Database } from "./database.types";
 import { supabaseKey, supabaseUrl } from "./env";
 
 // Reachable without signing in. /~offline is served by the service worker; /privacy and /terms are
-// linked from the Google sign-in consent screen. /discord-bot is read by Discord server admins who
-// may not have an account.
-const PUBLIC_PATHS = ["/login", "/auth", "/~offline", "/privacy", "/terms", "/discord-bot"];
+// linked from the Google sign-in consent screen. /about and /discord-bot are read by people
+// who may not have an account yet.
+const PUBLIC_PATHS = ["/login", "/auth", "/~offline", "/privacy", "/terms", "/about", "/discord-bot"];
 
 /** Refreshes the auth session cookie and sends signed-out users to /login. */
 export async function updateSession(request: NextRequest) {

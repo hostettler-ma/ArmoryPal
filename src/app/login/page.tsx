@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { safeNext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
@@ -24,6 +25,9 @@ export default async function LoginPage({
         <header className="space-y-2 text-center">
           <h1 className="text-heading-05">ArmoryPal</h1>
           <p className="text-muted">Borrow and bring cards for your weekly Armory.</p>
+          <Link href="/about" className="inline-block text-label link">
+            New here? See what ArmoryPal does ›
+          </Link>
         </header>
         {error === "other_browser" ? (
           <p className="card text-center text-body-compact">
