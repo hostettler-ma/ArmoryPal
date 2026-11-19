@@ -445,7 +445,13 @@ All of them are `security definer` with `set search_path = ''`, `execute` grante
   - **Going** → `bot_attend` → ephemeral "You're going to …". The post refresh comes from the outbox.
   - **Not going** → an ephemeral message with two Danger/Secondary buttons, `ap:leave-cancel:<id>` / `ap:leave-keep:<id>`. With no requests, it shows a single "Leave" button.
   - **Requests** → deferred ephemeral list. Same ordering as the Requests tab, up to the 1 embed / 6000 budget, then "+N more".
-  - **Unlinked user** → ephemeral "Connect your Discord to ArmoryPal" with a Link button to `/me#connected-accounts`.
+  - **Unlinked user** (no ArmoryPal account with this Discord ID): **Going** adds them as a **Discord guest** (`discord_attendees`, migration `*_discord_guests.sql`). `bot_attend` returns `'guest'`, and the reply ("You're on the Going list!") carries a "Sign in with Discord" link to `/login?next=/events/<id>?tab=requests`. **Not going** sees `discord_not_linked` from `bot_event_requests` and calls `bot_guest_leave` (no prompt: guests have no requests or pledges). Other buttons still reply "Connect your Discord to ArmoryPal" with a Link button to `/me#connected-accounts`.
+- **Discord guests:**
+  - **Name:** server nickname, else Discord display name, else username (`invokerName()`), at most 40 chars, refreshed on every tap. A blank name becomes "Discord player".
+  - **Where they show:** in the post's Going list and the app's Going tab, merged by join time. The app marks them "via Discord", and going counts include them. They can't request, pledge or vote, aren't in `event_audience` and get no notifications.
+  - **Privacy:** signed-in players can read `id, event_id, display_name, created_at` (column grants), never `discord_id`.
+  - **Claiming:** `claim_discord_spots(user)` turns a Discord ID's guest rows into attendances (keeping `created_at`, so the join order holds, past events included) and deletes them. Banned players' rows are dropped. It runs from `/auth/callback` (`claim_my_discord_spots()`, after every sign-in or Connect), from a `profiles` trigger when a display name is first set, and from `bot_attend` for linked players.
+  - **Cleanup:** one-offs cascade; deleting a weekly event clears its guests (trigger on `events.deleted_at`). Admins remove a guest with `admin_remove_discord_attendee` (logged as `remove_attendee`, "<name> (via Discord)").
 
 ---
 

@@ -6,6 +6,7 @@ import {
   banPlayer,
   deleteStore,
   removeAttendee,
+  removeDiscordAttendee,
   restoreStore,
   unbanPlayer,
   type ModerationResult,
@@ -116,6 +117,27 @@ export function RemoveAttendeeButton({ eventId, userId, name }: { eventId: strin
       reason="optional"
       confirmLabel="Remove from event"
       run={(reason) => removeAttendee(eventId, userId, reason)}
+    />
+  );
+}
+
+/** A Discord guest has no account, requests or pledges: removing just takes them off the list. */
+export function RemoveDiscordAttendeeButton({ eventId, attendeeId, name }: { eventId: string; attendeeId: string; name: string }) {
+  return (
+    <ConfirmButton
+      compact
+      danger
+      label="Remove"
+      title={`Remove ${name}?`}
+      description={
+        <>
+          {name} signed up with ArmoryBot on Discord and comes off the Going list. They aren&apos;t notified, and they
+          can tap Going again.
+        </>
+      }
+      reason="optional"
+      confirmLabel="Remove from event"
+      run={(reason) => removeDiscordAttendee(eventId, attendeeId, reason)}
     />
   );
 }

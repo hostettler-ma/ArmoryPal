@@ -63,6 +63,7 @@ Mobile-first companion PWA for the Flesh and Blood TCG. Players coordinate card 
   - **`events.label`** is stored on the event (filled from the schedule by the `events_fill_defaults` trigger). Display `event.label`, not the schedule's.
   - **`moved_from`** is the start time before the first move ("Moved from …"); moving back clears it.
 - **Attendance** goes only through the `attend_event` / `leave_event` RPCs (and ArmoryBot's `bot_attend` / `bot_leave`), which reject ended events via the internal `assert_event_open`. The table has no write policies. Attendee lists are visible to all signed-in users.
+  - **Discord guests** (`discord_attendees`, `*_discord_guests.sql`): ArmoryBot's Going button works without an ArmoryPal account. Guests show in the post and on the Going tab ("via Discord", merged by `created_at` in `buildPeopleList()`), and going counts include them, but they can't request or pledge. Signing in with that Discord account claims their spots as attendances (`claim_my_discord_spots()` in `/auth/callback`). Details in `docs/armorybot.md`. **Count both tables** anywhere you show how many are going.
 - **FKs to schedules and stores from events are `on delete restrict`.** Schedules get deactivated, never deleted.
 - **Requests and pledges** (migration `*_requests_pledges.sql`) are written only through RPCs:
   - **RPCs:** `add_requests(event, items jsonb, note)`, `update_request`, `cancel_request`, `pledge(request, qty)` and `unpledge`.
@@ -135,7 +136,7 @@ Mobile-first companion PWA for the Flesh and Blood TCG. Players coordinate card 
     - `bot_link_store(…, has_manage_guild)`: anyone with Manage Server (no ArmoryPal account needed), else a store manager with Discord linked, else `not_store_owner` (`bot_assert_can_configure`, `*_bot_server_managers.sql`; a suspended account is always refused). Server managers often aren't the store's owner on ArmoryPal.
     - `bot_update_settings(…, has_manage_guild)`: same check; raises `invalid_days_before`, `store_required`, `store_not_linked`.
     - `bot_unlink_store(…, has_manage_guild)`: manager **or** Manage Server (taken from the signed interaction).
-    - `bot_status`, `bot_attend`, `bot_leave`, `bot_event_requests`, `bot_render_event`.
+    - `bot_status`, `bot_attend` (returns `member` or `guest`), `bot_leave`, `bot_guest_leave`, `bot_event_requests`, `bot_render_event`.
     - `bot_claim_outbox` (`for update skip locked`, 2-minute claim), `bot_complete_outbox`, `bot_fail_outbox` (retries stay claimed until `next_attempt_at`; gives up after 8 attempts).
     - **New bot error codes** go in `ruleMessage()` **and** the bot's message map (`_shared/messages.ts`, Phase 2).
   - **Connected accounts** (`/me`): `<ConnectedAccounts>` lists sign-in methods (`connectedAccounts()` in `src/lib/connected-accounts.ts`), with Connect / Disconnect for Discord via `linkIdentity` / `unlinkIdentity`.
@@ -208,7 +209,7 @@ Mobile-first companion PWA for the Flesh and Blood TCG. Players coordinate card 
 - **Security baseline:** every public table has RLS. `next.config.ts` sets X-Frame-Options, nosniff, Referrer-Policy and Permissions-Policy on every response (no CSP yet). No security-definer function is executable by `anon`; check this after adding functions. Internal helpers revoke `execute` from `authenticated` too.
 
 ## Data model (summary)
-`profiles`, `stores`, `store_schedules`, `user_stores`, `store_owners`, `store_owner_requests`, `events`, `cards`, `attendances`, `requests`, `pledges`, `format_polls`, `format_votes`, `notifications`, `notification_preferences`, `bans`, `admin_actions`, plus ArmoryBot's `discord_guild_stores`, `discord_event_posts`, `discord_outbox`, `discord_dm_queue` and `discord_dm_status`. Coverage (pledged / remaining / open|partial|covered) is computed in TypeScript, not stored. Migrations live in `supabase/migrations/`, seed data in `supabase/seed.sql`.
+`profiles`, `stores`, `store_schedules`, `user_stores`, `store_owners`, `store_owner_requests`, `events`, `cards`, `attendances`, `requests`, `pledges`, `format_polls`, `format_votes`, `notifications`, `notification_preferences`, `bans`, `admin_actions`, plus ArmoryBot's `discord_attendees`, `discord_guild_stores`, `discord_event_posts`, `discord_outbox`, `discord_dm_queue` and `discord_dm_status`. Coverage (pledged / remaining / open|partial|covered) is computed in TypeScript, not stored. Migrations live in `supabase/migrations/`, seed data in `supabase/seed.sql`.
 - **Composite FKs keep denormalized columns honest:** `pledges (request_id, event_id)` → `requests (id, event_id)`, and `events (schedule_id, store_id)` → `store_schedules (id, store_id)` (one-offs have a null `schedule_id`, so they aren't checked).
 
 ## Out of scope (for now)

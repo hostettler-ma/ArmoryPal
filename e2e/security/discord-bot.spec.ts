@@ -29,6 +29,7 @@ const INTERNAL = new Set([
   "discord_link_for",
   "discord_post_at",
   "prune_discord_queues",
+  "claim_discord_spots",
 ]);
 
 const BOT_TABLES = ["discord_guild_stores", "discord_event_posts", "discord_outbox", "discord_dm_queue"];
@@ -46,7 +47,7 @@ test("signed-in players can't call any bot_* or internal user-ID function", asyn
   const surface = publicApiSurface();
   const targets = surface.functions.filter((fn) => fn.name.startsWith("bot_") || INTERNAL.has(fn.name));
   // Every bot RPC from docs/armorybot.md §4.6 is in the generated types (so it's actually checked).
-  expect(targets.map((f) => f.name)).toEqual(expect.arrayContaining(["bot_attend", "bot_leave", "bot_link_store", "bot_claim_outbox"]));
+  expect(targets.map((f) => f.name)).toEqual(expect.arrayContaining(["bot_attend", "bot_leave", "bot_guest_leave", "bot_link_store", "bot_claim_outbox", "claim_discord_spots"]));
 
   const open: string[] = [];
   for (const fn of targets) {
@@ -82,6 +83,29 @@ test("signed-in players can't read or write the bot tables, and see only their o
   // Read-only even for the owner: clearing it would only be done by the worker.
   await victim.db.from("discord_dm_status").delete().eq("user_id", victim.id);
   expect((await admin().from("discord_dm_status").select("user_id").eq("user_id", victim.id)).data).toHaveLength(1);
+});
+
+test("Discord guests: players see names only, and can't add, rename or remove guests", async ({ newPlayer }) => {
+  const mallory = await newPlayer({ name: `Mallory ${uid()}` });
+  const { data: events } = await mallory.db.rpc("current_events_for_stores", { p_store_ids: [E2E_STORE_ID] });
+  const eventId = events![0].id;
+  const discordId = `1${Date.now()}`;
+  await admin().rpc("bot_attend", { p_discord_id: discordId, p_event_id: eventId, p_display_name: "Guest" });
+  try {
+    // Discord IDs stay server-side (column grants).
+    expect((await mallory.db.from("discord_attendees").select("discord_id").limit(1)).error?.code).toBe("42501");
+    expect((await mallory.db.from("discord_attendees").select("*").limit(1)).error?.code).toBe("42501");
+    const forged = await mallory.db
+      .from("discord_attendees")
+      .insert({ event_id: eventId, discord_id: "1", display_name: "Fake" });
+    expect(forged.error?.code).toBe("42501");
+    await mallory.db.from("discord_attendees").update({ display_name: "Pwned" }).eq("event_id", eventId);
+    await mallory.db.from("discord_attendees").delete().eq("event_id", eventId);
+    const { data } = await admin().from("discord_attendees").select("display_name").eq("discord_id", discordId);
+    expect(data).toEqual([{ display_name: "Guest" }]);
+  } finally {
+    await admin().rpc("bot_guest_leave", { p_discord_id: discordId, p_event_id: eventId });
+  }
 });
 
 test("players can't opt someone else into Discord DMs", async ({ newPlayer }) => {

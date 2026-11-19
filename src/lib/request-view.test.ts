@@ -113,9 +113,28 @@ describe("buildRequestViews", () => {
         ME,
       );
       expect(people).toEqual([
-        { id: ME, name: "Me", attending: true, isMe: true, requests: 0, stillNeeded: 0 },
-        { id: "alice", name: "Alice", attending: true, isMe: false, requests: 2, stillNeeded: 1 },
-        { id: "carl", name: "Carl", attending: false, isMe: false, requests: 1, stillNeeded: 1 },
+        { id: ME, name: "Me", attending: true, isMe: true, viaDiscord: false, requests: 0, stillNeeded: 0 },
+        { id: "alice", name: "Alice", attending: true, isMe: false, viaDiscord: false, requests: 2, stillNeeded: 1 },
+        { id: "carl", name: "Carl", attending: false, isMe: false, viaDiscord: false, requests: 1, stillNeeded: 1 },
+      ]);
+    });
+
+    it("merges Discord guests into the join order, before people who left", () => {
+      const views = buildRequestViews([req("c1", { requester_id: "carl", requester: { display_name: "Carl" } })], viewer, new Set([ME]));
+      const people = buildPeopleList(
+        [
+          { user_id: ME, name: "Me", created_at: "2026-11-19T10:00:00Z" },
+          { user_id: "alice", name: "Alice", created_at: "2026-11-19T12:00:00Z" },
+        ],
+        views,
+        ME,
+        [{ id: "g1", name: "Zoe", created_at: "2026-11-19T11:00:00Z" }],
+      );
+      expect(people.map((p) => [p.name, p.viaDiscord, p.attending])).toEqual([
+        ["Me", false, true],
+        ["Zoe", true, true],
+        ["Alice", false, true],
+        ["Carl", false, false],
       ]);
     });
   });

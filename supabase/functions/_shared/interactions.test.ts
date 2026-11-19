@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { Rpc } from "./db.ts";
 import { buttonId } from "./custom-id.ts";
 import { EPHEMERAL, InteractionType, ResponseType, type Interaction, type InteractionResponse, type MessageData } from "./discord-types.ts";
-import { deferredResponseFor, followUpBody, handleInteraction, requestsEmbed } from "./interactions.ts";
+import { deferredResponseFor, followUpBody, handleInteraction, invokerName, requestsEmbed } from "./interactions.ts";
 
 const APP = "https://armorypal.test";
 const EVENT = "7afd6814-aa2c-490d-a17c-3dac4b852563";
@@ -231,9 +231,41 @@ describe("buttons", () => {
   });
 
   it("Going attends as the clicker", async () => {
-    const { res, calls } = await run(click("going"), { bot_attend: null });
-    expect(calls).toEqual([{ name: "bot_attend", args: { p_discord_id: "999", p_event_id: EVENT } }]);
+    const { res, calls } = await run(click("going"), { bot_attend: "member" });
+    expect(calls).toEqual([{ name: "bot_attend", args: { p_discord_id: "999", p_event_id: EVENT, p_display_name: null } }]);
     expect(data(res).content).toMatch(/^You're going!/);
+  });
+
+  it("Going without an ArmoryPal account lists the clicker as a guest, named as in the server", async () => {
+    const member = { user: { id: "999", username: "zoe_fab", global_name: "Zoe" }, nick: "  Zoe (Uncommons) " };
+    const { res, calls } = await run({ ...click("going"), member }, { bot_attend: "guest" });
+    expect(calls[0].args).toMatchObject({ p_display_name: "Zoe (Uncommons)" });
+    expect(data(res).content).toMatch(/^You're on the Going list!/);
+    const button = data(res).components?.[0].components[0];
+    expect(button).toMatchObject({ label: "Sign in with Discord" });
+    expect(button?.url).toBe(`${APP}/login?next=${encodeURIComponent(`/events/${EVENT}?tab=requests`)}`);
+  });
+
+  it("a guest's name falls back to the Discord display name, then the username", async () => {
+    const named = (member: Interaction["member"]) => invokerName({ ...click("going"), member } as Interaction);
+    expect(named({ user: { id: "1", username: "zoe_fab", global_name: "Zoe" }, nick: null })).toBe("Zoe");
+    expect(named({ user: { id: "1", username: "zoe_fab", global_name: null } })).toBe("zoe_fab");
+    expect(named({ user: { id: "1" } })).toBeNull();
+    expect(named({ user: { id: "1", global_name: "x".repeat(60) } })).toHaveLength(40);
+  });
+
+  it("Not going takes a guest off the list without the requests prompt", async () => {
+    const { res, calls } = await run(click("leave"), {
+      bot_event_requests: new Error("discord_not_linked"),
+      bot_guest_leave: true,
+    });
+    expect(calls.map((c) => c.name)).toEqual(["bot_event_requests", "bot_guest_leave"]);
+    expect(data(res).content).toBe("You're off the Going list.");
+    const notThere = await run(click("leave"), {
+      bot_event_requests: new Error("discord_not_linked"),
+      bot_guest_leave: false,
+    });
+    expect(data(notThere.res).content).toBe("You're not on the Going list.");
   });
 
   it("Going shows the app's rule when the event is over or cancelled", async () => {
@@ -242,7 +274,7 @@ describe("buttons", () => {
   });
 
   it("unlinked players get the Connect Discord reply", async () => {
-    const { res } = await run(click("going"), { bot_attend: new Error("discord_not_linked") });
+    const { res } = await run(click("requests"), { bot_event_requests: new Error("discord_not_linked") });
     expect(data(res).components?.[0].components[0]).toMatchObject({ label: "Connect Discord", url: `${APP}/me#connected-accounts` });
   });
 

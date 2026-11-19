@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AttendanceButton } from "@/components/attendance-button";
 import { RealtimeRefresh } from "@/components/realtime-refresh";
-import { RemoveAttendeeButton } from "@/components/admin/moderation-buttons";
+import { RemoveAttendeeButton, RemoveDiscordAttendeeButton } from "@/components/admin/moderation-buttons";
 import { AddRequestSheet } from "@/components/event/add-request-sheet";
 import { CancelledNotice } from "@/components/event/cancelled-notice";
 import { CopyRequestsBanner } from "@/components/event/copy-requests-banner";
@@ -43,7 +43,7 @@ export default async function EventPage({
     supabase
       .from("events")
       .select(
-        "*, store:stores(id, name, timezone, city, region, country, notes, ticket_url), attendances(user_id, created_at, profile:profiles(display_name))",
+        "*, store:stores(id, name, timezone, city, region, country, notes, ticket_url), attendances(user_id, created_at, profile:profiles(display_name)), discord_attendees(id, display_name, created_at)",
       )
       .eq("id", id)
       .maybeSingle(),
@@ -81,10 +81,12 @@ export default async function EventPage({
   const myPledges = requests.filter((r) => r.myPledge > 0);
   const stillNeeded = requests.filter((r) => r.coverage !== "covered").length;
   const people = buildPeopleList(
-    attendees.map((a) => ({ user_id: a.user_id, name: a.profile?.display_name ?? "Unknown player" })),
+    attendees.map((a) => ({ user_id: a.user_id, name: a.profile?.display_name ?? "Unknown player", created_at: a.created_at })),
     requests,
     user.id,
+    event.discord_attendees.map((g) => ({ id: g.id, name: g.display_name, created_at: g.created_at })),
   );
+  const goingCount = attendees.length + event.discord_attendees.length;
   const catalogNote = meta
     ? `Cards up to ${meta.latest_set_name}${meta.latest_set_released_on ? ` (${formatReleaseMonth(meta.latest_set_released_on)})` : ""}. Card data: the-fab-cube/flesh-and-blood-cards.`
     : null;
@@ -92,7 +94,7 @@ export default async function EventPage({
   const tabLabel: Record<Tab, string> = {
     requests: `Requests (${stillNeeded})`,
     checklist: `My checklist (${mine.length + myPledges.length})`,
-    going: `Going (${attendees.length})`,
+    going: `Going (${goingCount})`,
   };
 
   return (
@@ -249,6 +251,14 @@ export default async function EventPage({
                     {!p.attending && (
                       <span className="ml-2 rounded-full border border-border px-2 text-helper text-muted">Not going</span>
                     )}
+                    {p.viaDiscord && (
+                      <span
+                        className="ml-2 rounded-full border border-border px-2 text-helper text-muted"
+                        title="Signed up with ArmoryBot on Discord. They can request or bring cards once they sign in to ArmoryPal."
+                      >
+                        via Discord
+                      </span>
+                    )}
                   </span>
                   {p.requests > 0 && (
                     <span className="shrink-0 text-right text-body-compact">
@@ -260,7 +270,11 @@ export default async function EventPage({
                   )}
                   {/* Admins can take others off an open event (admin_remove_attendee). */}
                   {profile.is_admin && !closed && p.attending && !p.isMe && (
-                    <RemoveAttendeeButton eventId={event.id} userId={p.id} name={p.name} />
+                    p.viaDiscord ? (
+                      <RemoveDiscordAttendeeButton eventId={event.id} attendeeId={p.id} name={p.name} />
+                    ) : (
+                      <RemoveAttendeeButton eventId={event.id} userId={p.id} name={p.name} />
+                    )
                   )}
                 </li>
               ))}

@@ -27,7 +27,7 @@ export default async function StoreHistoryPage({
     supabase
       .from("events")
       .select(
-        "id, starts_at, label, attendances(count), requests(quantity, status, pledges(quantity))",
+        "id, starts_at, label, attendances(count), discord_attendees(count), requests(quantity, status, pledges(quantity))",
       )
       .eq("store_id", id)
       .lte("ends_at", new Date().toISOString())
@@ -42,7 +42,7 @@ export default async function StoreHistoryPage({
       id: e.id,
       label: e.label,
       when: formatEventWhen(e.starts_at, store.timezone),
-      going: e.attendances[0]?.count ?? 0,
+      going: (e.attendances[0]?.count ?? 0) + (e.discord_attendees[0]?.count ?? 0),
       requests: active.length,
       covered: active.filter((r) => coverage(r.quantity, totalPledged(r.pledges)) === "covered").length,
     };

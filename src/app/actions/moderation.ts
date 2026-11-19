@@ -25,6 +25,21 @@ export async function removeAttendee(eventId: string, userId: string, reason: st
   return {};
 }
 
+/** Takes a Discord guest (ArmoryBot Going, no account) off an open event. */
+export async function removeDiscordAttendee(eventId: string, attendeeId: string, reason: string): Promise<ModerationResult> {
+  if (!isUuid(eventId) || !isUuid(attendeeId)) return { error: ruleMessage("event_not_found") };
+  const parsed = parseReason(reason, { required: false });
+  if (!parsed.ok) return { error: parsed.error };
+  const { supabase } = await requireAdmin();
+  const { error } = await supabase.rpc("admin_remove_discord_attendee", {
+    p_attendee_id: attendeeId,
+    p_reason: parsed.value || undefined,
+  });
+  if (error) return { error: ruleMessage(error.message) };
+  revalidatePath(`/events/${eventId}`);
+  return {};
+}
+
 export async function banPlayer(userId: string, reason: string): Promise<ModerationResult> {
   if (!isUuid(userId)) return { error: ruleMessage("user_not_found") };
   const parsed = parseReason(reason, { required: true });

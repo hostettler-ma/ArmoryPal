@@ -45,6 +45,8 @@ export type PersonRow = {
   name: string;
   attending: boolean;
   isMe: boolean;
+  /** Tapped Going on ArmoryBot without an ArmoryPal account (no requests possible). `id` is the guest row's. */
+  viaDiscord: boolean;
   /** Active requests (one per card). */
   requests: number;
   /** Of those, how many aren't fully covered yet. */
@@ -52,13 +54,15 @@ export type PersonRow = {
 };
 
 /**
- * The Going tab: attendees in the order they joined, each with their request
- * counts, followed by people who left but kept requests open.
+ * The Going tab: attendees in the order they joined (Discord guests merged in
+ * by `created_at`), each with their request counts, followed by people who
+ * left but kept requests open.
  */
 export function buildPeopleList(
-  attendees: { user_id: string; name: string }[],
+  attendees: { user_id: string; name: string; created_at?: string }[],
   requests: RequestView[],
   viewerId: string,
+  discordGuests: { id: string; name: string; created_at: string }[] = [],
 ): PersonRow[] {
   const counts = new Map<string, { name: string; requests: number; stillNeeded: number }>();
   for (const r of requests) {
@@ -73,12 +77,21 @@ export function buildPeopleList(
     name,
     attending,
     isMe: id === viewerId,
+    viaDiscord: false,
     requests: counts.get(id)?.requests ?? 0,
     stillNeeded: counts.get(id)?.stillNeeded ?? 0,
   });
 
-  const going = attendees.map((a) => row(a.user_id, a.name, true));
-  const goingIds = new Set(going.map((p) => p.id));
+  const members = attendees.map((a) => ({ at: a.created_at ?? "", person: row(a.user_id, a.name, true) }));
+  const guests = discordGuests.map((g) => ({
+    at: g.created_at,
+    person: { id: g.id, name: g.name, attending: true, isMe: false, viaDiscord: true, requests: 0, stillNeeded: 0 },
+  }));
+  // Stable sort: attendees keep their given order among themselves.
+  const going = guests.length
+    ? [...members, ...guests].sort((a, b) => a.at.localeCompare(b.at)).map((x) => x.person)
+    : members.map((x) => x.person);
+  const goingIds = new Set(members.map((m) => m.person.id));
   const left = [...counts.entries()].filter(([id]) => !goingIds.has(id)).map(([id, c]) => row(id, c.name, false));
   return [...going, ...left];
 }
