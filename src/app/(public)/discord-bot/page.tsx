@@ -53,9 +53,6 @@ export default function DiscordBotGuidePage() {
   return (
     <main className="space-y-8 pb-6 [&_a:not(.btn)]:link [&_ul]:space-y-1 [&_ul_li]:ml-6 [&_ul_li]:list-disc">
       <header className="space-y-2">
-        <Link href="/" className="wordmark">
-          ArmoryPal
-        </Link>
         <h1 className="text-heading-04">Set up ArmoryBot for your store&apos;s Discord</h1>
         <p className="text-body text-muted">
           A free Discord bot that shows your store&apos;s weekly Armory in your server, so players can see who&apos;s
